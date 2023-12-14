@@ -56,6 +56,11 @@ final class WPDP_Metabox {
     
     public function get_data(){
         $file_url = $_POST['file'];
+        $post_id = intval(($_POST['post_id']));
+        if($post_id === 0){
+            wp_send_json_error(['Post ID not found']);
+        }
+
         if($file_url == ''){
             wp_send_json_error(['file path not found']);
         }
@@ -69,12 +74,14 @@ final class WPDP_Metabox {
         if(empty($result)){
             wp_send_json_error(['file is not formatted correctly']);
         }
+
+        update_post_meta($post_id,'wpdp_results',$result);
         wp_send_json_success([$result]);
         wp_die();
     }
 
     public function enqueue_scripts() {
-        wp_enqueue_script(WP_DATA_PRESENTATION_NAME, WP_DATA_PRESENTATION_URL . 'assets/wp-data-presentation-admin.js', array('jquery','iris'), WP_DATA_PRESENTATION_VERSION, false);
+        wp_enqueue_script(WP_DATA_PRESENTATION_NAME, WP_DATA_PRESENTATION_URL . 'assets/js/wp-data-presentation-admin.js', array('jquery'), WP_DATA_PRESENTATION_VERSION, false);
 
         wp_localize_script(WP_DATA_PRESENTATION_NAME, 'wpdp_obj', array( 'ajax_url' => admin_url('admin-ajax.php')));
 
@@ -101,8 +108,28 @@ final class WPDP_Metabox {
         <button class="button button-primary wpdp_validate_file">Validate File</button>
         <img class="wpdp_loader" src="'.admin_url('images/loading.gif').'">
         <p class="wpdp_success" '.($success ? 'style="opacity:1;"' : '').'>Success</p>
+
+        <br>
+        '.($success ? '<div class="wpdp_shortcode">
+        <input type="text" disabled value=" [WP_DATA_PRESENTATION id='.$_GET['post'].']"> 
+        <button class="button button-secondary wpdp_copy">Copy</button> 
+        </div>' : '').'
         ';
         echo '<style>
+            .wpdp_shortcode span{
+                position: absolute;
+                right: -54px;
+                top: 5px;
+            }
+            .wpdp_shortcode{
+                display: flex;
+                position:relative;
+                width: 39%;
+                margin-top: 10px;
+            }
+            .wpdp_shortcode input{
+                font-weight:bold;
+            }
             div[data-name="validation"]{
                 display:none;
             }

@@ -30,7 +30,7 @@ class WPDP_Get_Data{
             }
         }
 
-        // $this->data['location'] = $location;
+        $this->data['location'] = $location;
     
         $headerRow = $sheet->getRowIterator(2)->current();
         $headerValues = [];
