@@ -1,0 +1,17 @@
+{
+    "name": "omark/test",
+    "autoload": {
+        "psr-4": {
+            "Omark\\Test\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "omarkasem",
+            "email": "omar.kasem207@gmail.com"
+        }
+    ],
+    "require": {
+        "phpoffice/phpspreadsheet": "^1.29"
+    }
+}
