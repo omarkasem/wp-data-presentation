@@ -47,7 +47,7 @@ final class WPDP_Metabox {
         
         add_filter('acf/settings/url', array($this,'my_acf_settings_url'));
         add_filter('acf/settings/show_admin', array($this,'show_admin'));
-        add_filter('acf/render_field/name=validate_file', array($this,'override_acf_message_field'), 20, 1);
+        add_filter('acf/render_field/key=field_657aa8a6e7d11', array($this,'override_acf_message_field'), 20, 1);
         add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
 
         add_action('wp_ajax_wpdp_get_data', array($this,'get_data'));
