@@ -75,9 +75,7 @@ final class WPDP_DataTables {
         }
 
     ?>
-
-        <h1>Datatables</h1>
-        
+        <h2>Location: <b><?php echo $result['location']; ?></b></h2>
         <table id="wpdp_table" class="display" style="width:100%">
             <thead>
                 <tr>
@@ -106,6 +104,12 @@ final class WPDP_DataTables {
 
             </tbody>
         </table>
+
+        <style>
+            tr.group, tr.group:hover {
+                background-color: #ddd !important;
+            }
+        </style>
 
     <?php }
 
