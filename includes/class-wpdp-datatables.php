@@ -79,9 +79,9 @@ final class WPDP_DataTables {
         <table id="wpdp_table" class="display" style="width:100%">
             <thead>
                 <tr>
-                    <th>Country</th>
-                    <th>Type</th>
                     <th>Date</th>
+                    <th>Type</th>
+                    <th>Country</th>
                     <th>Number</th>
                 </tr>
             </thead>
@@ -93,9 +93,9 @@ final class WPDP_DataTables {
 
                     foreach($value as $k => $v){
                         echo '<tr>
-                            <td>'.$result['location'].'</td>
-                            <td>'.$type.'</td>
                             <td>'.$result['years'][$k].'</td>
+                            <td>'.$type.'</td>
+                            <td>'.$result['location'].'</td>
                             <td>'.$v.'</td>
                         </tr>';
                     }
