@@ -1,0 +1,64 @@
+.wpdp_table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+    font-size: 0.9em;
+    min-width: 400px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+.wpdp_table thead tr {
+    background-color: #009879;
+    color: #ffffff;
+    text-align: left;
+}
+
+.wpdp_table th,
+.wpdp_table td {
+    padding: 12px 15px;
+}
+
+.wpdp_table tbody tr {
+    border-bottom: 1px solid #dddddd;
+}
+
+.wpdp_table tbody tr:nth-of-type(even) {
+    background-color: #f3f3f3;
+}
+
+.wpdp_table tbody tr:last-of-type {
+    border-bottom: 2px solid #009879;
+}
+
+.wpdp_shortcode span{
+    position: absolute;
+    top: 75px;
+    left:0;
+    right:0;
+    margin:0 auto;
+}
+.wpdp_shortcode{
+    display: flex;
+    position: relative;
+    width: 100%;
+    margin-top: 10px;
+    flex-direction: column;
+    gap: 10px;
+}
+.wpdp_shortcode input{
+    font-weight:bold;
+}
+.wpdp_loader{
+    display:none;
+}
+.wpdp_success{
+    opacity:0;
+    display: inline-block;
+    align-items: center;
+    background: #1da311;
+    padding: 5px 10px;
+    color: #fff;
+    margin-left: 5px;
+    margin: 0;
+    margin-left: 10px;
+}

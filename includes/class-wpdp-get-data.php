@@ -8,69 +8,65 @@ class WPDP_Get_Data{
 
     public function __construct($excelFile){
         $this->excelFile = $excelFile;
-        $this->data = [];
     }
 
     public function parse_excel(){
         $spreadsheet = IOFactory::load($this->excelFile);
+        $sheets = $spreadsheet->getAllSheets();
+
+        return $this->parse_new_data($sheets);
+    }
+
+    public function parse_new_data($sheets){
+        $result = [];
+        foreach($sheets as $k => $sheet){
+            foreach ($sheet->getRowIterator() as $k2 => $row) {
+                $cellIterator = $row->getCellIterator();
+                $cellIterator->setIterateOnlyExistingCells(FALSE);
+                foreach ($cellIterator as $cell) {
+                    $result['sheet'.$k]['a'.$k2][] = $cell->getFormattedValue();
+                }
+            }
+        }
+        return $result;
+    }
+
+    public function get_preview_elements(){
+        $spreadsheet = IOFactory::load($this->excelFile);
         $sheet = $spreadsheet->getActiveSheet();
 
-        $this->parse_years($sheet);
-        $this->parse_data($sheet);
-
-        return $this->data;
-    }
-
-    private function parse_years($sheet){
-
+        $data = [];
         $loc = $sheet->getRowIterator(1)->current();
-        foreach ($loc->getCellIterator() as $cell) {
-            if($cell->getValue() !== 'Location:' && $cell->getValue() != ''){
-                $location = $cell->getValue();
+        $i=0;
+        foreach ($loc->getCellIterator() as $cell) { $i++;
+            if($i === 1){
+                $data['a1'] = $cell->getValue();
+            }
+            if($i === 2){
+                $data['b1'] = $cell->getValue();
             }
         }
 
-        $this->data['location'] = $location;
-    
-        $headerRow = $sheet->getRowIterator(2)->current();
-        $headerValues = [];
-
-        foreach ($headerRow->getCellIterator() as $cell) {
-            // If the cell value is not numeric, format it as a date
-            if (!is_numeric($cell->getValue())) {
-                $cell->getStyle()->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_DATE_XLSX22);
+        $loc2 = $sheet->getRowIterator(2)->current();
+        $m=0;
+        foreach ($loc2->getCellIterator() as $cell) { $m++;
+            if($m === 1){
+                $data['a2'] = $cell->getValue();
             }
-            $headerValues[] = $cell->getFormattedValue();
+            if($m === 2){
+                $data['b2'] = $cell->getValue();
+            }
         }
-
-        // Remove the "Location" label from the header
-        array_shift($headerValues);
-
-        // Set the years as the header
-        $this->data['years'] = $headerValues;
+        return $data;
     }
 
-    private function parse_data($sheet){
-        $rowIterator = $sheet->getRowIterator(3);
+}
 
-        foreach ($rowIterator as $row) {
-            $rowData = [];
-            $cellIterator = $row->getCellIterator();
-
-            // Get the type of incident (first column)
-            $rowData[] = $cellIterator->current()->getValue();
-            $cellIterator->next(); // Move to the next cell
-
-            // Iterate over all remaining columns dynamically
-            while ($cellIterator->valid()) {
-                $rowData[] = $cellIterator->current()->getValue();
-                $cellIterator->next();
-            }
-
-            $this->data['incidents'][] = $rowData;
-        }
-    }
-
+if(isset($_GET['test2'])){
+    $inputFileName = WP_DATA_PRESENTATION_PATH.'v1.xlsx';
+    $parser = new WPDP_Get_Data($inputFileName );
+    $result = $parser->parse_excel();
+    var_dump($result);exit;
 }
 
 // add_action('wp_enqueue_scripts', 'enqueue_moment_scripts');

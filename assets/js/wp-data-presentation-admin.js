@@ -16,10 +16,7 @@ jQuery(document).ready(function($){
 
         },
         
-        showError:function(message){
-            $('div[data-name="validation"] input').trigger('click').val(0);
-            
-            $('.wpdp_success').css('opacity','0');
+        showError:function(message){            
             alert(message);
             return;
         },
@@ -56,9 +53,12 @@ jQuery(document).ready(function($){
                         return;
                     }
                     $('.wpdp_loader').hide();
+                    $.each(response.data[0],function(index,val){
+                        $('.wpdp_table .'+index).text(val);
+                    });
+                    $('.wpdp_table').show();
+                    $('.wpdp_validated').val(1);
 
-                    $('.wpdp_success').css('opacity','1');
-                    $('div[data-name="validation"] input').trigger('click').val(1);
                 }
             });
         

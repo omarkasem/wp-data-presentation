@@ -48,10 +48,114 @@ final class WPDP_Metabox {
         add_filter('acf/settings/url', array($this,'my_acf_settings_url'));
         add_filter('acf/settings/show_admin', array($this,'show_admin'));
         add_filter('acf/render_field/key=field_657aa8a6e7d11', array($this,'override_acf_message_field'), 20, 1);
+        add_filter('acf/render_field/key=field_657d3337b74a7', array($this,'mapping_template'), 20, 1);
+        add_filter('acf/render_field/key=field_657e4ec5e8971', array($this,'shortcode_box'), 20, 1);
         add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
 
         add_action('wp_ajax_wpdp_get_data', array($this,'get_data'));
 
+        add_action('save_post',array($this,'save_presentation'));
+
+    }
+
+    function sheets_to_data($sheets) {
+        $data = [];
+    
+        // Loop over each of the sheets in the array,
+        foreach ($sheets as $sheetKey => $sheet) {
+            // Get the years from the first row of the sheet
+            $years = $sheet['a1'];
+            // Skip the first element as it is not a year
+            $location = array_shift($years);
+    
+            // Initialize array for this sheet data
+            $data[$sheetKey] = [];
+            $data[$sheetKey]['location'] = $location;
+             
+            // Loop over each of the rows in the sheet,
+            // excluding the first row (the years)
+            foreach (array_slice($sheet, 1) as $row) {
+                // Get the type from the first element of the row
+                $type = array_shift($row);
+    
+                // Loop through each count in the row
+                foreach ($row as $index => $count) {
+                    // Get the corresponding year
+                    $year = $years[$index];
+                    // Insert the count in the resulting array
+                    $data[$sheetKey][$year][$type] = intval($count);
+                }
+            }
+        }
+        return $data;
+    }
+    
+
+    function sheets_to_data2($sheets) {
+        $data = [];
+        foreach ($sheets as $sheetKey => $sheet) {
+            $categories = $sheet['a1'];
+            $location = array_shift($categories);
+            $data[$sheetKey] = [];
+            $data[$sheetKey]['location'] = $location;
+
+            foreach (array_slice($sheet, 1) as $row) {
+                if(count($row) == 1 && reset($row) === NULL){
+                    continue;
+                }
+                // The row now starts with the year
+                $year = array_shift($row);
+                foreach ($row as $index => $count) {
+                    // Get the corresponding category from the first row
+                    $category = $categories[$index];
+                    // Insert the count in the resulting array
+                    $data[$sheetKey][$year][$category] = intval($count);
+                }
+            }
+        }
+        return $data;
+    }
+    
+
+    
+    public function save_presentation($post_id){
+        if(get_post_type($post_id) !== 'wp-data-presentation'){
+            return;
+        }
+
+        if(intval($_POST['wpdp_validated']) === 0){
+            return;
+        }
+
+
+        if(isset($_POST['t_mapping'])){
+            update_post_meta($post_id,'t_mapping',$_POST['t_mapping']);
+        }
+
+        if(isset($_POST['t_location'])){
+            update_post_meta($post_id,'t_location',$_POST['t_location']);
+        }
+
+        $result = get_post_meta($post_id,'wpdp_results',true);
+
+        $mapping = $_POST['t_mapping'];
+        $modified = '';
+        if($mapping[1] === 'y' && $mapping[2] === 'x'){
+            $modified = $this->sheets_to_data($result);
+        }else{
+            $modified = $this->sheets_to_data2($result);
+        }
+        
+        update_post_meta($post_id,'wpdp_results',$modified);
+
+    }
+
+    public function shortcode_box($field){
+        echo '<div class="wpdp_shortcode">
+        <input type="text" disabled value=" [WP_DATA_PRESENTATION id='.$_GET['post'].']"> 
+        <button class="button button-secondary wpdp_copy">Copy</button>
+        <input type="hidden" class="wpdp_validated" name="wpdp_validated" value="0">
+        </div>';
     }
     
     public function get_data(){
@@ -70,18 +174,22 @@ final class WPDP_Metabox {
         file_put_contents($inputFileName, $file);
 
         $parser = new WPDP_Get_Data($inputFileName );
-        $result = $parser->parse_excel();
-        if(empty($result)){
+        // $result = $parser->parse_excel();
+        $preview = $parser->get_preview_elements($inputFileName);
+        $result = $parser->parse_excel($inputFileName);
+        
+        if(empty($preview)){
             wp_send_json_error(['file is not formatted correctly']);
         }
 
         update_post_meta($post_id,'wpdp_results',$result);
-        wp_send_json_success([$result]);
+        wp_send_json_success([$preview]);
         wp_die();
     }
 
     public function enqueue_scripts() {
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME, WP_DATA_PRESENTATION_URL . 'assets/js/wp-data-presentation-admin.js', array('jquery'), WP_DATA_PRESENTATION_VERSION, false);
+        wp_enqueue_style(WP_DATA_PRESENTATION_NAME, WP_DATA_PRESENTATION_URL . 'assets/css/wp-data-presentation-admin.css', false, WP_DATA_PRESENTATION_VERSION, false);
 
         wp_localize_script(WP_DATA_PRESENTATION_NAME, 'wpdp_obj', array( 'ajax_url' => admin_url('admin-ajax.php')));
 
@@ -98,56 +206,103 @@ final class WPDP_Metabox {
         return WP_DATA_PRESENTATION_ACF_SHOW;
     }
 
-    
+    function mapping_template(){ ?>
+        <table class="wpdp_table" style="display:none;">
+            <thead>
+                <th>Sample Data</th>
+                <th>Cell No</th>
+                <th>Mapping</th>
+                <th>Location</th>
+                <th>Cell Type</th>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="a1"></td>
+                    <td>A1</td>
+                    <td>
+                        <select name="t_mapping[0]" id="t_mapping">
+                            <option value="no">No Axis</option>
+                            <option value="x">X Axis (Time)</option>
+                            <option value="y">Y Axis (Types)</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select name="t_location[0]" id="t_location">
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                        </select>
+                    </td>
+                    <td>1st Cell (A1)</td>
+                </tr>
+
+                <tr>
+                    <td class="a2"></td>
+                    <td>A2</td>
+                    <td>
+                        <select name="t_mapping[1]" id="t_mapping">
+                            <option value="y">Y Axis (Types)</option>
+                            <option value="x">X Axis (Time)</option>
+                            <option value="no">No Axis</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select name="t_location[1]" id="t_location">
+                            <option value="no">No</option>
+                            <option value="yes">Yes</option>
+                        </select>
+                    </td>
+                    <td>Row Header</td>
+                </tr>
+
+                <tr>
+                    <td class="b1"></td>
+                    <td>B1</td>
+                    <td>
+                        <select name="t_mapping[2]" id="t_mapping">
+                            <option value="x">X Axis (Time)</option>
+                            <option value="y">Y Axis (Types)</option>
+                            <option value="no">No Axis</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select name="t_location[2]" id="t_location">
+                            <option value="no">No</option>
+                            <option value="yes">Yes</option>
+                        </select>
+                    </td>
+                    <td>Column Header</td>
+                </tr>
+
+
+                <tr>
+                    <td class="b2"></td>
+                    <td>B2</td>
+                    <td>
+                        <select name="t_mapping[3]" id="t_mapping">
+                            <option value="no">No Axis</option>
+                            <option value="x">X Axis (Time)</option>
+                            <option value="y">Y Axis (Types)</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select name="t_location[3]" id="t_location">
+                            <option value="no">No</option>
+                            <option value="yes">Yes</option>
+                        </select>
+                    </td>
+                    <td>Data Cell</td>
+                </tr>
+
+            </tbody>
+        </table>
+    <?php }
     
 
     function override_acf_message_field($field) {
-        $success = (isset($_GET['post']) && intval(get_field('validation')) === 1 ? true : false );
-
         echo '
         <button class="button button-primary wpdp_validate_file">Validate File</button>
         <img class="wpdp_loader" src="'.admin_url('images/loading.gif').'">
-        <p class="wpdp_success" '.($success ? 'style="opacity:1;"' : '').'>Success</p>
-
-        <br>
-        '.($success ? '<div class="wpdp_shortcode">
-        <input type="text" disabled value=" [WP_DATA_PRESENTATION id='.$_GET['post'].']"> 
-        <button class="button button-secondary wpdp_copy">Copy</button> 
-        </div>' : '').'
         ';
-        echo '<style>
-            .wpdp_shortcode span{
-                position: absolute;
-                right: -54px;
-                top: 5px;
-            }
-            .wpdp_shortcode{
-                display: flex;
-                position:relative;
-                width: 39%;
-                margin-top: 10px;
-            }
-            .wpdp_shortcode input{
-                font-weight:bold;
-            }
-            div[data-name="validation"]{
-                display:none;
-            }
-            .wpdp_loader{
-                display:none;
-            }
-            .wpdp_success{
-                opacity:0;
-                display: inline-block;
-                align-items: center;
-                background: #1da311;
-                padding: 5px 10px;
-                color: #fff;
-                margin-left: 5px;
-                margin: 0;
-                margin-left: 10px;
-            }
-        </style>';
     }
     
 

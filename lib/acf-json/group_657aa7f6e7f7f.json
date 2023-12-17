@@ -117,11 +117,31 @@
             "esc_html": 0
         },
         {
-            "key": "field_657abd1ddac96",
-            "label": "Validation",
-            "name": "validation",
+            "key": "field_657e4e55338f1",
+            "label": "Manual Location",
+            "name": "manual_location",
             "aria-label": "",
-            "type": "true_false",
+            "type": "text",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "maxlength": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": ""
+        },
+        {
+            "key": "field_657d3337b74a7",
+            "label": "Mapping",
+            "name": "",
+            "aria-label": "",
+            "type": "message",
             "instructions": "",
             "required": 0,
             "conditional_logic": 0,
@@ -131,10 +151,8 @@
                 "id": ""
             },
             "message": "",
-            "default_value": 0,
-            "ui": 0,
-            "ui_on_text": "",
-            "ui_off_text": ""
+            "new_lines": "wpautop",
+            "esc_html": 0
         },
         {
             "key": "field_657ac50fe4b23",
@@ -199,5 +217,5 @@
     "active": true,
     "description": "",
     "show_in_rest": 0,
-    "modified": 1702598344
+    "modified": 1702777966
 }

@@ -59,7 +59,6 @@ final class WPDP_DataTables {
         
         wp_register_style(WP_DATA_PRESENTATION_NAME.'datatables', WP_DATA_PRESENTATION_URL.'assets/css/datatables.min.css', [],WP_DATA_PRESENTATION_VERSION );
         
-        wp_register_script(WP_DATA_PRESENTATION_NAME.'public', WP_DATA_PRESENTATION_URL.'assets/js/wp-data-presentation-public.js', array('jquery'), WP_DATA_PRESENTATION_VERSION, true);
     }
     
 
@@ -75,31 +74,30 @@ final class WPDP_DataTables {
         }
 
     ?>
-        <h2>Location: <b><?php echo $result['location']; ?></b></h2>
         <table id="wpdp_table" class="display" style="width:100%">
             <thead>
                 <tr>
                     <th>Date</th>
                     <th>Type</th>
-                    <th>Country</th>
+                    <th>Location</th>
                     <th>Number</th>
                 </tr>
             </thead>
             <tbody>
-                <?php foreach($result['incidents'] as $key => $value){
-                    $type = $value[0];
-                    unset($value[0]);
-                    $value = array_values($value);
-
-                    foreach($value as $k => $v){
-                        echo '<tr>
-                            <td>'.$result['years'][$k].'</td>
+                <?php foreach($result as $key => $sheet){
+                    $location = $sheet['location'];
+                    unset($sheet['location']);
+                    foreach($sheet as $year => $data){
+                        foreach($data as $type => $number){
+                            echo '<tr>
+                            <td>'.$year.'</td>
                             <td>'.$type.'</td>
-                            <td>'.$result['location'].'</td>
-                            <td>'.$v.'</td>
+                            <td>'.$location.'</td>
+                            <td>'.$number.'</td>
                         </tr>';
-                    }
+                        }
 
+                    }
                 } ?>
 
             </tbody>
