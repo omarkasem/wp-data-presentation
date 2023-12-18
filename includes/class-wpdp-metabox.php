@@ -126,11 +126,11 @@ final class WPDP_Metabox {
         if(isset($_POST['wpdp_validated']) && intval($_POST['wpdp_validated']) === 0){
             return;
         }
+        
 
-        if(get_post_status($post_id) !== 'published'){
+        if(get_post_status($post_id) !== 'publish'){
             return;
         }
-
 
         if(isset($_POST['t_mapping'])){
             update_post_meta($post_id,'t_mapping',$_POST['t_mapping']);
@@ -144,6 +144,7 @@ final class WPDP_Metabox {
 
         $mapping = $_POST['t_mapping'];
         $modified = '';
+        
         if($mapping[1] === 'y' && $mapping[2] === 'x'){
             $modified = $this->sheets_to_data($result);
         }else{
