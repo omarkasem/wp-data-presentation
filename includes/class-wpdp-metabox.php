@@ -127,6 +127,10 @@ final class WPDP_Metabox {
             return;
         }
 
+        if(get_post_status($post_id) !== 'published'){
+            return;
+        }
+
 
         if(isset($_POST['t_mapping'])){
             update_post_meta($post_id,'t_mapping',$_POST['t_mapping']);
