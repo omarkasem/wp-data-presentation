@@ -123,7 +123,7 @@ final class WPDP_Metabox {
             return;
         }
 
-        if(intval($_POST['wpdp_validated']) === 0){
+        if(isset($_POST['wpdp_validated']) && intval($_POST['wpdp_validated']) === 0){
             return;
         }
 
