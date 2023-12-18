@@ -80,10 +80,10 @@ final class WPDP_Metabox {
     
                 // Loop through each count in the row
                 foreach ($row as $index => $count) {
-                    // Get the corresponding year
                     $year = $years[$index];
-                    // Insert the count in the resulting array
-                    $data[$sheetKey][$year][$type] = intval($count);
+                    if($year != ''){
+                        $data[$sheetKey][$year][$type] = intval($count);
+                    }
                 }
             }
         }
@@ -145,7 +145,6 @@ final class WPDP_Metabox {
         }else{
             $modified = $this->sheets_to_data2($result);
         }
-        
         update_post_meta($post_id,'wpdp_results',$modified);
 
     }
@@ -220,7 +219,7 @@ final class WPDP_Metabox {
                     <td class="a1"></td>
                     <td>A1</td>
                     <td>
-                        <select name="t_mapping[0]" id="t_mapping">
+                        <select disabled name="t_mapping[0]" id="t_mapping">
                             <option value="no">No Axis</option>
                             <option value="x">X Axis (Time)</option>
                             <option value="y">Y Axis (Types)</option>
@@ -242,7 +241,6 @@ final class WPDP_Metabox {
                         <select name="t_mapping[1]" id="t_mapping">
                             <option value="y">Y Axis (Types)</option>
                             <option value="x">X Axis (Time)</option>
-                            <option value="no">No Axis</option>
                         </select>
                     </td>
                     <td>
@@ -261,7 +259,6 @@ final class WPDP_Metabox {
                         <select name="t_mapping[2]" id="t_mapping">
                             <option value="x">X Axis (Time)</option>
                             <option value="y">Y Axis (Types)</option>
-                            <option value="no">No Axis</option>
                         </select>
                     </td>
                     <td>
@@ -278,7 +275,7 @@ final class WPDP_Metabox {
                     <td class="b2"></td>
                     <td>B2</td>
                     <td>
-                        <select name="t_mapping[3]" id="t_mapping">
+                        <select disabled name="t_mapping[3]" id="t_mapping">
                             <option value="no">No Axis</option>
                             <option value="x">X Axis (Time)</option>
                             <option value="y">Y Axis (Types)</option>

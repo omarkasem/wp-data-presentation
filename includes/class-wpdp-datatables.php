@@ -66,7 +66,6 @@ final class WPDP_DataTables {
         $id = intval($atts['id']);
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'datatables');
         wp_enqueue_style(WP_DATA_PRESENTATION_NAME.'datatables');
-        wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'public');
 
         $result = get_post_meta($id,'wpdp_results',true);
         if(empty($result)){
