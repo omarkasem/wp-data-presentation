@@ -53,10 +53,10 @@ jQuery(document).ready(function($){
                         return;
                     }
                     $('.wpdp_loader').hide();
-                    $.each(response.data[0],function(index,val){
-                        $('.wpdp_table .'+index).text(val);
-                    });
-                    $('.wpdp_table').show();
+                    // $.each(response.data[0],function(index,val){
+                    //     $('.wpdp_table .'+index).text(val);
+                    // });
+                    // $('.wpdp_table').show();
                     $('.wpdp_validated').val(1);
 
                 }

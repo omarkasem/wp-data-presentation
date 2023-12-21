@@ -166,8 +166,8 @@ final class WPDP_Shortcode {
             </div>
 
             <?php 
-                if($pres_type === 'Datatables'){
-                    WPDP_DataTables::shortcode_output($atts);
+                if($pres_type === 'Datatables' || $pres_type === 'ExcelTable'){
+                    WPDP_Tables::shortcode_output($atts);
                 }elseif($pres_type === 'Graphs'){
                     WPDP_Graphs::shortcode_output($atts);
                 }

@@ -17,18 +17,24 @@ class WPDP_Get_Data{
         return $this->parse_new_data($sheets);
     }
 
-    public function parse_new_data($sheets){
-        $result = [];
-        foreach($sheets as $k => $sheet){
-            foreach ($sheet->getRowIterator() as $k2 => $row) {
-                $cellIterator = $row->getCellIterator();
-                $cellIterator->setIterateOnlyExistingCells(FALSE);
-                foreach ($cellIterator as $cell) {
-                    $result['sheet'.$k]['a'.$k2][] = $cell->getFormattedValue();
+    public function parse_new_data($allSheets){
+        $allSheetsData = [];
+        foreach ($allSheets as $sheet) {
+            $sheetData = $sheet->toArray(null, true, true, true);
+        
+            $headers = array_shift($sheetData);
+        
+            foreach ($headers as $header) {
+                $allSheetsData[$sheet->getTitle()][$header] = [];
+            }
+        
+            foreach ($sheetData as $row) {
+                foreach ($headers as $column => $header) {
+                    $allSheetsData[$sheet->getTitle()][$header][] = $row[$column];
                 }
             }
         }
-        return $result;
+        return $allSheetsData;
     }
 
     public function get_preview_elements(){
@@ -63,7 +69,7 @@ class WPDP_Get_Data{
 }
 
 if(isset($_GET['test2'])){
-    $inputFileName = WP_DATA_PRESENTATION_PATH.'v1.xlsx';
+    $inputFileName = WP_DATA_PRESENTATION_PATH.'new.csv';
     $parser = new WPDP_Get_Data($inputFileName );
     $result = $parser->parse_excel();
     var_dump($result);exit;

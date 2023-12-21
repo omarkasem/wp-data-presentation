@@ -5,8 +5,8 @@
 
 .wpdp .con{
   position: absolute;
-  /* left: -25%; */
-  left:0;
+  left: -25%;
+  /* left:0; */
   transition: all .5s ease;
   background: #dfdfdf;
   z-index: 99;
@@ -16,6 +16,14 @@
 }
 .filter_back{
   cursor:pointer;
+}
+
+#wpdp_exceltables{
+  display:none;
+}
+
+#new_wpdp_exceltables{
+  width:100%;
 }
 
 .wpdp .grp{

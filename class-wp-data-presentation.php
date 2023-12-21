@@ -67,7 +67,7 @@ final class WP_Data_Presentation {
 		require_once( WP_DATA_PRESENTATION_ACF_PATH . 'acf.php' );
 		require_once( WP_DATA_PRESENTATION_PATH . 'includes/class-wpdp-get-data.php' );
 		require_once( WP_DATA_PRESENTATION_PATH . 'includes/class-wpdp-metabox.php' );
-		require_once( WP_DATA_PRESENTATION_PATH . 'includes/class-wpdp-datatables.php' );
+		require_once( WP_DATA_PRESENTATION_PATH . 'includes/class-wpdp-tables.php' );
 		require_once( WP_DATA_PRESENTATION_PATH . 'includes/class-wpdp-graphs.php' );
 		require_once( WP_DATA_PRESENTATION_PATH . 'includes/class-wpdp-shortcode.php' );
 

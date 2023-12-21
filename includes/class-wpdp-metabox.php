@@ -58,66 +58,6 @@ final class WPDP_Metabox {
 
     }
 
-    function sheets_to_data($sheets) {
-        $data = [];
-    
-        // Loop over each of the sheets in the array,
-        foreach ($sheets as $sheetKey => $sheet) {
-            // Get the years from the first row of the sheet
-            $years = $sheet['a1'];
-            // Skip the first element as it is not a year
-            $location = array_shift($years);
-    
-            // Initialize array for this sheet data
-            $data[$sheetKey] = [];
-            $data[$sheetKey]['location'] = $location;
-             
-            // Loop over each of the rows in the sheet,
-            // excluding the first row (the years)
-            foreach (array_slice($sheet, 1) as $row) {
-                // Get the type from the first element of the row
-                $type = array_shift($row);
-    
-                // Loop through each count in the row
-                foreach ($row as $index => $count) {
-                    $year = $years[$index];
-                    if($year != ''){
-                        $data[$sheetKey][$year][$type] = intval($count);
-                    }
-                }
-            }
-        }
-        return $data;
-    }
-    
-
-    function sheets_to_data2($sheets) {
-        $data = [];
-        foreach ($sheets as $sheetKey => $sheet) {
-            $categories = $sheet['a1'];
-            $location = array_shift($categories);
-            $data[$sheetKey] = [];
-            $data[$sheetKey]['location'] = $location;
-
-            foreach (array_slice($sheet, 1) as $row) {
-                if(count($row) == 1 && reset($row) === NULL){
-                    continue;
-                }
-                // The row now starts with the year
-                $year = array_shift($row);
-                foreach ($row as $index => $count) {
-                    // Get the corresponding category from the first row
-                    $category = $categories[$index];
-                    // Insert the count in the resulting array
-                    $data[$sheetKey][$year][$category] = intval($count);
-                }
-            }
-        }
-        return $data;
-    }
-    
-
-    
     public function save_presentation($post_id){
         if(get_post_type($post_id) !== 'wp-data-presentation'){
             return;
@@ -141,17 +81,7 @@ final class WPDP_Metabox {
         }
 
         $result = get_post_meta($post_id,'wpdp_results',true);
-
-        $mapping = $_POST['t_mapping'];
-        $modified = '';
-        
-        if($mapping[1] === 'y' && $mapping[2] === 'x'){
-            $modified = $this->sheets_to_data($result);
-        }else{
-            $modified = $this->sheets_to_data2($result);
-        }
-        update_post_meta($post_id,'wpdp_results',$modified);
-
+        update_post_meta($post_id,'wpdp_results',$result);
     }
 
     public function shortcode_box($field){
@@ -180,7 +110,6 @@ final class WPDP_Metabox {
         file_put_contents($inputFileName, $file);
 
         $parser = new WPDP_Get_Data($inputFileName );
-        // $result = $parser->parse_excel();
         $preview = $parser->get_preview_elements($inputFileName);
         $result = $parser->parse_excel($inputFileName);
         

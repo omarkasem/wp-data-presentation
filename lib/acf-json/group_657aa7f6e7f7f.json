@@ -117,26 +117,6 @@
             "esc_html": 0
         },
         {
-            "key": "field_657e4e55338f1",
-            "label": "Manual Location",
-            "name": "manual_location",
-            "aria-label": "",
-            "type": "text",
-            "instructions": "",
-            "required": 0,
-            "conditional_logic": 0,
-            "wrapper": {
-                "width": "",
-                "class": "",
-                "id": ""
-            },
-            "default_value": "",
-            "maxlength": "",
-            "placeholder": "",
-            "prepend": "",
-            "append": ""
-        },
-        {
             "key": "field_657d3337b74a7",
             "label": "Mapping",
             "name": "",
@@ -187,6 +167,7 @@
             },
             "choices": {
                 "Datatables": "Datatables",
+                "ExcelTable": "ExcelTable",
                 "Graphs": "Graphs",
                 "Maps": "Maps"
             },
@@ -217,5 +198,5 @@
     "active": true,
     "description": "",
     "show_in_rest": 0,
-    "modified": 1702777966
+    "modified": 1703156904
 }

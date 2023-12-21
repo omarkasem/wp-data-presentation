@@ -5,14 +5,14 @@
  * @since 1.0.0
  */
 
-final class WPDP_DataTables {
+final class WPDP_Tables {
 
     /**
      * Instance of this class.
      *
      * @since 1.0.0
      *
-     * @var WPDP_DataTables
+     * @var WPDP_Tables
      */
     protected static $_instance = null;
 
@@ -21,7 +21,7 @@ final class WPDP_DataTables {
      *
      * @since 1.0.0
      *
-     * @return WPDP_DataTables
+     * @return WPDP_Tables
      */
 
     public static function get_instance() {
@@ -56,24 +56,37 @@ final class WPDP_DataTables {
     function enqueue_scripts() {
     
         wp_register_script(WP_DATA_PRESENTATION_NAME.'datatables', WP_DATA_PRESENTATION_URL.'assets/js/datatables.min.js', array('jquery'), WP_DATA_PRESENTATION_VERSION, true);
-        
         wp_register_style(WP_DATA_PRESENTATION_NAME.'datatables', WP_DATA_PRESENTATION_URL.'assets/css/datatables.min.css', [],WP_DATA_PRESENTATION_VERSION );
         
+        wp_register_script(WP_DATA_PRESENTATION_NAME.'exceltables', WP_DATA_PRESENTATION_URL.'assets/js/handsontable.full.min.js', array('jquery'), WP_DATA_PRESENTATION_VERSION, true);
+        wp_register_style(WP_DATA_PRESENTATION_NAME.'exceltables', WP_DATA_PRESENTATION_URL.'assets/css/handsontable.full.min.css', [],WP_DATA_PRESENTATION_VERSION );
+
+
     }
     
 
     public static function shortcode_output($atts){
         $id = intval($atts['id']);
-        wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'datatables');
-        wp_enqueue_style(WP_DATA_PRESENTATION_NAME.'datatables');
+        $pres_type = get_field('presentation_type',$id);
+
+        if($pres_type === 'Datatables'){
+            wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'datatables');
+            wp_enqueue_style(WP_DATA_PRESENTATION_NAME.'datatables');
+            $table = 'wpdp_datatable';
+        }else{
+            wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'exceltables');
+            wp_enqueue_style(WP_DATA_PRESENTATION_NAME.'exceltables');
+            $table = 'wpdp_exceltables';
+        }
 
         $result = get_post_meta($id,'wpdp_results',true);
         if(empty($result)){
             return 'No results found.';
         }
-
+        $desiredHeaders = ['year', 'event_type', 'location', 'fatalities'];
+        
     ?>
-        <table id="wpdp_table" class="display" style="width:100%">
+        <table id="<?php echo $table; ?>" class="display" style="width:100%">
             <thead>
                 <tr>
                     <th>Date</th>
@@ -83,20 +96,17 @@ final class WPDP_DataTables {
                 </tr>
             </thead>
             <tbody>
-                <?php foreach($result as $key => $sheet){
-                    $location = $sheet['location'];
-                    unset($sheet['location']);
-                    foreach($sheet as $year => $data){
-                        foreach($data as $type => $number){
-                            echo '<tr>
-                            <td>'.$year.'</td>
-                            <td>'.$type.'</td>
-                            <td>'.$location.'</td>
-                            <td>'.$number.'</td>
-                        </tr>';
+                <?php foreach($result as $sheetData){
+                        $filteredData = array_intersect_key($sheetData, array_flip($desiredHeaders));
+                        // Table data
+                        $rowNumber = count(current($filteredData));
+                        for ($i = 0; $i < $rowNumber; $i++) {
+                            echo "<tr>";
+                            foreach ($filteredData as $data) {
+                                echo "<td>" . $data[$i] . "</td>";
+                            }
+                            echo "</tr>";
                         }
-
-                    }
                 } ?>
 
             </tbody>
@@ -113,4 +123,4 @@ final class WPDP_DataTables {
 
 }
 
-WPDP_DataTables::get_instance();
+WPDP_Tables::get_instance();
