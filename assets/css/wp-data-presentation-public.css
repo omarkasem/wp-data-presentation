@@ -18,6 +18,11 @@
   cursor:pointer;
 }
 
+#wpdp_map{
+  width:100%;
+  height: 500px;
+}
+
 #wpdp_exceltables{
   display:none;
 }

@@ -1,7 +1,6 @@
-( function ( jQuery ) {
+( function ( $ ) {
   'use strict';
 
-  jQuery( document ).ready( function ( $ ) {
     var self = {};
     var data = wpdp_data;
     var myChart;
@@ -12,9 +11,113 @@
       self.excelTables();
       self.filters();
       self.filtersChange();
+      
     },
 
+    self.maps = function(){
 
+      var desiredHeaders = ['year', 'event_type', 'location', 'fatalities','latitude','longitude'];
+
+      var mapData = [];
+      data.forEach(function(sheetData) {
+          desiredHeaders.forEach(function(header, index) {
+              if (sheetData.hasOwnProperty(header)) {
+                  mapData.push({
+                      latitude: sheetData.latitude[index],
+                      longitude: sheetData.longitude[index],
+                      date: sheetData.year[index],
+                      number: sheetData.fatalities[index],
+                      type: sheetData.event_type[index],
+                      location: sheetData.location[index]
+                  });
+              }
+          });
+      });
+
+
+      var startLocation = { lat: parseFloat(mapData[0].latitude), lng: parseFloat(mapData[0].longitude) };
+  
+      var map = new google.maps.Map(
+        document.getElementById('wpdp_map'),
+        { 
+            zoom: 3, 
+            center: startLocation,
+            styles: [ // this will make your map color darker
+                {
+                    "elementType": "geometry",
+                    "stylers": [ { "color": "#242f3e" } ]
+                },
+                {
+                    "elementType": "labels.text.stroke",
+                    "stylers": [ { "color": "#242f3e" } ]
+                },
+                {
+                    "elementType": "labels.text.fill",
+                    "stylers": [ { "color": "#746855" } ]
+                },
+                //... more styles if you wish
+            ],
+            mapTypeControl: false
+        } );
+        
+        var svgMarker = { // custom SVG marker
+          path: "M-20,0a20,20 0 1,0 40,0a20,20 0 1,0 -40,0",
+          fillColor: '#FF0000',
+          fillOpacity: .6,
+          anchor: new google.maps.Point(0,0),
+          strokeWeight: 0,
+          scale: 1
+      
+        };
+        
+        var infoWindow = new google.maps.InfoWindow; // declare InfoWindow outside loop
+        
+        mapData.forEach(function(loc) {
+            var location = { lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude) };
+            
+            var marker = new google.maps.Marker({
+                position: location, 
+                map: map,
+                icon: svgMarker // set custom marker
+            });
+        
+            marker.addListener('click', function() { 
+              infoWindow.close(); 
+              infoWindow.setContent(`
+              <div style="
+                  color: #333;
+                  font-size: 16px; 
+                  padding: 10px;
+                  line-height: 1.6;
+                  border: 2px solid #333;
+                  border-radius: 10px;
+                  background: #fff;
+                  ">
+                      <h2 style="
+                          margin: 0 0 10px;
+                          font-size: 20px;
+                          border-bottom: 1px solid #333;
+                          padding-bottom: 5px;
+                      ">${loc.type}</h2>
+                      <p style="margin-bottom:0;"><strong>Location:</strong> ${loc.location}</p>
+                      <p style="margin-bottom:0;"><strong>Number:</strong> ${loc.number}</p>
+                      <p style="margin-bottom:0;"><strong>Date:</strong> ${loc.date}</p>
+                  </div>
+              `);
+  
+              infoWindow.open(map, marker);
+            }); 
+
+
+            // Close the infoWindow when the map is clicked
+            map.addListener('click', function() {
+              infoWindow.close();
+            });
+
+        });
+
+      window.addEventListener('load', self.maps);
+    },
 
     self.excelTables = function(){
       if ($('#wpdp_exceltables').length > 0) {
@@ -217,52 +320,8 @@
 
 
     $( self.init );
-  });
-
-  
-
-  if (typeof Chart !== 'undefined') {
 
 
-    function extractData(dataset, category) {
-      const labels = Object.keys(dataset).filter(key => key !== 'location');
-      const values = labels.map(year => dataset[year][category]);
-      return { labels, values };
-    }
-
-    // Function to create the line chart
-    function createLineChart(dataset, category, color) {
-      const { labels, values } = extractData(dataset, category);
-      console.log(labels,values);
-      const ctx = document.getElementById('lineChart').getContext('2d');
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: `${dataset['location']} - ${category}`,
-            borderColor: color,
-            data: values,
-            fill: false,
-          }]
-        },
-        options: {
-          scales: {
-            x: {
-              type: 'linear',
-              position: 'bottom'
-            }
-          }
-        }
-      });
-    }
-
-    // Example: Create line charts for 'Protests' in Zambia and Egypt
-    // createLineChart(wpdp_data['sheet0'], 'Protests', 'blue');
-    // createLineChart(wpdp_data['sheet1'], 'Protests', 'red');
-
-
-
-  }
+    window.wpdp_maps = self.maps;
 
 }( jQuery ) );

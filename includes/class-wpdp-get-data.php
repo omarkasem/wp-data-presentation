@@ -19,18 +19,18 @@ class WPDP_Get_Data{
 
     public function parse_new_data($allSheets){
         $allSheetsData = [];
-        foreach ($allSheets as $sheet) {
+        foreach ($allSheets as $k => $sheet) {
             $sheetData = $sheet->toArray(null, true, true, true);
         
             $headers = array_shift($sheetData);
         
             foreach ($headers as $header) {
-                $allSheetsData[$sheet->getTitle()][$header] = [];
+                $allSheetsData[$k][$header] = [];
             }
         
             foreach ($sheetData as $row) {
                 foreach ($headers as $column => $header) {
-                    $allSheetsData[$sheet->getTitle()][$header][] = $row[$column];
+                    $allSheetsData[$k][$header][] = $row[$column];
                 }
             }
         }
