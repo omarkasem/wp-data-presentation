@@ -71,20 +71,16 @@ final class WPDP_Shortcode {
     private function get_filters($result){
         $filters = [];
         $i=-1;
-        foreach($result as $key => $sheet){$i++;
-            $location = $sheet['location'];
-            $filters['locations'][] = $location;
-            unset($sheet['location']);
-            foreach($sheet as $year => $data){
-                $filters['years'][] = $year;
-                foreach($data as $type => $number){
-                    $filters['types'][] = $type;
-                }
-            }
+        foreach($result as $key => $val){$i++;
+            $filters['types'][] = $val['event_type'];
+            $filters['years'][] = $val['year'];
+            $filters['locations'][] = $val['country'];
         }
         $filters['types'] = array_unique($filters['types']);
+        $filters['locations'] = array_unique($filters['locations']);
+        sort($filters['types']);
+        sort($filters['locations']);
         return $filters;
-
     }
 
 
@@ -103,22 +99,33 @@ final class WPDP_Shortcode {
         wp_enqueue_style(WP_DATA_PRESENTATION_NAME.'select2');
         wp_enqueue_style(WP_DATA_PRESENTATION_NAME.'public');
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'public');
+        wp_enqueue_style( 'dashicons' );
+
         $pres_type = get_field('presentation_type',$id);
         $result = get_post_meta($id,'wpdp_results',true);
         
         ?>
 
         <div class="wpdp">
-
+            <style>
+                .wpdp .con{
+                    left: -35%;
+                }
+            </style>
 
             <?php 
                 if($pres_type === 'Datatables' || $pres_type === 'ExcelTable'){
                     WPDP_Tables::shortcode_output($atts);
                 }elseif($pres_type === 'Graphs'){
+                    echo '<style>
+                        .wpdp .con{left:-5%}
+                    </style>';
                     $filters = $this->get_filters($result);
                     $this->get_filter($filters);
                     WPDP_Graphs::shortcode_output($atts);
                 }elseif($pres_type === 'Maps'){
+                    $filters = $this->get_filters($result);
+                    $this->get_filter($filters);
                     WPDP_Maps::shortcode_output($atts);
                 }
             ?>
@@ -135,7 +142,7 @@ final class WPDP_Shortcode {
 
     function get_filter($filters){ ?>
         <div class="filter_data">
-            <a class="filter" href=""><span class="dashicons dashicons-filter"></span></a>
+            <a class="filter" href=""><span class="dashicons dashicons-image-filter"></span></a>
             <div class="con">
                 <span class="filter_back dashicons dashicons-arrow-left-alt"></span>
                 <form action="">

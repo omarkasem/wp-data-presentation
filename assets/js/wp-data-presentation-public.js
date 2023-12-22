@@ -5,7 +5,6 @@
     var data = wpdp_data;
     var myChart;
 
-
     self.init = function(){
       self.dataTables();
       self.excelTables();
@@ -20,17 +19,13 @@
 
       var mapData = [];
       data.forEach(function(sheetData) {
-          desiredHeaders.forEach(function(header, index) {
-              if (sheetData.hasOwnProperty(header)) {
-                  mapData.push({
-                      latitude: sheetData.latitude[index],
-                      longitude: sheetData.longitude[index],
-                      date: sheetData.year[index],
-                      number: sheetData.fatalities[index],
-                      type: sheetData.event_type[index],
-                      location: sheetData.location[index]
-                  });
-              }
+          mapData.push({
+              latitude: sheetData.latitude,
+              longitude: sheetData.longitude,
+              date: sheetData.year,
+              number: sheetData.fatalities,
+              type: sheetData.event_type,
+              location: sheetData.location
           });
       });
 
@@ -39,7 +34,7 @@
   
       var map = new google.maps.Map(
         document.getElementById('wpdp_map'),
-        { 
+        {
             zoom: 3, 
             center: startLocation,
             styles: [ // this will make your map color darker
@@ -58,63 +53,64 @@
                 //... more styles if you wish
             ],
             mapTypeControl: false
-        } );
+        }
+      );
         
-        var svgMarker = { // custom SVG marker
-          path: "M-20,0a20,20 0 1,0 40,0a20,20 0 1,0 -40,0",
-          fillColor: '#FF0000',
-          fillOpacity: .6,
-          anchor: new google.maps.Point(0,0),
-          strokeWeight: 0,
-          scale: 1
+      var svgMarker = { // custom SVG marker
+        path: "M-20,0a20,20 0 1,0 40,0a20,20 0 1,0 -40,0",
+        fillColor: '#FF0000',
+        fillOpacity: .6,
+        anchor: new google.maps.Point(0,0),
+        strokeWeight: 0,
+        scale: 1
+    
+      };
+        
+      var infoWindow = new google.maps.InfoWindow; // declare InfoWindow outside loop
       
-        };
-        
-        var infoWindow = new google.maps.InfoWindow; // declare InfoWindow outside loop
-        
-        mapData.forEach(function(loc) {
-            var location = { lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude) };
-            
-            var marker = new google.maps.Marker({
-                position: location, 
-                map: map,
-                icon: svgMarker // set custom marker
-            });
-        
-            marker.addListener('click', function() { 
-              infoWindow.close(); 
-              infoWindow.setContent(`
-              <div style="
-                  color: #333;
-                  font-size: 16px; 
-                  padding: 10px;
-                  line-height: 1.6;
-                  border: 2px solid #333;
-                  border-radius: 10px;
-                  background: #fff;
-                  ">
-                      <h2 style="
-                          margin: 0 0 10px;
-                          font-size: 20px;
-                          border-bottom: 1px solid #333;
-                          padding-bottom: 5px;
-                      ">${loc.type}</h2>
-                      <p style="margin-bottom:0;"><strong>Location:</strong> ${loc.location}</p>
-                      <p style="margin-bottom:0;"><strong>Number:</strong> ${loc.number}</p>
-                      <p style="margin-bottom:0;"><strong>Date:</strong> ${loc.date}</p>
-                  </div>
-              `);
-  
-              infoWindow.open(map, marker);
-            }); 
+      mapData.forEach(function(loc) {
+          var location = { lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude) };
+          
+          var marker = new google.maps.Marker({
+              position: location, 
+              map: map,
+              icon: svgMarker // set custom marker
+          });
+      
+          marker.addListener('click', function() { 
+            infoWindow.close(); 
+            infoWindow.setContent(`
+            <div style="
+                color: #333;
+                font-size: 16px; 
+                padding: 10px;
+                line-height: 1.6;
+                border: 2px solid #333;
+                border-radius: 10px;
+                background: #fff;
+                ">
+                    <h2 style="
+                        margin: 0 0 10px;
+                        font-size: 20px;
+                        border-bottom: 1px solid #333;
+                        padding-bottom: 5px;
+                    ">${loc.type}</h2>
+                    <p style="margin-bottom:0;"><strong>Location:</strong> ${loc.location}</p>
+                    <p style="margin-bottom:0;"><strong>Number:</strong> ${loc.number}</p>
+                    <p style="margin-bottom:0;"><strong>Date:</strong> ${loc.date}</p>
+                </div>
+            `);
+
+            infoWindow.open(map, marker);
+          }); 
 
 
-            // Close the infoWindow when the map is clicked
-            map.addListener('click', function() {
-              infoWindow.close();
-            });
+          // Close the infoWindow when the map is clicked
+          map.addListener('click', function() {
+            infoWindow.close();
+          });
 
-        });
+      });
 
       window.addEventListener('load', self.maps);
     },
@@ -156,7 +152,7 @@
 
     self.dataTables = function(){
       if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
-        $('#wpdp_table').DataTable({
+        $('#wpdp_datatable').DataTable({
             dom: 'Bfrtip',
             buttons: [
                 'copyHtml5',
@@ -172,12 +168,12 @@
     self.filters = function(){
       $('.wpdp .filter').click(function(e){
         e.preventDefault();
-        $('.wpdp .con').css('left','0');
+        $('.wpdp .con').css('left','-5%');
       });
     
       $('.wpdp .filter_back').click(function(e){
         e.preventDefault();
-        $('.wpdp .con').css('left','-25%');
+        $('.wpdp .con').css('left','-35%');
       });
     
       $('#wpdp_type,#wpdp_location,#wpdp_from,#wpdp_to').select2({
@@ -193,20 +189,6 @@
         let fromYear = $("#wpdp_from").select2("val");
         let toYear = $("#wpdp_to").select2("val");
 
-
-        if(typeValue == ""){
-          typeValue = $('#wpdp_type option').toArray().map(item => item.value);
-        }
-        if(locationValue == ""){
-          locationValue = $('#wpdp_location option').toArray().map(item => item.value);
-        }
-        if(fromYear == ""){
-          fromYear = $('#wpdp_from option').toArray().map(item => item.value);
-        }
-        if(toYear == ""){
-          toYear = $('#wpdp_to option').toArray().map(item => item.value);
-        }
-
         if (myChart) {
           myChart.destroy();
         }
@@ -220,69 +202,69 @@
         datasets: []
       };
 
-      function removeDuplicates(data) {
-        let uniqueData = [...new Set(data)];
+      let datasetsMap = {};
     
-        uniqueData.sort(function(a, b) {
-            let aParts = a.split('-'),
-                bParts = b.split('-');
-    
-            let aYear = parseInt(aParts[aParts.length - 1]) < 100 ? parseInt(aParts[aParts.length - 1]) + 2000 : parseInt(aParts[aParts.length - 1]);
+      for (let val of data) {
+        if(locationValue.length > 0 && !locationValue.includes(val.country)){
+          continue;
+        }
 
-            let bYear = bParts[bParts.length - 1] < 100 ? parseInt(bParts[bParts.length - 1]) + 2000 : parseInt(bParts[bParts.length - 1]);
-    
-            let aMonth, bMonth;
-    
-            if (aParts.length > 1) {
-                let aDate = new Date(a);
-                aDate.setFullYear(aYear);
-                aMonth = aDate.getMonth();
-            }
-    
-            if (bParts.length > 1) {
-                let bDate = new Date(b);
-                bDate.setFullYear(bYear);
-                bMonth = bDate.getMonth();
-            }
-    
-            if (aYear === bYear) {
-                return (aMonth - bMonth) || 0        }
-    
-            return aYear - bYear;
-        });
-        return uniqueData;
-      }
-    
-      for (let sheet in data) {
-        let location = data[sheet].location;
-        for (let selectField of typeValue) {
-          if(locationValue.length > 0){
-            if(!locationValue.includes(location)){
-              continue;
-            }
+        if(typeValue.length > 0 && !typeValue.includes(val.event_type)){
+          continue;
+        }
+        
+        if(parseInt(val.fatalities) === 0){
+          continue;
+        }
+
+        let dataset = {
+          label: '',
+          data: [],
+          fill: false,
+          borderColor: '#' + (Math.random()*0xFFFFFF<<0).toString(16)
+        };
+
+        // Type
+        if (typeValue.length && !datasetsMap[val.event_type]) {
+          let label = val.event_type;
+          if(locationValue.length){
+            label += ' in ' + locationValue;
           }
-          let dataset = {
-            label: `${selectField} in ${location}`,
-            data: [],
-            fill: false,
-            borderColor: '#' + (Math.random()*0xFFFFFF<<0).toString(16)
-          };
-            
-          for (let year in data[sheet]) {
-            if (year === 'location') continue;
-                
-            dataset.data.push(data[sheet][year][selectField]);
-          }
-              
-          chartData.labels.push(Object.keys(data[sheet]).filter(key => key !== 'location'));
+          dataset.label = label;
+    
+          datasetsMap[val.event_type] = dataset;
           chartData.datasets.push(dataset);
         }
-      }
     
-      chartData.labels = removeDuplicates(chartData.labels.flat());
+        if(val.event_type in datasetsMap) {
+          datasetsMap[val.event_type].data.push(val.fatalities);
+        }
+
+        // Location
+        if (locationValue.length && !datasetsMap[val.country]) {
+          let label = 'Incidents in '+ val.country;
+          dataset.label = label;
+    
+          datasetsMap[val.country] = dataset;
+          chartData.datasets.push(dataset);
+        }
+
+        if(val.country in datasetsMap) {
+          datasetsMap[val.country].data.push(val.fatalities);
+        }
+
+        chartData.labels.push(val.year);
+      }
+
+      // Fix years.
+      chartData.labels = [...new Set(chartData.labels)];
+      chartData.labels.sort((a, b) => a - b);
+      let previousYear = (parseInt(chartData.labels[0]) - 1);
+      let nextYear = (parseInt(chartData.labels[chartData.labels.length - 1]) + 1);
+      chartData.labels.unshift(previousYear);
+      chartData.labels.push(nextYear);
 
       let ctx = document.getElementById('myChart').getContext('2d');
-          
       return new Chart(ctx, {
         type: 'line',
         data: chartData,
@@ -303,6 +285,7 @@
                     }
                 },
                 y: {
+                    type: 'linear',
                     display: true,
                     title: {
                         display: true,

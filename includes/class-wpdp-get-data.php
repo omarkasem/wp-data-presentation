@@ -17,23 +17,21 @@ class WPDP_Get_Data{
         return $this->parse_new_data($sheets);
     }
 
-    public function parse_new_data($allSheets){
+    public function parse_new_data($sheets){
+        
         $allSheetsData = [];
-        foreach ($allSheets as $k => $sheet) {
+        $i=-1;
+        foreach ($sheets as $k => $sheet) {
             $sheetData = $sheet->toArray(null, true, true, true);
-        
-            $headers = array_shift($sheetData);
-        
-            foreach ($headers as $header) {
-                $allSheetsData[$k][$header] = [];
-            }
-        
-            foreach ($sheetData as $row) {
+            $headers = array_values(array_shift($sheetData));
+            foreach ($sheetData as $row) {$i++;
+                $row = array_values($row);
                 foreach ($headers as $column => $header) {
-                    $allSheetsData[$k][$header][] = $row[$column];
+                    $allSheetsData[$i][$headers[$column]] = $row[$column];
                 }
             }
         }
+
         return $allSheetsData;
     }
 
@@ -69,7 +67,7 @@ class WPDP_Get_Data{
 }
 
 if(isset($_GET['test2'])){
-    $inputFileName = WP_DATA_PRESENTATION_PATH.'new.csv';
+    $inputFileName = WP_DATA_PRESENTATION_PATH.'new2.xlsx';
     $parser = new WPDP_Get_Data($inputFileName );
     $result = $parser->parse_excel();
     var_dump($result);exit;

@@ -96,17 +96,13 @@ final class WPDP_Tables {
                 </tr>
             </thead>
             <tbody>
-                <?php foreach($result as $sheetData){
-                        $filteredData = array_intersect_key($sheetData, array_flip($desiredHeaders));
-                        // Table data
-                        $rowNumber = count(current($filteredData));
-                        for ($i = 0; $i < $rowNumber; $i++) {
-                            echo "<tr>";
-                            foreach ($filteredData as $data) {
-                                echo "<td>" . $data[$i] . "</td>";
-                            }
-                            echo "</tr>";
-                        }
+                <?php foreach($result as $val){
+                    echo "<tr>";
+                        echo "<td>" . $val['year'] . "</td>";
+                        echo "<td>" . $val['event_type'] . "</td>";
+                        echo "<td>" . $val['location'] . "</td>";
+                        echo "<td>" . $val['fatalities'] . "</td>";
+                    echo "</tr>";
                 } ?>
 
             </tbody>

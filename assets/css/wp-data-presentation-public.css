@@ -2,13 +2,14 @@
 .wpdp-presentation{
   position:relative;
 }
-
+.wpdp{
+  position: relative;
+}
 .wpdp .con{
   position: absolute;
-  left: -25%;
-  /* left:0; */
+  border: 1px solid #cdcdcd;
   transition: all .5s ease;
-  background: #dfdfdf;
+  background: #eaeaea;
   z-index: 99;
   width: 300px;
   padding: 20px;
@@ -17,7 +18,17 @@
 .filter_back{
   cursor:pointer;
 }
-
+.wpdp .filter{
+  position: absolute;
+  z-index: 98;
+  top: 10px;
+  left: 10px;
+  background: #fff;
+  padding: 4px 7px
+}
+.wpdp .filter .dashicons{
+  color: #000;
+}
 #wpdp_map{
   width:100%;
   height: 500px;
