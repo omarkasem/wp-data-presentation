@@ -56,7 +56,7 @@ final class WPDP_Maps {
 
 
     function enqueue_scripts() {
-        wp_register_script(WP_DATA_PRESENTATION_NAME.'google-maps-api', 'https://maps.googleapis.com/maps/api/js?key='.OK_GOOGLE_MAP_KEY.'&callback=wpdp_maps', array(), null, true);
+        wp_register_script(WP_DATA_PRESENTATION_NAME.'google-maps-api', 'https://maps.googleapis.com/maps/api/js?key='.get_field('google_maps_api_key','option').'&callback=wpdp_maps', array(), null, true);
 
     }
     

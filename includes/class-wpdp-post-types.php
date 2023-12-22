@@ -52,9 +52,21 @@ final class WPDP_Post_Types {
         add_action( 'init', array($this,'register_post_type') );
         add_filter( 'acf/settings/save_json', array($this,'my_acf_json_save_point') );
         add_filter( 'acf/settings/load_json', array($this,'my_acf_json_load_point') );
+        add_action('acf/init',array($this,'my_acf_op_init'));
     }
 
-
+    
+    function my_acf_op_init() {
+    
+        if( function_exists('acf_add_options_sub_page') ) {
+            $parent = acf_add_options_page(array(
+                'page_title'  => __('Data Presentation'),
+                'menu_title'  => __('Data Presentation'),
+                'redirect'    => false,
+                'parent_slug'=>'options-general.php'
+            ));
+        }
+    }
     
 
 
