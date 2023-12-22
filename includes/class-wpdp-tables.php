@@ -100,7 +100,7 @@ final class WPDP_Tables {
                     echo "<tr>";
                         echo "<td>" . $val['year'] . "</td>";
                         echo "<td>" . $val['event_type'] . "</td>";
-                        echo "<td>" . $val['location'] . "</td>";
+                        echo "<td>" . $val['country'] . "</td>";
                         echo "<td>" . $val['fatalities'] . "</td>";
                     echo "</tr>";
                 } ?>
