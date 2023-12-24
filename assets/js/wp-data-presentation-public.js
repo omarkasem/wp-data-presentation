@@ -4,6 +4,7 @@
     var self = {};
     var data = wpdp_data;
     var myChart;
+    var global_markers = [];
 
     self.init = function(){
       self.dataTables();
@@ -13,69 +14,87 @@
       
     },
 
-    self.maps = function(){
-
-      var desiredHeaders = ['year', 'event_type', 'location', 'fatalities','latitude','longitude'];
+    self.maps = function(typeValue = false , locationValue = false,fromYear = false,toYear = false){
 
       var mapData = [];
-      data.forEach(function(sheetData) {
+      for (let val of data) {
+          if(locationValue.length > 0 && !locationValue.includes(val.country)){
+            continue;
+          }
+
+          if(typeValue.length > 0 && !typeValue.includes(val.event_type)){
+            continue;
+          }
+          
+          if(parseInt(val.fatalities) === 0){
+            continue;
+          }
+
           mapData.push({
-              latitude: sheetData.latitude,
-              longitude: sheetData.longitude,
-              date: sheetData.year,
-              number: sheetData.fatalities,
-              type: sheetData.event_type,
-              location: sheetData.location
+              latitude: val.latitude,
+              longitude: val.longitude,
+              date: val.year,
+              number: val.fatalities,
+              type: val.event_type,
+              location: val.country
           });
-      });
+      };
 
 
       var startLocation = { lat: parseFloat(mapData[0].latitude), lng: parseFloat(mapData[0].longitude) };
-  
-      var map = new google.maps.Map(
-        document.getElementById('wpdp_map'),
-        {
-            zoom: 3, 
-            center: startLocation,
-            styles: [ // this will make your map color darker
-                {
-                    "elementType": "geometry",
-                    "stylers": [ { "color": "#242f3e" } ]
-                },
-                {
-                    "elementType": "labels.text.stroke",
-                    "stylers": [ { "color": "#242f3e" } ]
-                },
-                {
-                    "elementType": "labels.text.fill",
-                    "stylers": [ { "color": "#746855" } ]
-                },
-                //... more styles if you wish
-            ],
-            mapTypeControl: false
-        }
-      );
+      
+      if(!self.main_map){
         
-      var svgMarker = { // custom SVG marker
-        path: "M-20,0a20,20 0 1,0 40,0a20,20 0 1,0 -40,0",
-        fillColor: '#FF0000',
-        fillOpacity: .6,
-        anchor: new google.maps.Point(0,0),
-        strokeWeight: 0,
-        scale: 1
-    
-      };
+        self.main_map = new google.maps.Map(
+          document.getElementById('wpdp_map'),
+          {
+              zoom: 3, 
+              center: startLocation,
+              styles: [ // this will make your map color darker
+                  {
+                      "elementType": "geometry",
+                      "stylers": [ { "color": "#242f3e" } ]
+                  },
+                  {
+                      "elementType": "labels.text.stroke",
+                      "stylers": [ { "color": "#242f3e" } ]
+                  },
+                  {
+                      "elementType": "labels.text.fill",
+                      "stylers": [ { "color": "#746855" } ]
+                  },
+                  //... more styles if you wish
+              ],
+              mapTypeControl: false
+          }
+        );
+          
+      }
+
+      if(!self.svg_marker){     
+        self.svg_marker = {
+          path: "M-20,0a20,20 0 1,0 40,0a20,20 0 1,0 -40,0",
+          fillColor: '#FF0000',
+          fillOpacity: .6,
+          anchor: new google.maps.Point(0,0),
+          strokeWeight: 0,
+          scale: 1
+      
+        };
+      }
         
-      var infoWindow = new google.maps.InfoWindow; // declare InfoWindow outside loop
+      var infoWindow = new google.maps.InfoWindow;
       
       mapData.forEach(function(loc) {
           var location = { lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude) };
           
           var marker = new google.maps.Marker({
               position: location, 
-              map: map,
-              icon: svgMarker // set custom marker
+              map: self.main_map,
+              icon: self.svg_marker // set custom marker
           });
+
+          global_markers.push(marker);
       
           marker.addListener('click', function() { 
             infoWindow.close(); 
@@ -101,12 +120,12 @@
                 </div>
             `);
 
-            infoWindow.open(map, marker);
+            infoWindow.open(self.main_map, marker);
           }); 
 
 
           // Close the infoWindow when the map is clicked
-          map.addListener('click', function() {
+          self.main_map.addListener('click', function() {
             infoWindow.close();
           });
 
@@ -152,7 +171,7 @@
 
     self.dataTables = function(){
       if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
-        $('#wpdp_datatable').DataTable({
+        var table =  $('#wpdp_datatable').DataTable({
             dom: 'Bfrtip',
             buttons: [
                 'copyHtml5',
@@ -160,8 +179,44 @@
                 'csvHtml5',
                 'pdfHtml5'
             ],
-         
+            
+            initComplete: function () {
+              this.api()
+                  .columns()
+                  .every(function () {
+                      let column = this;
+       
+                      // Create select element
+                      let select = document.createElement('select');
+                      select.add(new Option(''));
+                      column.footer().replaceChildren(select);
+       
+                      // Apply listener for user change in value
+                      select.addEventListener('change', function () {
+                          var val = DataTable.util.escapeRegex(select.value);
+       
+                          column
+                              .search(val ? '^' + val + '$' : '', true, false)
+                              .draw();
+                      });
+       
+                      // Add list of options
+                      column
+                          .data()
+                          .unique()
+                          .sort()
+                          .each(function (d, j) {
+                              select.add(new Option(d));
+                          });
+                  });
+          }
+      
+
+
         });
+
+
+
       }
     },
 
@@ -188,11 +243,21 @@
         let locationValue = $("#wpdp_location").select2("val");
         let fromYear = $("#wpdp_from").select2("val");
         let toYear = $("#wpdp_to").select2("val");
-
-        if (myChart) {
-          myChart.destroy();
+        if (typeof Chart !== 'undefined') {
+          if (myChart) {
+            myChart.destroy();
+          }
+          myChart = self.graphChange(typeValue, locationValue,fromYear,toYear);
         }
-        myChart = self.graphChange(typeValue, locationValue,fromYear,toYear);
+
+        if (typeof google === 'object' && typeof google.maps === 'object') {
+          for(let i=0; i<global_markers.length; i++){
+            global_markers[i].setMap(null);
+          }
+          
+          self.maps(typeValue, locationValue,fromYear,toYear);
+
+        }
       });
     },
       
@@ -259,10 +324,11 @@
       // Fix years.
       chartData.labels = [...new Set(chartData.labels)];
       chartData.labels.sort((a, b) => a - b);
-      let previousYear = (parseInt(chartData.labels[0]) - 1);
-      let nextYear = (parseInt(chartData.labels[chartData.labels.length - 1]) + 1);
-      chartData.labels.unshift(previousYear);
-      chartData.labels.push(nextYear);
+      // let previousYear = (parseInt(chartData.labels[0]) - 1);
+      // let nextYear = (parseInt(chartData.labels[chartData.labels.length - 1]) + 1);
+      // chartData.labels.unshift(previousYear);
+      // chartData.labels.push(nextYear);
+      // console.log(chartData.labels);
 
       let ctx = document.getElementById('myChart').getContext('2d');
       return new Chart(ctx, {

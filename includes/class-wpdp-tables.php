@@ -83,7 +83,6 @@ final class WPDP_Tables {
         if(empty($result)){
             return 'No results found.';
         }
-        $desiredHeaders = ['year', 'event_type', 'location', 'fatalities'];
         
     ?>
         <table id="<?php echo $table; ?>" class="display" style="width:100%">
@@ -96,16 +95,26 @@ final class WPDP_Tables {
                 </tr>
             </thead>
             <tbody>
-                <?php foreach($result as $val){
-                    echo "<tr>";
-                        echo "<td>" . $val['year'] . "</td>";
-                        echo "<td>" . $val['event_type'] . "</td>";
-                        echo "<td>" . $val['country'] . "</td>";
-                        echo "<td>" . $val['fatalities'] . "</td>";
-                    echo "</tr>";
-                } ?>
+                <?php foreach($result as $k=> $val){ ?>
+                    <tr>
+                        <td><?php echo $val['event_date']; ?></td>
+                        <td><?php echo $val['disorder_type']; ?></td>
+                        <td><?php echo $val['country']; ?></td>
+                        <td><?php echo $val['fatalities']; ?></td>
+                    </tr>
+                <?php } ?>
 
             </tbody>
+
+            <tfoot>
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Location</th>
+                    <th>Number</th>
+                </tr>
+        </tfoot>
+
         </table>
 
         <style>

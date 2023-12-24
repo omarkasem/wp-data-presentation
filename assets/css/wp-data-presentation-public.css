@@ -18,6 +18,12 @@
 .filter_back{
   cursor:pointer;
 }
+.details-control span{
+  cursor: pointer;
+  background: #009b28;
+  color: #fff;
+  padding: 1px 7px;
+}
 .wpdp .filter{
   position: absolute;
   z-index: 98;
