@@ -2,11 +2,10 @@
 .wpdp-presentation{
   position:relative;
 }
-.wpdp{
-  position: relative;
-}
+
 .wpdp .con{
-  position: absolute;
+  position: fixed;
+  left:-100%;
   border: 1px solid #cdcdcd;
   transition: all .5s ease;
   background: #eaeaea;
@@ -25,12 +24,20 @@
   padding: 1px 7px;
 }
 .wpdp .filter{
-  position: absolute;
+  position: fixed;
+  border: 1px solid #acacac;
+  box-shadow: 0px 1px #acacac;
+  transition: all .5s ease;
   z-index: 98;
-  top: 10px;
   left: 10px;
   background: #fff;
   padding: 4px 7px
+}
+.wpdp .filter:hover{
+  background:#2f2f2f;
+}
+.wpdp .filter:hover .dashicons{
+  color:#fff;
 }
 .wpdp .filter .dashicons{
   color: #000;
@@ -54,13 +61,27 @@
   gap: 5px;
   margin-bottom: 30px;
 }
+#wpdp_datatable_filter{
+  display:none;
+}
+.wpdp_more_info{
+  margin:0;
+  list-style: none;
+}
+.wpdp_more_info li{
+  padding: 8px 0px;
+  border-bottom: 1px solid #c8c8c8;
+}
+.wpdp_more_info li:last-child{
+  border:none;
+}
 
 .wpdp .grp label{
   font-size: 18px;
   font-weight: 500;
 }
 
-.wpdp .filter_data select{
+.wpdp .filter_data select,.wpdp tfoot select{
   width: 100%;
 }
 

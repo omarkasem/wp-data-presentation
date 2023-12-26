@@ -60,12 +60,13 @@ final class WPDP_Graphs {
     }
     
 
-    public static function shortcode_output($atts){
-        $id = intval($atts['id']);
+    public static function shortcode_output($result){
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'chartjs');
     ?>
-        <canvas id="myChart" width="800" height="400"></canvas>
-
+        <h2 id="wpdp_chart_title">
+            You have to use the filter to show the chart.
+        </h2>
+        <canvas style="display:none;" id="wpdp_chart" width="800" ></canvas>
     <?php }
 
 

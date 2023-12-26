@@ -61,8 +61,7 @@ final class WPDP_Maps {
     }
     
 
-    public static function shortcode_output($atts){
-        $id = intval($atts['id']);
+    public static function shortcode_output($result){
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'google-maps-api');
     ?>
     

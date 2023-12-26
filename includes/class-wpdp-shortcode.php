@@ -72,7 +72,7 @@ final class WPDP_Shortcode {
         $filters = [];
         $i=-1;
         foreach($result as $key => $val){$i++;
-            $filters['types'][] = $val['event_type'];
+            $filters['types'][] = $val['disorder_type'];
             $filters['years'][] = $val['year'];
             $filters['locations'][] = $val['country'];
         }
@@ -83,16 +83,34 @@ final class WPDP_Shortcode {
         return $filters;
     }
 
+    public function get_all_data(){
+        $posts = get_posts(array(
+            'post_type'=>'wp-data-presentation',
+            'posts_per_page'=>-1,
+            'fields'=>'ids'
+        ));
+
+        if(empty($posts)){
+            return 'No data';
+        }
+
+        $data = [];
+        foreach($posts as $id){
+            $result = get_post_meta($id,'wpdp_results',true);
+            $data = array_merge($data,$result);
+        }
+        return $data;
+        
+    }
+
 
     public function show_shortcode($atts){
-        $atts = shortcode_atts( array(
-            'id' => '',
-        ), $atts, 'WP_DATA_PRESENTATION' );
         
-        $id = intval($atts['id']);
-        if($id === 0 || get_post_type($id) !== 'wp-data-presentation'){
-            return 'ID is not correct';
-        }
+        
+        // $id = intval($atts['id']);
+        // if($id === 0 || get_post_type($id) !== 'wp-data-presentation'){
+        //     return 'ID is not correct';
+        // }
 
         ob_start();
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'select2');
@@ -101,38 +119,24 @@ final class WPDP_Shortcode {
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'public');
         wp_enqueue_style( 'dashicons' );
 
-        $pres_type = get_field('presentation_type',$id);
-        $result = get_post_meta($id,'wpdp_results',true);
+        $result = $this->get_all_data();
         
         ?>
 
         <div class="wpdp">
-            <style>
-                .wpdp .con{
-                    left: -35%;
-                }
-            </style>
-
             <?php 
-                if($pres_type === 'Datatables' || $pres_type === 'ExcelTable'){
-                    WPDP_Tables::shortcode_output($atts);
-                }elseif($pres_type === 'Graphs'){
-                    echo '<style>
-                        .wpdp .con{left:-5%}
-                    </style>';
-                    $filters = $this->get_filters($result);
-                    $this->get_filter($filters);
-                    WPDP_Graphs::shortcode_output($atts);
-                }elseif($pres_type === 'Maps'){
-                    $filters = $this->get_filters($result);
-                    $this->get_filter($filters);
-                    WPDP_Maps::shortcode_output($atts);
-                }
+                $filters = $this->get_filters($result);
+                $this->get_filter($filters);
+                WPDP_Tables::shortcode_output($result);
+                echo '<br><hr>';
+                WPDP_Graphs::shortcode_output($result);
+                echo '<br><hr>';
+                WPDP_Maps::shortcode_output($result);
             ?>
         </div>
 
         <script>
-            var wpdp_data = <?php echo json_encode(get_post_meta($id,'wpdp_results',true)); ?>;
+            var wpdp_data = <?php echo json_encode($result); ?>;
         </script>
 
     <?php 

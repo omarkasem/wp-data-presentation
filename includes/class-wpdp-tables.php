@@ -65,21 +65,24 @@ final class WPDP_Tables {
     }
     
 
-    public static function shortcode_output($atts){
-        $id = intval($atts['id']);
-        $pres_type = get_field('presentation_type',$id);
+    public static function shortcode_output($result){
+        // $id = intval($atts['id']);
+        // $pres_type = get_field('presentation_type',$id);
 
-        if($pres_type === 'Datatables'){
-            wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'datatables');
-            wp_enqueue_style(WP_DATA_PRESENTATION_NAME.'datatables');
-            $table = 'wpdp_datatable';
-        }else{
-            wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'exceltables');
-            wp_enqueue_style(WP_DATA_PRESENTATION_NAME.'exceltables');
-            $table = 'wpdp_exceltables';
-        }
+        // if($pres_type === 'Datatables'){
+            // wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'datatables');
+            // wp_enqueue_style(WP_DATA_PRESENTATION_NAME.'datatables');
+            // $table = 'wpdp_datatable';
+        // }else{
+        //     wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'exceltables');
+        //     wp_enqueue_style(WP_DATA_PRESENTATION_NAME.'exceltables');
+        //     $table = 'wpdp_exceltables';
+        // }
 
-        $result = get_post_meta($id,'wpdp_results',true);
+        wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'datatables');
+        wp_enqueue_style(WP_DATA_PRESENTATION_NAME.'datatables');
+        $table = 'wpdp_datatable';
+
         if(empty($result)){
             return 'No results found.';
         }
@@ -92,28 +95,34 @@ final class WPDP_Tables {
                     <th>Type</th>
                     <th>Location</th>
                     <th>Number</th>
+                    <th>More Details</th>
                 </tr>
             </thead>
+
+            <tfoot style="display:none;">
+                <tr>
+                    <th class="date">Date</th>
+                    <th class="type">Type</th>
+                    <th class="location">Location</th>
+                    <th class="number">Number</th>
+                </tr>
+            </tfoot>
+
             <tbody>
                 <?php foreach($result as $k=> $val){ ?>
                     <tr>
-                        <td><?php echo $val['event_date']; ?></td>
-                        <td><?php echo $val['disorder_type']; ?></td>
-                        <td><?php echo $val['country']; ?></td>
-                        <td><?php echo $val['fatalities']; ?></td>
+                        <td event_type="<?php echo $val['event_type']; ?>"><?php echo $val['event_date']; ?></td>
+                        <td sub_event_type="<?php echo $val['sub_event_type']; ?>"><?php echo $val['disorder_type']; ?></td>
+                        <td source="<?php echo $val['source']; ?>"><?php echo $val['country']; ?></td>
+                        <td notes="<?php echo $val['notes']; ?>"><?php echo $val['fatalities']; ?></td>
+                        <td timestamp="<?php echo date('c',$val['timestamp']); ?>"><button class="more-info">More Details</button></td>
                     </tr>
+                    
                 <?php } ?>
 
             </tbody>
 
-            <tfoot>
-                <tr>
-                    <th>Date</th>
-                    <th>Type</th>
-                    <th>Location</th>
-                    <th>Number</th>
-                </tr>
-        </tfoot>
+
 
         </table>
 

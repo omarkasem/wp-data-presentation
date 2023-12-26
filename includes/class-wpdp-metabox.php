@@ -85,13 +85,11 @@ final class WPDP_Metabox {
     }
 
     public function shortcode_box($field){
-        if(isset($_GET['post'])){
-            echo '<div class="wpdp_shortcode">
-            <input type="text" disabled value=" [WP_DATA_PRESENTATION id='.$_GET['post'].']"> 
-            <button class="button button-secondary wpdp_copy">Copy</button>
-            <input type="hidden" class="wpdp_validated" name="wpdp_validated" value="0">
-            </div>';
-        }
+        echo '<div class="wpdp_shortcode">
+        <input type="text" disabled value=" [WP_DATA_PRESENTATION]"> 
+        <button class="button button-secondary wpdp_copy">Copy</button>
+        <input type="hidden" class="wpdp_validated" name="wpdp_validated" value="0">
+        </div>';
     }
     
     public function get_data(){

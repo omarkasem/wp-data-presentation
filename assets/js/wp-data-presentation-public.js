@@ -8,11 +8,12 @@
 
     self.init = function(){
       self.dataTables();
-      self.excelTables();
+      // self.excelTables();
       self.filters();
       self.filtersChange();
       
     },
+
 
     self.maps = function(typeValue = false , locationValue = false,fromYear = false,toYear = false){
 
@@ -22,7 +23,7 @@
             continue;
           }
 
-          if(typeValue.length > 0 && !typeValue.includes(val.event_type)){
+          if(typeValue.length > 0 && !typeValue.includes(val.disorder_type)){
             continue;
           }
           
@@ -35,7 +36,7 @@
               longitude: val.longitude,
               date: val.year,
               number: val.fatalities,
-              type: val.event_type,
+              type: val.disorder_type,
               location: val.country
           });
       };
@@ -174,47 +175,134 @@
         var table =  $('#wpdp_datatable').DataTable({
             dom: 'Bfrtip',
             buttons: [
-                'copyHtml5',
-                'excelHtml5',
-                'csvHtml5',
-                'pdfHtml5'
+              { 
+                extend: 'copyHtml5',
+                exportOptions: {
+                    columns: [0,1,2,3]
+                }
+            },
+            {
+                extend: 'excelHtml5',
+                exportOptions: {
+                    columns: [0,1,2,3]
+                }
+            },
+            { 
+              extend: 'csvHtml5',
+              exportOptions: {
+                  columns: [0,1,2,3]
+              }
+            },
+            {
+                extend: 'pdfHtml5',
+                exportOptions: {
+                    columns: [0,1,2,3]
+                }
+            },
+            {
+              extend: 'print',
+              exportOptions: {
+                  columns: [0,1,2,3]
+              }
+            }
             ],
-            
+            "columnDefs": [
+              { "orderable": false, "targets": 4 }
+            ],
             initComplete: function () {
-              this.api()
-                  .columns()
-                  .every(function () {
-                      let column = this;
-       
-                      // Create select element
-                      let select = document.createElement('select');
-                      select.add(new Option(''));
-                      column.footer().replaceChildren(select);
-       
-                      // Apply listener for user change in value
-                      select.addEventListener('change', function () {
-                          var val = DataTable.util.escapeRegex(select.value);
-       
-                          column
-                              .search(val ? '^' + val + '$' : '', true, false)
+              let count = 0;
+              this.api().columns().every( function () {
+                  var title = this.header();
+                  //replace spaces with dashes
+                  title = $(title).html().replace(/[\W]/g, '-');
+                  var column = this;
+                  var select = $('<select id="' + title + '" class="select2" ></select>')
+                      .appendTo( $(column.footer()).empty() )
+                      .on( 'change', function () {
+                        //Get the "text" property from each selected data 
+                        //regex escape the value and store in array
+                        var data = $.map( $(this).select2('data'), function( value, key ) {
+                          return value.text ? '^' + $.fn.dataTable.util.escapeRegex(value.text) + '$' : null;
+                                   });
+                        
+                        //if no data selected use ""
+                        if (data.length === 0) {
+                          data = [""];
+                        }
+                        
+                        //join array into string with regex or (|)
+                        var val = data.join('|');
+                        
+                        //search for the option(s) selected
+                        column
+                              .search( val ? val : '', true, false )
                               .draw();
-                      });
-       
-                      // Add list of options
-                      column
-                          .data()
-                          .unique()
-                          .sort()
-                          .each(function (d, j) {
-                              select.add(new Option(d));
-                          });
-                  });
+                      } );
+   
+                  column.data().unique().sort().each( function ( d, j ) {
+                      select.append( '<option value="'+d+'">'+d+'</option>' );
+                  } );
+                
+                //use column title as selector and placeholder
+                $('#' + title).select2({
+                  multiple: true,
+                  closeOnSelect: false,
+                  placeholder: "Select a " + title,
+                  width: 'resolve',
+                });
+                
+                //initially clear select otherwise first option is selected
+                $('.select2').val(null).trigger('change');
+              } );
           }
-      
-
 
         });
 
+        $('#wpdp_datatable tbody').on('click', 'button.more-info', function() {
+            var tr = $(this).closest('tr');
+            var row = table.row( tr );
+    
+            if ( row.child.isShown() ) {
+                row.child.hide();
+                tr.removeClass('shown');
+            } else {
+                row.child( format(row.selector.rows[0] ) ).show();
+                tr.addClass('shown');
+            }
+        } );
+    
+        function format ( row ) {
+          let event_type = $(row).find('td[event_type]').attr('event_type');
+          let sub_event_type = $(row).find('td[sub_event_type]').attr('sub_event_type');
+          let source = $(row).find('td[source]').attr('source');
+          let notes = $(row).find('td[notes]').attr('notes');
+          let timestamp = $(row).find('td[timestamp]').attr('timestamp');
+          return `
+          <ul class="wpdp_more_info">
+              <li>
+                <b>Event Type:</b>
+                `+event_type+`
+              </li>
+              <li>
+                <b>Sub Event Type:</b>
+                `+sub_event_type+`
+              </li>
+              <li>
+                <b>Source Type:</b>
+                `+source+`
+              </li>
+              <li>
+                <b>Notes:</b>
+                `+notes+`
+              </li>
+              <li>
+                <b>Timestamp:</b>
+                `+timestamp+`
+              </li>
+
+              </ul>`;
+        }
+          
 
 
       }
@@ -223,12 +311,13 @@
     self.filters = function(){
       $('.wpdp .filter').click(function(e){
         e.preventDefault();
-        $('.wpdp .con').css('left','-5%');
+        e.stopPropagation();
+        $('.wpdp .con').css('left','0').addClass('active');
       });
     
       $('.wpdp .filter_back').click(function(e){
         e.preventDefault();
-        $('.wpdp .con').css('left','-35%');
+        $('.wpdp .con').css('left','-100%').removeClass('active');
       });
     
       $('#wpdp_type,#wpdp_location,#wpdp_from,#wpdp_to').select2({
@@ -248,16 +337,24 @@
             myChart.destroy();
           }
           myChart = self.graphChange(typeValue, locationValue,fromYear,toYear);
+          $('#wpdp_chart').show();
+          $('#wpdp_chart_title').hide();
         }
 
         if (typeof google === 'object' && typeof google.maps === 'object') {
           for(let i=0; i<global_markers.length; i++){
             global_markers[i].setMap(null);
           }
-          
           self.maps(typeValue, locationValue,fromYear,toYear);
-
         }
+
+        if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
+            $('#wpdp_datatable .type select').val(typeValue).trigger('change');
+            $('#wpdp_datatable .location select').val(locationValue).trigger('change');
+            $('#wpdp_datatable .date select').val(fromYear).trigger('change');
+        }
+
+
       });
     },
       
@@ -274,7 +371,7 @@
           continue;
         }
 
-        if(typeValue.length > 0 && !typeValue.includes(val.event_type)){
+        if(typeValue.length > 0 && !typeValue.includes(val.disorder_type)){
           continue;
         }
         
@@ -290,19 +387,19 @@
         };
 
         // Type
-        if (typeValue.length && !datasetsMap[val.event_type]) {
-          let label = val.event_type;
+        if (typeValue.length && !datasetsMap[val.disorder_type]) {
+          let label = val.disorder_type;
           if(locationValue.length){
             label += ' in ' + locationValue;
           }
           dataset.label = label;
     
-          datasetsMap[val.event_type] = dataset;
+          datasetsMap[val.disorder_type] = dataset;
           chartData.datasets.push(dataset);
         }
     
-        if(val.event_type in datasetsMap) {
-          datasetsMap[val.event_type].data.push(val.fatalities);
+        if(val.disorder_type in datasetsMap) {
+          datasetsMap[val.disorder_type].data.push(val.fatalities);
         }
 
         // Location
@@ -330,7 +427,7 @@
       // chartData.labels.push(nextYear);
       // console.log(chartData.labels);
 
-      let ctx = document.getElementById('myChart').getContext('2d');
+      let ctx = document.getElementById('wpdp_chart').getContext('2d');
       return new Chart(ctx, {
         type: 'line',
         data: chartData,
