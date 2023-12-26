@@ -8,7 +8,6 @@
 
     self.init = function(){
       self.dataTables();
-      // self.excelTables();
       self.filters();
       self.filtersChange();
       
@@ -135,40 +134,6 @@
       window.addEventListener('load', self.maps);
     },
 
-    self.excelTables = function(){
-      if ($('#wpdp_exceltables').length > 0) {
-        var data = [];
-        $('#wpdp_exceltables tr').each(function(index,el){
-            var rowData = [];
-            $(el).children().each(function(index,el){
-                rowData.push($(el).html());
-            });
-            data.push(rowData);
-        });
-        var el = $('#wpdp_exceltables').after('<div id="new_wpdp_exceltables"></div>').next();
-        $('#wpdp_exceltables').remove();
-        const container = document.querySelector('#new_wpdp_exceltables');
-        let headers = data.shift();
-
-        const hot = new Handsontable(container, {
-          colHeaders: headers,
-          data: data,
-          dropdownMenu: true,
-          hiddenColumns: {
-            indicators: true,
-          },
-          contextMenu: true,
-          multiColumnSorting: true,
-          filters: true,
-          rowHeaders: true,
-          manualRowMove: true,
-          autoWrapCol: true,
-          autoWrapRow: true,
-          licenseKey: 'non-commercial-and-evaluation'
-        });
-        
-      }
-    },
 
     self.dataTables = function(){
       if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {

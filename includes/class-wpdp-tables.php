@@ -58,10 +58,6 @@ final class WPDP_Tables {
         wp_register_script(WP_DATA_PRESENTATION_NAME.'datatables', WP_DATA_PRESENTATION_URL.'assets/js/datatables.min.js', array('jquery'), WP_DATA_PRESENTATION_VERSION, true);
         wp_register_style(WP_DATA_PRESENTATION_NAME.'datatables', WP_DATA_PRESENTATION_URL.'assets/css/datatables.min.css', [],WP_DATA_PRESENTATION_VERSION );
         
-        wp_register_script(WP_DATA_PRESENTATION_NAME.'exceltables', WP_DATA_PRESENTATION_URL.'assets/js/handsontable.full.min.js', array('jquery'), WP_DATA_PRESENTATION_VERSION, true);
-        wp_register_style(WP_DATA_PRESENTATION_NAME.'exceltables', WP_DATA_PRESENTATION_URL.'assets/css/handsontable.full.min.css', [],WP_DATA_PRESENTATION_VERSION );
-
-
     }
     
 
