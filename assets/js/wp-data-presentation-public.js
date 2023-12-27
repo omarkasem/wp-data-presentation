@@ -5,12 +5,18 @@
     var data = wpdp_data;
     var myChart;
     var global_markers = [];
+    var markerCluster;
 
     self.init = function(){
       self.dataTables();
-      self.filters();
+      self.menuFilters();
       self.filtersChange();
-      
+
+      $(document).on('click','.wpdp_map_more',function(e){
+        e.preventDefault();
+        console.log('fff');
+        $(this).find('span').show();
+      });
     },
 
 
@@ -26,6 +32,22 @@
             continue;
           }
           
+          if(fromYear.length > 0){
+            let date1 = new Date(fromYear);
+            let date2 = new Date(val.event_date);
+            if(date2.getTime() < date1.getTime()) {
+              continue;
+            }
+          }
+
+          if(toYear.length > 0){
+            let date1 = new Date(toYear);
+            let date2 = new Date(val.event_date);
+            if(date2.getTime() > date1.getTime()) {
+              continue;
+            }
+          }
+
           if(parseInt(val.fatalities) === 0){
             continue;
           }
@@ -33,14 +55,16 @@
           mapData.push({
               latitude: val.latitude,
               longitude: val.longitude,
-              date: val.year,
+              date: val.event_date,
               number: val.fatalities,
               type: val.disorder_type,
               location: val.country
           });
       };
-
-
+      
+      if(!mapData.length){
+        return;
+      }
       var startLocation = { lat: parseFloat(mapData[0].latitude), lng: parseFloat(mapData[0].longitude) };
       
       if(!self.main_map){
@@ -71,6 +95,12 @@
           
       }
 
+      self.originalZoom = self.main_map.getZoom();
+      self.originalCenter = self.main_map.getCenter();
+
+
+      var my_map = self.main_map;
+
       if(!self.svg_marker){     
         self.svg_marker = {
           path: "M-20,0a20,20 0 1,0 40,0a20,20 0 1,0 -40,0",
@@ -84,14 +114,14 @@
       }
         
       var infoWindow = new google.maps.InfoWindow;
-      
+
       mapData.forEach(function(loc) {
           var location = { lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude) };
           
           var marker = new google.maps.Marker({
               position: location, 
-              map: self.main_map,
-              icon: self.svg_marker // set custom marker
+              map:self.main_map,
+              icon: self.svg_marker
           });
 
           global_markers.push(marker);
@@ -131,7 +161,10 @@
 
       });
 
-      window.addEventListener('load', self.maps);
+      markerCluster = new MarkerClusterer(my_map, global_markers, {
+        imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
+      });
+
     },
 
 
@@ -177,51 +210,74 @@
             initComplete: function () {
               let count = 0;
               this.api().columns().every( function () {
-                  var title = this.header();
-                  //replace spaces with dashes
-                  title = $(title).html().replace(/[\W]/g, '-');
-                  var column = this;
-                  var select = $('<select id="' + title + '" class="select2" ></select>')
-                      .appendTo( $(column.footer()).empty() )
-                      .on( 'change', function () {
-                        //Get the "text" property from each selected data 
-                        //regex escape the value and store in array
-                        var data = $.map( $(this).select2('data'), function( value, key ) {
-                          return value.text ? '^' + $.fn.dataTable.util.escapeRegex(value.text) + '$' : null;
-                                   });
-                        
-                        //if no data selected use ""
-                        if (data.length === 0) {
-                          data = [""];
-                        }
-                        
-                        //join array into string with regex or (|)
-                        var val = data.join('|');
-                        
-                        //search for the option(s) selected
-                        column
-                              .search( val ? val : '', true, false )
-                              .draw();
-                      } );
-   
-                  column.data().unique().sort().each( function ( d, j ) {
-                      select.append( '<option value="'+d+'">'+d+'</option>' );
+            
+                // Get the existing filtering functionality.
+                var title = this.header();
+                title = $(title).html().replace(/[\W]/g, '-');
+                var column = this;
+                var select = $('<select id="' + title + '" class="select2" ></select>')
+                  .appendTo( $(column.footer()).empty() )
+                  .on( 'change', function () {
+                    var data = $.map( $(this).select2('data'), function( value, key ) {
+                      return value.text ? '^' + $.fn.dataTable.util.escapeRegex(value.text) + '$' : null;
+                    });
+                    if (data.length === 0) {
+                      data = [""];
+                    }
+                    var val = data.join('|');
+
+                    column.search( val ? val : '', true, false ).draw();
                   } );
-                
-                //use column title as selector and placeholder
+            
+                column.data().unique().sort().each( function ( d, j ) {
+                  select.append( '<option value="'+d+'">'+d+'</option>' );
+                } );
+            
                 $('#' + title).select2({
                   multiple: true,
                   closeOnSelect: false,
                   placeholder: "Select a " + title,
                   width: 'resolve',
                 });
-                
-                //initially clear select otherwise first option is selected
                 $('.select2').val(null).trigger('change');
-              } );
-          }
+            
+              });
+            }
 
         });
+
+
+        let minDate = $('#wpdp_min');
+        let maxDate = $('#wpdp_max');
+ 
+        DataTable.ext.search.push(function (settings, data, dataIndex) {
+            let min = null;
+            let max = null;
+
+            if(minDate.val()){
+              min = new Date(minDate.val());
+            }
+            if(maxDate.val()){
+              max = new Date(maxDate.val());
+            }
+
+            let date = new Date(data[0]);
+
+            if (
+                (min === null && max === null) ||
+                (min === null && date <= max) ||
+                (min <= date && max === null) ||
+                (min <= date && date <= max)
+            ) {
+                return true;
+            }
+            return false;
+        });
+
+        $('#wpdp_min, #wpdp_max').on('change',function(){
+          table.draw();
+        });
+
 
         $('#wpdp_datatable tbody').on('click', 'button.more-info', function() {
             var tr = $(this).closest('tr');
@@ -273,7 +329,7 @@
       }
     },
 
-    self.filters = function(){
+    self.menuFilters = function(){
       $('.wpdp .filter').click(function(e){
         e.preventDefault();
         e.stopPropagation();
@@ -310,13 +366,20 @@
           for(let i=0; i<global_markers.length; i++){
             global_markers[i].setMap(null);
           }
+          markerCluster.clearMarkers();
+          global_markers = [];
+
+          self.main_map.setZoom(self.originalZoom);
+          self.main_map.setCenter(self.originalCenter);
+
           self.maps(typeValue, locationValue,fromYear,toYear);
         }
 
         if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
             $('#wpdp_datatable .type select').val(typeValue).trigger('change');
             $('#wpdp_datatable .location select').val(locationValue).trigger('change');
-            $('#wpdp_datatable .date select').val(fromYear).trigger('change');
+            $('#wpdp_min').val(fromYear).trigger('change');
+            $('#wpdp_max').val(toYear).trigger('change');
         }
 
 
@@ -340,6 +403,24 @@
           continue;
         }
         
+          
+        if(fromYear.length > 0){
+          let date1 = new Date(fromYear);
+          let date2 = new Date(val.event_date);
+          if(date2.getTime() < date1.getTime()) {
+            continue;
+          }
+        }
+
+        if(toYear.length > 0){
+          let date1 = new Date(toYear);
+          let date2 = new Date(val.event_date);
+          if(date2.getTime() > date1.getTime()) {
+            continue;
+          }
+        }
+
+
         if(parseInt(val.fatalities) === 0){
           continue;
         }
@@ -380,17 +461,14 @@
           datasetsMap[val.country].data.push(val.fatalities);
         }
 
-        chartData.labels.push(val.year);
+        chartData.labels.push(val.event_date);
       }
 
-      // Fix years.
-      chartData.labels = [...new Set(chartData.labels)];
-      chartData.labels.sort((a, b) => a - b);
-      // let previousYear = (parseInt(chartData.labels[0]) - 1);
-      // let nextYear = (parseInt(chartData.labels[chartData.labels.length - 1]) + 1);
-      // chartData.labels.unshift(previousYear);
-      // chartData.labels.push(nextYear);
-      // console.log(chartData.labels);
+
+      chartData.labels.sort(function(a, b) {
+        return new Date(a) - new Date(b);
+      });
+
 
       let ctx = document.getElementById('wpdp_chart').getContext('2d');
       return new Chart(ctx, {
@@ -426,9 +504,6 @@
       });
     }
     
- 
-      
-
 
     $( self.init );
 

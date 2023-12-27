@@ -27,7 +27,13 @@ class WPDP_Get_Data{
             foreach ($sheetData as $row) {$i++;
                 $row = array_values($row);
                 foreach ($headers as $column => $header) {
-                    $allSheetsData[$i][$headers[$column]] = $row[$column];
+                    if($headers[$column] === 'event_date'){
+                        $val = DateTime::createFromFormat('d-M-y', $row[$column]);
+                        $val = $val->format('Y-m-d');
+                    }else{
+                        $val = $row[$column];
+                    }
+                    $allSheetsData[$i][$headers[$column]] = $val;
                 }
             }
         }

@@ -63,7 +63,6 @@ final class WPDP_Shortcode {
 
         wp_register_style(WP_DATA_PRESENTATION_NAME.'jquery-ui', WP_DATA_PRESENTATION_URL.'assets/css/jquery-ui.min.css', [],WP_DATA_PRESENTATION_VERSION );
 
-
         wp_register_script(WP_DATA_PRESENTATION_NAME.'public', WP_DATA_PRESENTATION_URL.'assets/js/wp-data-presentation-public.js', array('jquery'), WP_DATA_PRESENTATION_VERSION, true);
 
     }
@@ -73,11 +72,12 @@ final class WPDP_Shortcode {
         $i=-1;
         foreach($result as $key => $val){$i++;
             $filters['types'][] = $val['disorder_type'];
-            $filters['years'][] = $val['year'];
+            $filters['years'][] = $val['event_date'];
             $filters['locations'][] = $val['country'];
         }
         $filters['types'] = array_unique($filters['types']);
         $filters['locations'] = array_unique($filters['locations']);
+        sort($filters['years']);
         sort($filters['types']);
         sort($filters['locations']);
         return $filters;

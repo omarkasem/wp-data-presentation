@@ -58,11 +58,16 @@ final class WPDP_Maps {
     function enqueue_scripts() {
         wp_register_script(WP_DATA_PRESENTATION_NAME.'google-maps-api', 'https://maps.googleapis.com/maps/api/js?key='.get_field('google_maps_api_key','option').'&callback=wpdp_maps', array(), null, true);
 
+        wp_register_script(WP_DATA_PRESENTATION_NAME.'google-maps-cluster',WP_DATA_PRESENTATION_URL. 'assets/js/markerclustererplus.js', array(), null, true);
+        // wp_register_script(WP_DATA_PRESENTATION_NAME.'google-maps-cluster', 'https://unpkg.com/@google/markerclustererplus', array(), null, true);
     }
-    
+
 
     public static function shortcode_output($result){
+        wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'google-maps-cluster');
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'google-maps-api');
+
+        
     ?>
     
         <div id="wpdp_map"></div>

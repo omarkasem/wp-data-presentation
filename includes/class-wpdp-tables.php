@@ -56,6 +56,7 @@ final class WPDP_Tables {
     function enqueue_scripts() {
     
         wp_register_script(WP_DATA_PRESENTATION_NAME.'datatables', WP_DATA_PRESENTATION_URL.'assets/js/datatables.min.js', array('jquery'), WP_DATA_PRESENTATION_VERSION, true);
+        wp_register_script(WP_DATA_PRESENTATION_NAME.'moment', WP_DATA_PRESENTATION_URL.'assets/js/moment.min.js', array('jquery'), WP_DATA_PRESENTATION_VERSION, true);
         wp_register_style(WP_DATA_PRESENTATION_NAME.'datatables', WP_DATA_PRESENTATION_URL.'assets/css/datatables.min.css', [],WP_DATA_PRESENTATION_VERSION );
         
     }
@@ -76,6 +77,7 @@ final class WPDP_Tables {
         // }
 
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'datatables');
+        wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'moment');
         wp_enqueue_style(WP_DATA_PRESENTATION_NAME.'datatables');
         $table = 'wpdp_datatable';
 
@@ -84,6 +86,18 @@ final class WPDP_Tables {
         }
         
     ?>
+
+    <table style="display:none;">
+        <tbody><tr>
+            <td>Minimum date:</td>
+            <td><input type="text" id="wpdp_min" name="min"></td>
+        </tr>
+        <tr>
+            <td>Maximum date:</td>
+            <td><input type="text" id="wpdp_max" name="max"></td>
+        </tr>
+    </tbody></table>
+
         <table id="<?php echo $table; ?>" class="display" style="width:100%">
             <thead>
                 <tr>
