@@ -75,7 +75,64 @@
 .wpdp_more_info li:last-child{
   border:none;
 }
+.map_more_details .det{
+  display:none;
+}
+.map_more_details button{
+  margin-top: 5px;
+  padding: 10px;
+  font-size: 14px;
+  border-radius: 5px;
+  background: #cd0202;
+}
 
+.wpdp_modal.modal {
+  display: none; 
+  position: fixed; 
+  z-index: 1;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto; 
+  background-color: rgb(0,0,0);
+  background-color: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wpdp_modal .modal-content {
+  background-color: #fefefe; 
+  padding: 20px;
+  border: 1px solid #888; 
+  width: 50%;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.wpdp_modal .close-button {
+  color: #aaaaaa;
+  font-weight: bold;
+  position: absolute;
+  top: 0px;
+  right: 5px;
+  padding: 4px;
+  font-size: 25px;
+  background: transparent;
+  border: none;
+}
+
+.wpdp_modal .close-button:hover,
+.wpdp_modal .close-button:focus {
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+
+.wpdp .cluster span{
+  color:#fff;
+}
 .wpdp .grp label{
   font-size: 18px;
   font-weight: 500;

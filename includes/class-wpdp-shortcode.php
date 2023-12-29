@@ -65,6 +65,10 @@ final class WPDP_Shortcode {
 
         wp_register_script(WP_DATA_PRESENTATION_NAME.'public', WP_DATA_PRESENTATION_URL.'assets/js/wp-data-presentation-public.js', array('jquery'), WP_DATA_PRESENTATION_VERSION, true);
 
+        wp_localize_script( WP_DATA_PRESENTATION_NAME.'public','wpdp_obj',[
+            'url'=>WP_DATA_PRESENTATION_URL,
+        ]);
+
     }
 
     private function get_filters($result){

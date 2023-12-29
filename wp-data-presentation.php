@@ -4,7 +4,7 @@
  * Plugin Name:       WP Data Presentation
  * Plugin URI:        wp-data-presentation
  * Description:       Present data using tables, graphs and maps.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Author:            Omar Kasem
  * Text Domain:       wp-data-presentation
  */
@@ -15,10 +15,12 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 
-define( 'WP_DATA_PRESENTATION_VERSION', '1.0.0' );
+define( 'WP_DATA_PRESENTATION_VERSION', '1.0.1' );
 define( 'WP_DATA_PRESENTATION_NAME', 'wp-data-presentation' );
 define( 'WP_DATA_PRESENTATION_URL', plugin_dir_url( __FILE__ ) );
 define( 'WP_DATA_PRESENTATION_PATH', plugin_dir_path( __FILE__ ) );
+
+
 define( 'WP_DATA_PRESENTATION_ACF_PATH', plugin_dir_path(__FILE__) . '/lib/acf/' );
 define( 'WP_DATA_PRESENTATION_ACF_URL', plugin_dir_url(__FILE__) . '/lib/acf/' );
 define( 'WP_DATA_PRESENTATION_ACF_SHOW', true );
