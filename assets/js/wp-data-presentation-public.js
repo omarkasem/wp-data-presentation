@@ -71,9 +71,9 @@
             }
           }
 
-          if(parseInt(val.fatalities) === 0){
-            continue;
-          }
+          // if(parseInt(val.fatalities) === 0){
+          //   continue;
+          // }
 
           mapData.push({
               latitude: val.latitude,
@@ -624,9 +624,9 @@
         }
 
 
-        if(parseInt(val.fatalities) === 0){
-          continue;
-        }
+        // if(parseInt(val.fatalities) === 0){
+        //   continue;
+        // }
 
         let dataset = {
           label: '',
