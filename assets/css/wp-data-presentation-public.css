@@ -10,9 +10,11 @@
   transition: all .5s ease;
   background: #eaeaea;
   z-index: 99;
-  width: 300px;
+  width: 400px;
   padding: 20px;
-  margin-top: -35px;
+  overflow-y: scroll;
+  height: 100vh;
+  top:50px;
 }
 .filter_back{
   cursor:pointer;
@@ -59,7 +61,7 @@
   display: flex;
   flex-direction: column;
   gap: 5px;
-  margin-bottom: 30px;
+  margin-bottom: 15px;
 }
 #wpdp_datatable_filter{
   display:none;
@@ -121,12 +123,40 @@
   background: transparent;
   border: none;
 }
-
+.wpdp .grp .content{
+  padding: 10px;
+  background-color: #f9f9f9;
+  color: #666;
+  display:none;
+}
+.wpdp .grp.active .content{
+  display:block;
+}
 .wpdp_modal .close-button:hover,
 .wpdp_modal .close-button:focus {
   color: #000;
   text-decoration: none;
   cursor: pointer;
+}
+
+
+.wpdp .grp .title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  background-color: #f2f2f2;
+  color: #333;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.wpdp .grp .title .dashicons {
+  transition: transform 0.3s;
+}
+
+.wpdp .grp.active .title {
+  background-color: #ccc;
 }
 
 
@@ -138,8 +168,8 @@
   font-weight: 500;
 }
 
-.wpdp .filter_data select,.wpdp tfoot select{
-  width: 100%;
+.wpdp .filter_data select,.wpdp tfoot select,.wpdp .select2-container{
+  width: 100%!important;
 }
 
 .wpdp .dates{
@@ -151,4 +181,44 @@
 }
 .wpdp .dates label{
   font-size:15px;
+}
+
+.wpdp .content input[type='checkbox']{
+  margin-right:5px;
+}
+
+.wpdp .content ul{
+  margin: 0;
+  list-style: none;
+  padding: 0;
+}
+.wpdp .content li > ul{
+  padding: 0 5%;
+}
+.wpdp .content li{
+  margin-bottom:5px;
+}
+.expandable > ul {
+  display: none;
+}
+
+.expandable.expanded > ul {
+  display: block;
+}
+.exp_click{
+  display: inline-flex;
+  cursor: pointer;
+  justify-content: space-between;
+  align-items: center;
+  width: 90%;
+  margin-bottom:5px;
+}
+.expandable > .arrow {
+  display: inline-block;
+  transform: rotate(0);
+  transition: transform 0.3s ease;
+}
+
+.expandable.expanded > .arrow {
+  transform: rotate(180deg);
 }

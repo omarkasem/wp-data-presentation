@@ -8,10 +8,29 @@
     var markerCluster;
 
     self.init = function(){
+
+      $('.filter_data li input[type="checkbox"]').on('change', function() {
+          $(this).parent().find('li input[type="checkbox"]').prop('checked', this.checked);
+      });
+
+
+
       self.dataTables();
       self.menuFilters();
       self.filtersChange();
+      self.expandable();
+      self.showMapDetails();
 
+      $('.expandable > .exp_click').on('click', function(event) {
+        event.stopPropagation();
+        $(this).parent().toggleClass('expanded');
+    });
+
+    $('.filter_data li:not(:has(li))').find('.dashicons').remove();
+                
+    },
+
+    self.showMapDetails = function(){
       $(document).on('click','.map_more_details button',function(e){
         e.preventDefault();
         let det = $(this).next().html();
@@ -42,52 +61,69 @@
       });
     },
 
+    self.expandable = function(){
+      $(".wpdp .grp .title").click(function() {
+        $(this).parent().toggleClass("active");
+        $(this).find(".dashicons").toggleClass("dashicons-arrow-down-alt2 dashicons-arrow-up-alt2");
+      });
+    },
 
-    self.maps = function(typeValue = false , locationValue = false,fromYear = false,toYear = false){
-
+    self.maps = function(typeValue = false , selectedLocations = [],fromYear = false,toYear = false){
       var mapData = [];
       for (let val of data) {
-          if(locationValue.length > 0 && !locationValue.includes(val.country)){
-            continue;
-          }
-
-          if(typeValue.length > 0 && !typeValue.includes(val.disorder_type)){
-            continue;
-          }
-          
-          if(fromYear.length > 0){
-            let date1 = new Date(fromYear);
-            let date2 = new Date(val.event_date);
-            if(date2.getTime() < date1.getTime()) {
-              continue;
+        let all_locations = [
+          val.region,
+          val.country,
+          val.admin1,
+          val.admin2,
+          val.admin3,
+          val.location,
+        ];
+        
+        if(selectedLocations.length > 0){
+          let exist = false;
+          for(let loc of selectedLocations){
+            if(all_locations.includes(loc)){
+              exist = true;
             }
           }
-
-          if(toYear.length > 0){
-            let date1 = new Date(toYear);
-            let date2 = new Date(val.event_date);
-            if(date2.getTime() > date1.getTime()) {
-              continue;
-            }
+          if(!exist){
+            continue;
           }
+        }
 
-          // if(parseInt(val.fatalities) === 0){
-          //   continue;
-          // }
+        if(typeValue.length > 0 && !typeValue.includes(val.disorder_type)){
+          continue;
+        }
+        
+        if(fromYear.length > 0){
+          let date1 = new Date(fromYear);
+          let date2 = new Date(val.event_date);
+          if(date2.getTime() < date1.getTime()) {
+            continue;
+          }
+        }
 
-          mapData.push({
-              latitude: val.latitude,
-              longitude: val.longitude,
-              date: val.event_date,
-              number: val.fatalities,
-              type: val.disorder_type,
-              location: val.country,
-              timestamp: val.timestamp,
-              event_type: val.event_type,
-              sub_event_type: val.sub_event_type,
-              source: val.source,
-              notes: val.notes,
-          });
+        if(toYear.length > 0){
+          let date1 = new Date(toYear);
+          let date2 = new Date(val.event_date);
+          if(date2.getTime() > date1.getTime()) {
+            continue;
+          }
+        }
+        mapData.push({
+            latitude: val.latitude,
+            longitude: val.longitude,
+            date: val.event_date,
+            number: val.fatalities,
+            type: val.disorder_type,
+            location: val.country,
+            timestamp: val.timestamp,
+            event_type: val.event_type,
+            sub_event_type: val.sub_event_type,
+            source: val.source,
+            notes: val.notes,
+        });
       };
       
       if(!mapData.length){
@@ -422,8 +458,9 @@
                   .appendTo( $(column.footer()).empty() )
                   .on( 'change', function () {
                     var data = $.map( $(this).select2('data'), function( value, key ) {
-                      return value.text ? '^' + $.fn.dataTable.util.escapeRegex(value.text) + '$' : null;
+                      return value.text;
                     });
+
                     if (data.length === 0) {
                       data = [""];
                     }
@@ -431,11 +468,29 @@
 
                     column.search( val ? val : '', true, false ).draw();
                   } );
-            
-                column.data().unique().sort().each( function ( d, j ) {
-                  select.append( '<option value="'+d+'">'+d+'</option>' );
-                } );
-            
+                  
+
+                if(column.index() === 2){
+                  let loc_data = [];
+                  jQuery.each(column.nodes(),function(){
+                    let locs = JSON.parse($(this).attr('locs'));
+                    loc_data = loc_data.concat(locs);
+                  });
+                  
+                  let loc_data2 = [...new Set(loc_data)];
+     
+                  for(let loc of loc_data2){
+                    select.append( '<option value="'+loc+'">'+loc+'</option>' );
+                  };
+
+
+                }else{
+                  
+                  column.data().unique().sort().each( function ( d, j ) {
+                    select.append( '<option value="'+d+'">'+d+'</option>' );
+                  } );
+              
+                }
                 $('#' + title).select2({
                   multiple: true,
                   closeOnSelect: false,
@@ -527,7 +582,16 @@
               </ul>`;
         }
           
-
+        // DataTable.ext.search.push(function (settings, data, dataIndex) {
+        //   console.log(data);
+        //   return true;
+        //     // var targetValue = $('#your-input').val();
+        //     // var targetRow = $('#your-table').DataTable().row(dataIndex).node();
+        //     // var targetData = $(targetRow).find('td').eq(2).text() + $(targetRow).find('td').eq(2).find('span').text();
+        //     // return ~targetData.indexOf(targetValue);
+        //   }
+        // );
+        
 
       }
     },
@@ -551,16 +615,21 @@
     },
 
     self.filtersChange = function() {
-      $('#wpdp_type, #wpdp_location,#wpdp_from,#wpdp_to').on('select2:select select2:unselect',function(e){
+      $('#wpdp_type, .wpdp_location,#wpdp_from,#wpdp_to').on('change select2:select select2:unselect',function(e){
         let typeValue = $("#wpdp_type").select2("val");
-        let locationValue = $("#wpdp_location").select2("val");
         let fromYear = $("#wpdp_from").select2("val");
         let toYear = $("#wpdp_to").select2("val");
+        var selectedLocations = [];
+
+        $('input[type="checkbox"].wpdp_location:checked').each(function() {
+            selectedLocations.push($(this).val());
+        });
+
         if (typeof Chart !== 'undefined') {
           if (myChart) {
             myChart.destroy();
           }
-          myChart = self.graphChange(typeValue, locationValue,fromYear,toYear);
+          myChart = self.graphChange(typeValue, selectedLocations,fromYear,toYear);
           $('#wpdp_chart').show();
           $('#wpdp_chart_title').hide();
         }
@@ -575,12 +644,12 @@
           self.main_map.setZoom(self.originalZoom);
           self.main_map.setCenter(self.originalCenter);
 
-          self.maps(typeValue, locationValue,fromYear,toYear);
+          self.maps(typeValue, selectedLocations,fromYear,toYear);
         }
 
         if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
             $('#wpdp_datatable .type select').val(typeValue).trigger('change');
-            $('#wpdp_datatable .location select').val(locationValue).trigger('change');
+            $('#wpdp_datatable .location select').val(selectedLocations).trigger('change');
             $('#wpdp_min').val(fromYear).trigger('change');
             $('#wpdp_max').val(toYear).trigger('change');
         }
@@ -589,7 +658,7 @@
       });
     },
       
-    self.graphChange = function(typeValue, locationValue, fromYear,toYear){
+    self.graphChange = function(typeValue, selectedLocations, fromYear,toYear){
       let chartData = {
         labels: [],
         datasets: []
@@ -598,8 +667,25 @@
       let datasetsMap = {};
     
       for (let val of data) {
-        if(locationValue.length > 0 && !locationValue.includes(val.country)){
-          continue;
+        let all_locations = [
+          val.region,
+          val.country,
+          val.admin1,
+          val.admin2,
+          val.admin3,
+          val.location,
+        ];
+        
+        if(selectedLocations.length > 0){
+          let exist = false;
+          for(let loc of selectedLocations){
+            if(all_locations.includes(loc)){
+              exist = true;
+            }
+          }
+          if(!exist){
+            continue;
+          }
         }
 
         if(typeValue.length > 0 && !typeValue.includes(val.disorder_type)){
@@ -638,8 +724,8 @@
         // Type
         if (typeValue.length && !datasetsMap[val.disorder_type]) {
           let label = val.disorder_type;
-          if(locationValue.length){
-            label += ' in ' + locationValue;
+          if(selectedLocations.length){
+            label += ' in ' + selectedLocations[0];
           }
           dataset.label = label;
     
@@ -652,7 +738,7 @@
         }
 
         // Location
-        if (locationValue.length && !datasetsMap[val.country]) {
+        if (selectedLocations.length && !datasetsMap[val.country]) {
           let label = 'Incidents in '+ val.country;
           dataset.label = label;
     

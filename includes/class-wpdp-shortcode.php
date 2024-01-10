@@ -77,13 +77,51 @@ final class WPDP_Shortcode {
         foreach($result as $key => $val){$i++;
             $filters['types'][] = $val['disorder_type'];
             $filters['years'][] = $val['event_date'];
-            $filters['locations'][] = $val['country'];
+
+            
+            $region = $val['region'];
+            $country = $val['country'];
+            $admin1 = $val['admin1'];
+            $admin2 = $val['admin2'];
+            $admin3 = $val['admin3'];
+            $location = $val['location'];
+            
+            if (!empty($region)) {
+                $locations[$region] = $locations[$region] ?? [];
+                $currentLevel = &$locations[$region];
+            
+                if (!empty($country) && $region != $country) {
+                    $currentLevel[$country] = $currentLevel[$country] ?? [];
+                    $currentLevel = &$currentLevel[$country];
+                }
+            
+                if (!empty($admin1) && $country != $admin1) {
+                    $currentLevel[$admin1] = $currentLevel[$admin1] ?? [];
+                    $currentLevel = &$currentLevel[$admin1];
+                }
+            
+                if (!empty($admin2) && $admin1 != $admin2) {
+                    $currentLevel[$admin2] = $currentLevel[$admin2] ?? [];
+                    $currentLevel = &$currentLevel[$admin2];
+                }
+            
+                if (!empty($admin3) && $admin2 != $admin3) {
+                    $currentLevel[$admin3] = $currentLevel[$admin3] ?? [];
+                    $currentLevel = &$currentLevel[$admin3];
+                }
+            
+                if (!empty($location)) {
+                    $currentLevel[] = $location;
+                }
+            }
+            
+            $filters['locations'] = $locations;
+
+
         }
         $filters['types'] = array_unique($filters['types']);
-        $filters['locations'] = array_unique($filters['locations']);
         sort($filters['years']);
         sort($filters['types']);
-        sort($filters['locations']);
         return $filters;
     }
 
@@ -107,15 +145,40 @@ final class WPDP_Shortcode {
         
     }
 
+    function printArrayAsList($locations, $level = 0) {
+        // var_dump($locations['Middle Africa']['Democratic Republic of Congo']['Tshopo']);exit;
 
+
+        
+        echo '<ul>';
+        foreach ($locations as $key => $value) {
+            if(!is_array($value) && intval($value) === 0){
+                continue;
+            }
+
+            if(is_array($value) && empty($value)){
+                continue;
+            }
+            
+            if (is_array($value)) {
+                echo '<li class="expandable">';
+                echo '<input type="checkbox" class="wpdp_location" value="' . $key . '">';
+                echo '<div class="exp_click"><span for="' . $key . '">' . $key . '</span>';
+                echo '<span class="dashicons dashicons-arrow-up-alt2 arrow"></span></div>';
+                $this->printArrayAsList($value, $level + 1);
+            } else {
+                echo '<li>';
+                echo $value;
+            }
+
+            echo '</li>';
+        }
+
+        echo '</ul>';
+    }
+    
     public function show_shortcode($atts){
         
-        
-        // $id = intval($atts['id']);
-        // if($id === 0 || get_post_type($id) !== 'wp-data-presentation'){
-        //     return 'ID is not correct';
-        // }
-
         ob_start();
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'select2');
         wp_enqueue_style(WP_DATA_PRESENTATION_NAME.'select2');
@@ -153,51 +216,60 @@ final class WPDP_Shortcode {
             <a class="filter" href=""><span class="dashicons dashicons-image-filter"></span></a>
             <div class="con">
                 <span class="filter_back dashicons dashicons-arrow-left-alt"></span>
-                <form action="">
-                    <div class="grp">
-                        <label for="wpdp_type">INCIDENT TYPE</label>
-                        <select multiple="multiple" name="wpdp_type" id="wpdp_type">
-                        <option></option>
-                            <?php foreach($filters['types'] as $type){
-                                echo '<option value="'.$type.'">'.$type.'</option>';
-                            } ?>
-                        </select>
-                    </div>
+                <form action="" style="margin-top:15px;">
+                    <div class="grp active">
 
-                    <div class="grp">
-                        <label for="wpdp_location">LOCATION/REGION</label>
-                        <select multiple="multiple" name="wpdp_location" id="wpdp_location">
-                        <option></option>
-                        <?php foreach($filters['locations'] as $location){
-                                echo '<option value="'.$location.'">'.$location.'</option>';
-                            } ?>
-                        </select>
-                    </div>
-
-                    <div class="grp">
-                        <label for="wpdp_date">DATE RANGE</label>
-                        <div class="dates">
-                            <label for="wpdp_from">FROM</label>
-                            <select data-allow-clear="true" name="wpdp_from" id="wpdp_from">
+                        <div class="title">
+                            INCIDENT TYPE <span class="dashicons dashicons-arrow-up-alt2"></span>
+                        </div>
+                        <div class="content">
+                            <select multiple="multiple" name="wpdp_type" id="wpdp_type">
                             <option></option>
-                            <?php 
-                            $years = array_unique($filters['years']);
-                            sort($years);
-                            foreach($years as $year){
-                                    echo '<option value="'.$year.'">'.$year.'</option>';
-                            } ?>
+                                <?php foreach($filters['types'] as $type){
+                                    echo '<option value="'.$type.'">'.$type.'</option>';
+                                } ?>
                             </select>
                         </div>
-                        <div class="dates">
-                            <label style="margin-right: 23px;" for="wpdp_to">TO</label>
-                            <select data-allow-clear="true" name="wpdp_to" id="wpdp_to">
-                            <option></option>
-                            <?php 
-                            $years = array_unique($filters['years']);
-                            foreach($years as $year){
-                                    echo '<option value="'.$year.'">'.$year.'</option>';
-                            } ?>
-                            </select>
+                    </div>
+
+                    <div class="grp">
+                        <div class="title">
+                            LOCATION/REGION <span class="dashicons dashicons-arrow-down-alt2"></span>
+                        </div>
+                        <div class="content">
+                            <?php $this->printArrayAsList($filters['locations']); ?>
+                        </div>
+                    </div>
+
+                    <div class="grp active">
+
+                        <div class="title">
+                            DATE RANGE <span class="dashicons dashicons-arrow-up-alt2"></span>
+                        </div>
+                        <div class="content">
+                            <div class="dates">
+                                <label for="wpdp_from">FROM</label>
+                                <select data-allow-clear="true" name="wpdp_from" id="wpdp_from">
+                                <option></option>
+                                <?php 
+                                $years = array_unique($filters['years']);
+                                sort($years);
+                                foreach($years as $year){
+                                        echo '<option value="'.$year.'">'.$year.'</option>';
+                                } ?>
+                                </select>
+                            </div>
+                            <div class="dates">
+                                <label style="margin-right: 23px;" for="wpdp_to">TO</label>
+                                <select data-allow-clear="true" name="wpdp_to" id="wpdp_to">
+                                <option></option>
+                                <?php 
+                                $years = array_unique($filters['years']);
+                                foreach($years as $year){
+                                        echo '<option value="'.$year.'">'.$year.'</option>';
+                                } ?>
+                                </select>
+                            </div>
                         </div>
 
                     </div>           

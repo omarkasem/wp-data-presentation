@@ -119,11 +119,19 @@ final class WPDP_Tables {
             </tfoot>
 
             <tbody>
-                <?php foreach($result as $k=> $val){ ?>
+                <?php foreach($result as $k=> $val){
+                    $locs = [$val['country'],$val['region'],$val['admin1'],$val['admin2'],$val['admin3'],$val['location']];
+                    ?>
                     <tr>
                         <td event_type="<?php echo $val['event_type']; ?>"><?php echo $val['event_date']; ?></td>
                         <td sub_event_type="<?php echo $val['sub_event_type']; ?>"><?php echo $val['disorder_type']; ?></td>
-                        <td source="<?php echo $val['source']; ?>"><?php echo $val['country']; ?></td>
+                        <td locs='<?php echo wp_json_encode($locs); ?>' source="<?php echo $val['source']; ?>"><?php echo $val['country']; ?> 
+                        <span style="display:none;">
+                        <?php unset($locs[0]); foreach(array_filter($locs) as $loc): ?>
+                            <?php echo $loc.' '; ?>
+                        <?php endforeach; ?>
+                        </span>
+                    </td>
                         <td notes="<?php echo $val['notes']; ?>"><?php echo $val['fatalities']; ?></td>
                         <td timestamp="<?php echo date('c',$val['timestamp']); ?>"><button class="more-info">More Details</button></td>
                     </tr>
@@ -131,8 +139,6 @@ final class WPDP_Tables {
                 <?php } ?>
 
             </tbody>
-
-
 
         </table>
 
