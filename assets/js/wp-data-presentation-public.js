@@ -631,6 +631,7 @@
           }
           myChart = self.graphChange(typeValue, selectedLocations,fromYear,toYear);
           $('#wpdp_chart').show();
+          $('#wpdp_type_selector').show();
           $('#wpdp_chart_title').hide();
         }
 
@@ -666,6 +667,11 @@
 
       let datasetsMap = {};
     
+      data.sort(function(a, b) {
+        return new Date(a.event_date) - new Date(b.event_date);
+      });
+
+
       for (let val of data) {
         let all_locations = [
           val.region,
@@ -710,13 +716,10 @@
         }
 
 
-        // if(parseInt(val.fatalities) === 0){
-        //   continue;
-        // }
-
         let dataset = {
           label: '',
           data: [],
+          fat:[],
           fill: false,
           borderColor: '#' + (Math.random()*0xFFFFFF<<0).toString(16)
         };
@@ -734,7 +737,12 @@
         }
     
         if(val.disorder_type in datasetsMap) {
-          datasetsMap[val.disorder_type].data.push(val.fatalities);
+          if($('#wpdp_type_selector').val() === 'incident_count'){
+            datasetsMap[val.disorder_type].data.push(1);
+          }else{
+            datasetsMap[val.disorder_type].data.push(val.fatalities);
+          }
+          datasetsMap[val.disorder_type].fat.push(val.fatalities);
         }
 
         // Location
@@ -747,25 +755,32 @@
         }
 
         if(val.country in datasetsMap) {
-          datasetsMap[val.country].data.push(val.fatalities);
+          if($('#wpdp_type_selector').val() === 'incident_count'){
+            datasetsMap[val.country].data.push(1);
+          }else{
+            datasetsMap[val.country].data.push(val.fatalities);
+          }
+          datasetsMap[val.country].fat.push(val.fatalities);
         }
 
         chartData.labels.push(val.event_date);
       }
 
 
-      chartData.labels.sort(function(a, b) {
-        return new Date(a) - new Date(b);
-      });
-
-
       let ctx = document.getElementById('wpdp_chart').getContext('2d');
-      return new Chart(ctx, {
+      var wpdp_chart =  new Chart(ctx, {
         type: 'line',
         data: chartData,
         options: {
             responsive: true,
             plugins: {
+                tooltips: {
+                  callbacks: {
+                    title: function(tooltipItems, data) {
+                      return ''; 
+                    }
+                  }
+                },
                 title: {
                     display: true,
                     text: 'Incidents by Type'
@@ -773,11 +788,11 @@
             },
             scales: {
                 x: {
-                    display: true,
-                    title: {
-                        display: true,
-                        text: 'Year'
-                    }
+                  type: 'timeseries',
+                  time: {
+                    unit: 'month',  
+                    tooltipFormat: 'DD MMM YYYY'
+                  }
                 },
                 y: {
                     type: 'linear',
@@ -791,6 +806,22 @@
             }
         }
       });
+
+      document.getElementById('wpdp_type_selector').addEventListener('change', function () {
+        let val = this.value;
+        for(let set of wpdp_chart.data.datasets){
+          if(val == 'incident_count'){
+            set.data = set.data.fill(1);
+          }else{
+            set.data = set.fat;
+          }
+        }
+        wpdp_chart.update();
+      });
+
+
+      return wpdp_chart;
+      
     }
     
 
