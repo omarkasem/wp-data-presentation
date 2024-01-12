@@ -146,10 +146,6 @@ final class WPDP_Shortcode {
     }
 
     function printArrayAsList($locations, $level = 0) {
-        // var_dump($locations['Middle Africa']['Democratic Republic of Congo']['Tshopo']);exit;
-
-
-        
         echo '<ul>';
         foreach ($locations as $key => $value) {
             if(!is_array($value) && intval($value) === 0){
@@ -178,7 +174,12 @@ final class WPDP_Shortcode {
     }
     
     public function show_shortcode($atts){
-        
+        $atts = shortcode_atts( array(
+            'type' => '',
+            'from' => '',
+            'to' => ''
+        ), $atts);
+    
         ob_start();
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'select2');
         wp_enqueue_style(WP_DATA_PRESENTATION_NAME.'select2');
@@ -187,18 +188,38 @@ final class WPDP_Shortcode {
         wp_enqueue_style( 'dashicons' );
 
         $result = $this->get_all_data();
-        
+        foreach($result as $key => $val){
+            if($atts['from'] && new DateTime($val['event_date']) < new DateTime($atts['from'])){
+                unset($result[$key]);
+            }
+
+            if($atts['to'] && new DateTime($val['event_date']) > new DateTime($atts['to'])){
+                unset($result[$key]);
+            }
+
+        }
+
+        $result = array_values($result);
+
         ?>
 
         <div class="wpdp">
-            <?php 
+            <?php
                 $filters = $this->get_filters($result);
-                $this->get_filter($filters);
-                WPDP_Tables::shortcode_output($result);
-                echo '<br><hr>';
-                WPDP_Graphs::shortcode_output($result);
-                echo '<br><hr>';
-                WPDP_Maps::shortcode_output($result);
+                $this->get_html_filter($filters);
+                if($atts['type'] === 'table'){
+                    WPDP_Tables::shortcode_output($result);
+                }elseif($atts['type'] === 'graph'){
+                    WPDP_Graphs::shortcode_output($result);
+                }elseif($atts['type'] === 'map'){
+                    WPDP_Maps::shortcode_output($result);
+                }else{
+                    WPDP_Tables::shortcode_output($result);
+                    echo '<br><hr>';
+                    WPDP_Graphs::shortcode_output($result);
+                    echo '<br><hr>';
+                    WPDP_Maps::shortcode_output($result);
+                }
             ?>
         </div>
 
@@ -206,12 +227,13 @@ final class WPDP_Shortcode {
             var wpdp_data = <?php echo json_encode($result); ?>;
         </script>
 
+
     <?php 
         $output = ob_get_clean();
         return $output;
     }
 
-    function get_filter($filters){ ?>
+    function get_html_filter($filters){ ?>
         <div class="filter_data">
             <a class="filter" href=""><span class="dashicons dashicons-image-filter"></span></a>
             <div class="con">

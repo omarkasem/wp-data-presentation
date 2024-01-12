@@ -24,9 +24,9 @@
       $('.expandable > .exp_click').on('click', function(event) {
         event.stopPropagation();
         $(this).parent().toggleClass('expanded');
-    });
+      });
 
-    $('.filter_data li:not(:has(li))').find('.dashicons').remove();
+      $('.filter_data li:not(:has(li))').find('.dashicons').remove();
                 
     },
 
@@ -666,7 +666,6 @@
       };
 
       let datasetsMap = {};
-    
       data.sort(function(a, b) {
         return new Date(a.event_date) - new Date(b.event_date);
       });

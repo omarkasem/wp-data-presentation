@@ -63,18 +63,6 @@ final class WPDP_Tables {
     
 
     public static function shortcode_output($result){
-        // $id = intval($atts['id']);
-        // $pres_type = get_field('presentation_type',$id);
-
-        // if($pres_type === 'Datatables'){
-            // wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'datatables');
-            // wp_enqueue_style(WP_DATA_PRESENTATION_NAME.'datatables');
-            // $table = 'wpdp_datatable';
-        // }else{
-        //     wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'exceltables');
-        //     wp_enqueue_style(WP_DATA_PRESENTATION_NAME.'exceltables');
-        //     $table = 'wpdp_exceltables';
-        // }
 
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'datatables');
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'moment');

@@ -64,7 +64,7 @@ final class WPDP_Graphs {
 
     public static function shortcode_output($result){
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'chartjs');
-        wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'chartjs2');
+        wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'chartjs-moment');
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'chartjs-adapter');
     ?>
         <h2 id="wpdp_chart_title">
