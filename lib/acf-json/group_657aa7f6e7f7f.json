@@ -99,11 +99,11 @@
             "placeholder": ""
         },
         {
-            "key": "field_657aa8a6e7d11",
-            "label": "Validate File",
-            "name": "",
+            "key": "field_65a800a69e6d3",
+            "label": "Override csv file",
+            "name": "override_csv_file",
             "aria-label": "",
-            "type": "message",
+            "type": "true_false",
             "instructions": "",
             "required": 0,
             "conditional_logic": 0,
@@ -113,8 +113,10 @@
                 "id": ""
             },
             "message": "",
-            "new_lines": "wpautop",
-            "esc_html": 0
+            "default_value": 0,
+            "ui_on_text": "",
+            "ui_off_text": "",
+            "ui": 0
         }
     ],
     "location": [
@@ -135,5 +137,5 @@
     "active": true,
     "description": "",
     "show_in_rest": 0,
-    "modified": 1703619995
+    "modified": 1705509067
 }

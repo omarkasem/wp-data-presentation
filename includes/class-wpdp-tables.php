@@ -50,8 +50,33 @@ final class WPDP_Tables {
      */
     private function _add_hooks() {
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
+        add_action( 'wp_ajax_nopriv_wpdp_datatables_request', array($this,'get_datatables_data') );
+        add_action( 'wp_ajax_wpdp_datatables_request', array($this,'get_datatables_data') );
+        if(isset($_GET['test'])){
+            var_dump(get_option('test'));exit;
+        }
     }
 
+    public function get_datatables_data(){
+        $types = [
+            'event_date',
+            'disorder_type',
+            'country',
+            'fatalities',
+            'admin1'
+        ];
+        $data = WPDP_Shortcode::get_all_data($types,true);
+
+        $arr = [
+            "draw"=> 1,
+            "recordsTotal"=> count($data),
+            "recordsFiltered"=> count($data),
+            "data"=> $data,
+        ];
+
+        echo json_encode($arr);
+        wp_die();
+    }
 
     function enqueue_scripts() {
     
@@ -69,9 +94,9 @@ final class WPDP_Tables {
         wp_enqueue_style(WP_DATA_PRESENTATION_NAME.'datatables');
         $table = 'wpdp_datatable';
 
-        if(empty($result)){
-            return 'No results found.';
-        }
+        // if(empty($result)){
+        //     return 'No results found.';
+        // }
         
     ?>
 
@@ -97,7 +122,7 @@ final class WPDP_Tables {
                 </tr>
             </thead>
 
-            <tfoot style="display:none;">
+            <tfoot style2="display:none;">
                 <tr>
                     <th class="date">Date</th>
                     <th class="type">Type</th>
@@ -106,7 +131,7 @@ final class WPDP_Tables {
                 </tr>
             </tfoot>
 
-            <tbody>
+            <!-- <tbody>
                 <?php foreach($result as $k=> $val){
                     $locs = [$val['country'],$val['region'],$val['admin1'],$val['admin2'],$val['admin3'],$val['location']];
                     ?>
@@ -121,12 +146,12 @@ final class WPDP_Tables {
                         </span>
                     </td>
                         <td notes="<?php echo $val['notes']; ?>"><?php echo $val['fatalities']; ?></td>
-                        <td timestamp="<?php echo date('c',$val['timestamp']); ?>"><button class="more-info">More Details</button></td>
+                        <td timestamp="<?php echo date('c',$val['timestamp']); ?>"><span style="cursor:pointer;color:#cd0202;font-size:26px;" class="more-info dashicons dashicons-info"></span></td>
                     </tr>
                     
                 <?php } ?>
 
-            </tbody>
+            </tbody> -->
 
         </table>
 

@@ -49,9 +49,6 @@
   height: 500px;
 }
 
-#wpdp_exceltables{
-  display:none;
-}
 
 #new_wpdp_exceltables{
   width:100%;
@@ -64,7 +61,7 @@
   margin-bottom: 15px;
 }
 #wpdp_datatable_filter{
-  display:none;
+  /* display:none; */
 }
 .wpdp_more_info{
   margin:0;

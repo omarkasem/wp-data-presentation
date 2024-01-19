@@ -51,7 +51,11 @@ final class WPDP_Shortcode {
     private function _add_hooks() {
         add_shortcode( 'WP_DATA_PRESENTATION',array($this,'show_shortcode'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
+    
+        
+        
     }
+
 
     public function enqueue_scripts(){
         wp_register_script(WP_DATA_PRESENTATION_NAME.'select2', WP_DATA_PRESENTATION_URL.'assets/js/select2.min.js', array('jquery'), WP_DATA_PRESENTATION_VERSION, true);
@@ -67,6 +71,7 @@ final class WPDP_Shortcode {
 
         wp_localize_script( WP_DATA_PRESENTATION_NAME.'public','wpdp_obj',[
             'url'=>WP_DATA_PRESENTATION_URL,
+            'ajax_url' => admin_url('admin-ajax.php'),
         ]);
 
     }
@@ -125,7 +130,7 @@ final class WPDP_Shortcode {
         return $filters;
     }
 
-    public function get_all_data(){
+    public static function get_all_data($types,$values_only = false){
         $posts = get_posts(array(
             'post_type'=>'wp-data-presentation',
             'posts_per_page'=>-1,
@@ -136,11 +141,47 @@ final class WPDP_Shortcode {
             return 'No data';
         }
 
+        $all_types = [
+            'event_date',
+            'disorder_type',
+            'event_type',
+            'sub_event_type',
+            'region',
+            'country',
+            'admin1',
+            'admin2',
+            'admin3',
+            'location',
+            'latitude',
+            'longitude',
+            'source',
+            'notes',
+            'fatalities',
+            'timestamp',
+        ];
+        if($types == ''){
+            $types = $all_types;
+        }
+        $arr_type = ARRAY_A;
+
         $data = [];
         foreach($posts as $id){
-            $result = get_post_meta($id,'wpdp_results',true);
-            $data = array_merge($data,$result);
+            global $wpdb;
+            $table_name = 'wpdp_data_'.$id;
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
+            if(!$table_exists){
+                continue;
+            }
+            if($values_only){
+                $arr_type = ARRAY_N;
+            }
+            $result = $wpdb->get_results( "SELECT ".implode(', ',$types)." FROM {$table_name} LIMIT 500", $arr_type );
+
+            if($result){
+                $data = array_merge($data,$result);
+            }
         }
+
         return $data;
         
     }
@@ -186,27 +227,26 @@ final class WPDP_Shortcode {
         wp_enqueue_style(WP_DATA_PRESENTATION_NAME.'public');
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'public');
         wp_enqueue_style( 'dashicons' );
+        // $result = $this->get_all_data();
+        // foreach($result as $key => $val){
+        //     if($atts['from'] && new DateTime($val['event_date']) < new DateTime($atts['from'])){
+        //         unset($result[$key]);
+        //     }
 
-        $result = $this->get_all_data();
-        foreach($result as $key => $val){
-            if($atts['from'] && new DateTime($val['event_date']) < new DateTime($atts['from'])){
-                unset($result[$key]);
-            }
+        //     if($atts['to'] && new DateTime($val['event_date']) > new DateTime($atts['to'])){
+        //         unset($result[$key]);
+        //     }
 
-            if($atts['to'] && new DateTime($val['event_date']) > new DateTime($atts['to'])){
-                unset($result[$key]);
-            }
-
-        }
-
-        $result = array_values($result);
+        // }
+        // $result = array_values($result);
 
         ?>
 
         <div class="wpdp">
             <?php
-                $filters = $this->get_filters($result);
-                $this->get_html_filter($filters);
+            $result = '';
+                // $filters = $this->get_filters($result);
+                // $this->get_html_filter($filters,$atts);
                 if($atts['type'] === 'table'){
                     WPDP_Tables::shortcode_output($result);
                 }elseif($atts['type'] === 'graph'){
@@ -224,7 +264,7 @@ final class WPDP_Shortcode {
         </div>
 
         <script>
-            var wpdp_data = <?php echo json_encode($result); ?>;
+            var wpdp_data = [];
         </script>
 
 
@@ -233,12 +273,28 @@ final class WPDP_Shortcode {
         return $output;
     }
 
-    function get_html_filter($filters){ ?>
+    function get_html_filter($filters,$atts){ ?>
         <div class="filter_data">
             <a class="filter" href=""><span class="dashicons dashicons-image-filter"></span></a>
             <div class="con">
                 <span class="filter_back dashicons dashicons-arrow-left-alt"></span>
                 <form action="" style="margin-top:15px;">
+
+                    <?php if($atts['type'] === 'graph' || $atts['type'] == ''){ ?>
+                    <div class="grp active">
+
+                        <div class="title">
+                            COUNT TYPE <span class="dashicons dashicons-arrow-up-alt2"></span>
+                        </div>
+                        <div class="content">
+                            <select name="wpdp_type_selector" id="wpdp_type_selector">
+                                <option value="fatalities">Fatalities</option>
+                                <option value="incident_count">Incident Count</option>
+                            </select>
+                        </div>
+                    </div>
+                    <?php } ?>
+
                     <div class="grp active">
 
                         <div class="title">

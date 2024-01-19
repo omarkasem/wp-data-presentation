@@ -9,29 +9,34 @@
 
     self.init = function(){
 
-      $('.filter_data li input[type="checkbox"]').on('change', function() {
-          $(this).parent().find('li input[type="checkbox"]').prop('checked', this.checked);
-      });
-
-
+   
 
       self.dataTables();
       self.menuFilters();
       self.filtersChange();
       self.expandable();
       self.showMapDetails();
+      // self.graphCountSelector();
 
-      $('.expandable > .exp_click').on('click', function(event) {
-        event.stopPropagation();
-        $(this).parent().toggleClass('expanded');
-      });
-
-      $('.filter_data li:not(:has(li))').find('.dashicons').remove();
-                
     },
 
+    self.graphCountSelector = function(){
+      document.getElementById('wpdp_type_selector').addEventListener('change', function () {
+        let val = this.value;
+        let i = -1;
+        for(let set of myChart.data.datasets){ i++;
+          if(val == 'incident_count'){
+            myChart.data.datasets[i].data = [...set.data].fill(1);
+          } else {
+            myChart.data.datasets[i].data = set.fat;
+          }
+        }
+        myChart.update();
+      });
+    };
+
     self.showMapDetails = function(){
-      $(document).on('click','.map_more_details button',function(e){
+      $(document).on('click','.map_more_details span',function(e){
         e.preventDefault();
         let det = $(this).next().html();
         // Create modal elements
@@ -129,7 +134,10 @@
       if(!mapData.length){
         return;
       }
+
+        
       var startLocation = { lat: parseFloat(mapData[0].latitude), lng: parseFloat(mapData[0].longitude) };
+
       
       if(!self.main_map){
         
@@ -318,10 +326,10 @@
           }
         );
           
+      }else{
+        self.main_map.setCenter(startLocation);
+        self.main_map.setZoom(3);
       }
-
-      self.originalZoom = self.main_map.getZoom();
-      self.originalCenter = self.main_map.getCenter();
 
 
       var my_map = self.main_map;
@@ -374,7 +382,7 @@
                     <p style="margin-bottom:0;"><strong>Number:</strong> ${loc.number}</p>
                     <p style="margin-bottom:0;"><strong>Date:</strong> ${loc.date}</p>
                     <div class="map_more_details">
-                      <button>More Details</button>
+                      <span style="cursor:pointer;color:#cd0202;font-size:25px;margin-top:3px;" class="dashicons dashicons-info"></span>
                       <div class="det">
                         <ul>
                           <li><b>Event Type:</b> ${loc.event_type}</li>
@@ -410,6 +418,13 @@
     self.dataTables = function(){
       if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
         var table =  $('#wpdp_datatable').DataTable({
+            ajax: {
+              "url": wpdp_obj.ajax_url,
+              "type": "POST",
+              "data": { action: 'wpdp_datatables_request' }
+            },
+            processing: true,
+
             dom: 'Bfrtip',
             buttons: [
               { 
@@ -470,27 +485,27 @@
                   } );
                   
 
-                if(column.index() === 2){
-                  let loc_data = [];
-                  jQuery.each(column.nodes(),function(){
-                    let locs = JSON.parse($(this).attr('locs'));
-                    loc_data = loc_data.concat(locs);
-                  });
+                // if(column.index() === 2){
+                //   let loc_data = [];
+                //   jQuery.each(column.nodes(),function(){
+                //     let locs = JSON.parse($(this).attr('locs'));
+                //     loc_data = loc_data.concat(locs);
+                //   });
                   
-                  let loc_data2 = [...new Set(loc_data)];
+                //   let loc_data2 = [...new Set(loc_data)];
      
-                  for(let loc of loc_data2){
-                    select.append( '<option value="'+loc+'">'+loc+'</option>' );
-                  };
+                //   for(let loc of loc_data2){
+                //     select.append( '<option value="'+loc+'">'+loc+'</option>' );
+                //   };
 
 
-                }else{
+                // }else{
                   
                   column.data().unique().sort().each( function ( d, j ) {
                     select.append( '<option value="'+d+'">'+d+'</option>' );
                   } );
               
-                }
+                // }
                 $('#' + title).select2({
                   multiple: true,
                   closeOnSelect: false,
@@ -537,66 +552,75 @@
         });
 
 
-        $('#wpdp_datatable tbody').on('click', 'button.more-info', function() {
-            var tr = $(this).closest('tr');
-            var row = table.row( tr );
+        $('#wpdp_datatable tbody').on('click', 'span.more-info', function() {
+          var tr = $(this).closest('tr');
+          var row = table.row(tr);
+      
+          if (row.child.isShown()) {
+              tr.next('tr').find('td').wrapInner('<div style="display: block;"></div>');
+              tr.next('tr').find('td > div').slideUp(function() {
+                 row.child.hide();
+                 tr.removeClass('shown');
+              });
+          } else {
+              row.child( format(row.selector.rows[0] ) ).show();
+              tr.next('tr').find('td').wrapInner('<div style="display: none;"></div>');
+              tr.next('tr').find('td > div').slideDown();
+              tr.addClass('shown');
+          }
+      });
     
-            if ( row.child.isShown() ) {
-                row.child.hide();
-                tr.removeClass('shown');
-            } else {
-                row.child( format(row.selector.rows[0] ) ).show();
-                tr.addClass('shown');
-            }
-        } );
-    
-        function format ( row ) {
-          let event_type = $(row).find('td[event_type]').attr('event_type');
-          let sub_event_type = $(row).find('td[sub_event_type]').attr('sub_event_type');
-          let source = $(row).find('td[source]').attr('source');
-          let notes = $(row).find('td[notes]').attr('notes');
-          let timestamp = $(row).find('td[timestamp]').attr('timestamp');
-          return `
-          <ul class="wpdp_more_info">
-              <li>
-                <b>Event Type:</b>
-                `+event_type+`
-              </li>
-              <li>
-                <b>Sub Event Type:</b>
-                `+sub_event_type+`
-              </li>
-              <li>
-                <b>Source Type:</b>
-                `+source+`
-              </li>
-              <li>
-                <b>Notes:</b>
-                `+notes+`
-              </li>
-              <li>
-                <b>Timestamp:</b>
-                `+timestamp+`
-              </li>
+      function format ( row ) {
+        let event_type = $(row).find('td[event_type]').attr('event_type');
+        let sub_event_type = $(row).find('td[sub_event_type]').attr('sub_event_type');
+        let source = $(row).find('td[source]').attr('source');
+        let notes = $(row).find('td[notes]').attr('notes');
+        let timestamp = $(row).find('td[timestamp]').attr('timestamp');
+        return `
+        <ul class="wpdp_more_info">
+            <li>
+              <b>Event Type:</b>
+              `+event_type+`
+            </li>
+            <li>
+              <b>Sub Event Type:</b>
+              `+sub_event_type+`
+            </li>
+            <li>
+              <b>Source Type:</b>
+              `+source+`
+            </li>
+            <li>
+              <b>Notes:</b>
+              `+notes+`
+            </li>
+            <li>
+              <b>Timestamp:</b>
+              `+timestamp+`
+            </li>
 
-              </ul>`;
-        }
+            </ul>`;
+      }
           
-        // DataTable.ext.search.push(function (settings, data, dataIndex) {
-        //   console.log(data);
-        //   return true;
-        //     // var targetValue = $('#your-input').val();
-        //     // var targetRow = $('#your-table').DataTable().row(dataIndex).node();
-        //     // var targetData = $(targetRow).find('td').eq(2).text() + $(targetRow).find('td').eq(2).find('span').text();
-        //     // return ~targetData.indexOf(targetValue);
-        //   }
-        // );
-        
-
       }
     },
 
     self.menuFilters = function(){
+
+      $('.filter_data li input[type="checkbox"]').on('change', function() {
+          $(this).parent().find('li input[type="checkbox"]').prop('checked', this.checked);
+      });
+
+
+
+      $('.expandable > .exp_click').on('click', function(event) {
+        event.stopPropagation();
+        $(this).parent().toggleClass('expanded');
+      });
+
+      $('.filter_data li:not(:has(li))').find('.dashicons').remove();
+
+
       $('.wpdp .filter').click(function(e){
         e.preventDefault();
         e.stopPropagation();
@@ -631,7 +655,6 @@
           }
           myChart = self.graphChange(typeValue, selectedLocations,fromYear,toYear);
           $('#wpdp_chart').show();
-          $('#wpdp_type_selector').show();
           $('#wpdp_chart_title').hide();
         }
 
@@ -641,9 +664,6 @@
           }
           markerCluster.clearMarkers();
           global_markers = [];
-
-          self.main_map.setZoom(self.originalZoom);
-          self.main_map.setCenter(self.originalCenter);
 
           self.maps(typeValue, selectedLocations,fromYear,toYear);
         }
@@ -741,7 +761,8 @@
           }else{
             datasetsMap[val.disorder_type].data.push(val.fatalities);
           }
-          datasetsMap[val.disorder_type].fat.push(val.fatalities);
+
+            datasetsMap[val.disorder_type].fat.push(val.fatalities);
         }
 
         // Location
@@ -759,7 +780,8 @@
           }else{
             datasetsMap[val.country].data.push(val.fatalities);
           }
-          datasetsMap[val.country].fat.push(val.fatalities);
+          
+            datasetsMap[val.country].fat.push(val.fatalities);
         }
 
         chartData.labels.push(val.event_date);
@@ -806,17 +828,7 @@
         }
       });
 
-      document.getElementById('wpdp_type_selector').addEventListener('change', function () {
-        let val = this.value;
-        for(let set of wpdp_chart.data.datasets){
-          if(val == 'incident_count'){
-            set.data = set.data.fill(1);
-          }else{
-            set.data = set.fat;
-          }
-        }
-        wpdp_chart.update();
-      });
+
 
 
       return wpdp_chart;

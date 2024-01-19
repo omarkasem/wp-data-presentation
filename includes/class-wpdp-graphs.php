@@ -70,10 +70,6 @@ final class WPDP_Graphs {
         <h2 id="wpdp_chart_title">
             You have to use the filter to show the chart.
         </h2>
-        <select id="wpdp_type_selector" style="display:none;">
-            <option value="fatalities">Fatalities</option>
-            <option value="incident_count">Incident Count</option>
-        </select>
         <canvas style="display:none;" id="wpdp_chart" width="800" ></canvas>
     <?php }
 

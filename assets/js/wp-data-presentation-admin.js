@@ -39,6 +39,7 @@ jQuery(document).ready(function($){
         getFileData:function(file){
             $('.wpdp_loader').show();
             let post_id = $('#post_ID').val();
+            console.log(file);
             $.ajax({
                 url: wpdp_obj.ajax_url,
                 type: 'POST',
@@ -67,7 +68,7 @@ jQuery(document).ready(function($){
         validateFile:function(){
             let file;
             if($('#acf-field_657aa840cb9c5').val() == 'Upload'){
-                file = $('.acf-file-uploader .file-info a[data-name="filename"]').attr('href');
+                file = $('input[name="acf\\[field_657aa818cb9c4\\]"]').val();
             }else{
                 file = $('div[data-name="excel_file_url"] input').val();
             }
@@ -78,10 +79,10 @@ jQuery(document).ready(function($){
                 return;
             }
 
-            if(!allowed_types.includes(wpDataPresentation.getExtension(file))){
-                wpDataPresentation.showError('File type has to be xlsx or csv');
-                return;
-            }
+            // if(!allowed_types.includes(wpDataPresentation.getExtension(file))){
+            //     wpDataPresentation.showError('File type has to be xlsx or csv');
+            //     return;
+            // }
 
             return file;
 
