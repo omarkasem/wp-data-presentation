@@ -4,6 +4,7 @@
     var self = {};
     var data = wpdp_data;
     var myChart;
+    var table;
     var global_markers = [];
     var markerCluster;
 
@@ -417,11 +418,21 @@
 
     self.dataTables = function(){
       if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
-        var table =  $('#wpdp_datatable').DataTable({
+        var selectedLocations = [];
+        $('input[type="checkbox"].wpdp_location:checked').each(function() {
+            selectedLocations.push($(this).val());
+        });
+        self.table = $('#wpdp_datatable').DataTable({
             ajax: {
               "url": wpdp_obj.ajax_url,
               "type": "POST",
-              "data": { action: 'wpdp_datatables_request' }
+              "data": function ( d ) {
+                d.action = 'wpdp_datatables_request';
+                d.type_val = $('#wpdp_type').val();
+                d.from_val = $('#wpdp_from').val();
+                d.to_val = $('#wpdp_to').val();
+                d.locations_val = selectedLocations;
+              }
             },
             processing: true,
             serverSide: true,
@@ -470,100 +481,45 @@
             },
 
 
-            initComplete: function () {
-              let count = 0;
-              this.api().columns().every( function () {
-            
-                // Get the existing filtering functionality.
-                var title = this.header();
-                title = $(title).html().replace(/[\W]/g, '-');
-                var column = this;
-                var select = $('<select id="' + title + '" class="select2" ></select>')
-                  .appendTo( $(column.footer()).empty() )
-                  .on( 'change', function () {
-                    var data = $.map( $(this).select2('data'), function( value, key ) {
-                      return value.text;
-                    });
-
-                    if (data.length === 0) {
-                      data = [""];
-                    }
-                    var val = data.join('|');
-
-                    column.search( val ? val : '', true, false ).draw();
-                  } );
-                  
-
-                // if(column.index() === 2){
-                //   let loc_data = [];
-                //   jQuery.each(column.nodes(),function(){
-                //     let locs = JSON.parse($(this).attr('locs'));
-                //     loc_data = loc_data.concat(locs);
-                //   });
-                  
-                //   let loc_data2 = [...new Set(loc_data)];
-     
-                //   for(let loc of loc_data2){
-                //     select.append( '<option value="'+loc+'">'+loc+'</option>' );
-                //   };
-
-
-                // }else{
-                  
-                  column.data().unique().sort().each( function ( d, j ) {
-                    select.append( '<option value="'+d+'">'+d+'</option>' );
-                  } );
-              
-                // }
-                $('#' + title).select2({
-                  multiple: true,
-                  closeOnSelect: false,
-                  placeholder: "Select a " + title,
-                  width: 'resolve',
-                });
-                $('.select2').val(null).trigger('change');
-            
-              });
-            }
 
         });
 
 
-        let minDate = $('#wpdp_min');
-        let maxDate = $('#wpdp_max');
+        // let minDate = $('#wpdp_min');
+        // let maxDate = $('#wpdp_max');
  
-        DataTable.ext.search.push(function (settings, data, dataIndex) {
-            let min = null;
-            let max = null;
+        // DataTable.ext.search.push(function (settings, data, dataIndex) {
+        //     let min = null;
+        //     let max = null;
 
-            if(minDate.val()){
-              min = new Date(minDate.val());
-            }
-            if(maxDate.val()){
-              max = new Date(maxDate.val());
-            }
+        //     if(minDate.val()){
+        //       min = new Date(minDate.val());
+        //     }
+        //     if(maxDate.val()){
+        //       max = new Date(maxDate.val());
+        //     }
 
-            let date = new Date(data[0]);
+        //     let date = new Date(data[0]);
 
-            if (
-                (min === null && max === null) ||
-                (min === null && date <= max) ||
-                (min <= date && max === null) ||
-                (min <= date && date <= max)
-            ) {
-                return true;
-            }
-            return false;
-        });
+        //     if (
+        //         (min === null && max === null) ||
+        //         (min === null && date <= max) ||
+        //         (min <= date && max === null) ||
+        //         (min <= date && date <= max)
+        //     ) {
+        //         return true;
+        //     }
+        //     return false;
+        // });
 
-        $('#wpdp_min, #wpdp_max').on('change',function(){
-          table.draw();
-        });
+        // $('#wpdp_min, #wpdp_max').on('change',function(){
+        //   table.draw();
+        // });
 
 
       $('#wpdp_datatable tbody').on('click', 'span.more-info', function() {
           var tr = $(this).closest('tr');
-          var row = table.row(tr);
+          var row = self.table.row(tr);
       
           if (row.child.isShown()) {
               tr.next('tr').find('td').wrapInner('<div style="display: block;"></div>');
@@ -632,6 +588,11 @@
 
     self.menuFilters = function(){
 
+      setTimeout(function() {
+          $('.wpdp .filter_data').show();
+      }, 1000);
+
+
       $('.filter_data li input[type="checkbox"]').on('change', function() {
           $(this).parent().find('li input[type="checkbox"]').prop('checked', this.checked);
       });
@@ -694,10 +655,7 @@
         }
 
         if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
-            $('#wpdp_datatable .type select').val(typeValue).trigger('change');
-            $('#wpdp_datatable .location select').val(selectedLocations).trigger('change');
-            $('#wpdp_min').val(fromYear).trigger('change');
-            $('#wpdp_max').val(toYear).trigger('change');
+          self.table.draw(false);
         }
 
 

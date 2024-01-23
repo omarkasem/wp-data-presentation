@@ -52,7 +52,9 @@ final class WPDP_Shortcode {
         add_shortcode( 'WP_DATA_PRESENTATION',array($this,'show_shortcode'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
     
-        
+        if(isset($_GET['t'])){
+            var_dump($this->get_filters());exit;
+        }
         
     }
 
@@ -76,58 +78,100 @@ final class WPDP_Shortcode {
 
     }
 
-    private function get_filters($result){
-        $filters = [];
-        $i=-1;
-        foreach($result as $key => $val){$i++;
-            $filters['types'][] = $val['disorder_type'];
-            $filters['years'][] = $val['event_date'];
+    function get_filters(){
+        if(!empty(get_transient('wpdp_filters'))){
+            return get_transient('wpdp_filters');
+        }
 
-            
-            $region = $val['region'];
-            $country = $val['country'];
-            $admin1 = $val['admin1'];
-            $admin2 = $val['admin2'];
-            $admin3 = $val['admin3'];
-            $location = $val['location'];
-            
-            if (!empty($region)) {
-                $locations[$region] = $locations[$region] ?? [];
-                $currentLevel = &$locations[$region];
-            
-                if (!empty($country) && $region != $country) {
-                    $currentLevel[$country] = $currentLevel[$country] ?? [];
-                    $currentLevel = &$currentLevel[$country];
-                }
-            
-                if (!empty($admin1) && $country != $admin1) {
-                    $currentLevel[$admin1] = $currentLevel[$admin1] ?? [];
-                    $currentLevel = &$currentLevel[$admin1];
-                }
-            
-                if (!empty($admin2) && $admin1 != $admin2) {
-                    $currentLevel[$admin2] = $currentLevel[$admin2] ?? [];
-                    $currentLevel = &$currentLevel[$admin2];
-                }
-            
-                if (!empty($admin3) && $admin2 != $admin3) {
-                    $currentLevel[$admin3] = $currentLevel[$admin3] ?? [];
-                    $currentLevel = &$currentLevel[$admin3];
-                }
-            
-                if (!empty($location)) {
-                    $currentLevel[] = $location;
-                }
+
+        $posts = get_posts(array(
+            'post_type'=>'wp-data-presentation',
+            'posts_per_page'=>-1,
+            'fields'=>'ids'
+        ));
+
+        if(empty($posts)){
+            return 'No data';
+        }
+
+        $arr_type = ARRAY_A;
+        global $wpdb;
+        $types = [];
+        $years = [];
+        $ordered_locations = [];
+        foreach($posts as $id){
+            $table_name = 'wpdp_data_'.$id;
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
+            if(!$table_exists){
+                continue;
+            }
+
+            $db_types = $wpdb->get_col("SELECT DISTINCT disorder_type FROM {$table_name}");
+            if(!empty($db_types)){
+                $types = array_merge($types,$db_types);
             }
             
-            $filters['locations'] = $locations;
 
+            $db_years = $wpdb->get_col("SELECT DISTINCT event_date FROM {$table_name}");
+            if(!empty($db_years)){
+                $years = array_merge($years,$db_years);
+            }
+            
+            $db_locations = $wpdb->get_results("SELECT DISTINCT region,country,admin1,admin2,admin3,location FROM {$table_name}", ARRAY_A);
+
+            foreach ($db_locations as $location) {
+                $region = $location['region'];
+                $country = $location['country'];
+                $admin1 = $location['admin1'];
+                $admin2 = $location['admin2'];
+                $admin3 = $location['admin3'];
+                $location = $location['location'];
+
+
+                if (!empty($region)) {
+                    $locations[$region] = $locations[$region] ?? [];
+                    $currentLevel = &$locations[$region];
+                
+                    if (!empty($country) && $region != $country) {
+                        $currentLevel[$country] = $currentLevel[$country] ?? [];
+                        $currentLevel = &$currentLevel[$country];
+                    }
+                
+                    if (!empty($admin1) && $country != $admin1) {
+                        $currentLevel[$admin1] = $currentLevel[$admin1] ?? [];
+                        $currentLevel = &$currentLevel[$admin1];
+                    }
+                
+                    if (!empty($admin2) && $admin1 != $admin2) {
+                        $currentLevel[$admin2] = $currentLevel[$admin2] ?? [];
+                        $currentLevel = &$currentLevel[$admin2];
+                    }
+                
+                    if (!empty($admin3) && $admin2 != $admin3) {
+                        $currentLevel[$admin3] = $currentLevel[$admin3] ?? [];
+                        $currentLevel = &$currentLevel[$admin3];
+                    }
+                
+                    if (!empty($location)) {
+                        $currentLevel[] = $location;
+                    }
+                }
+
+                $ordered_locations = $locations;
+    
+            }
+            
 
         }
-        $filters['types'] = array_unique($filters['types']);
-        sort($filters['years']);
-        sort($filters['types']);
-        return $filters;
+
+        $filters = array(
+            'types'=>$types,
+            'years'=>$years,
+            'locations'=>$ordered_locations
+        );
+
+        set_transient( 'wpdp_filters',$filters);
+
     }
 
     public static function get_total_records_count(){
@@ -156,7 +200,7 @@ final class WPDP_Shortcode {
         return $count;
     }
 
-    public static function get_data($types, $start, $length, $columnName, $orderDir, $values_only = false) {
+    public static function get_data($filters, $types, $start, $length, $columnName, $orderDir, $values_only = false) {
         $posts = get_posts(array(
             'post_type' => 'wp-data-presentation',
             'posts_per_page' => -1,
@@ -203,7 +247,31 @@ final class WPDP_Shortcode {
                 $arr_type = ARRAY_N;
             }
     
-            $result = $wpdb->get_results($wpdb->prepare("SELECT ".implode(', ', $types)." FROM {$table_name} ORDER BY {$columnName} {$orderDir} LIMIT %d, %d", $start, $length), $arr_type);
+            $whereSQL = '';
+            $queryArgs = [];
+            
+            if (!empty($filters)) {
+              $whereSQL = ' WHERE 1=1';
+              foreach($filters as $key => $filter) {
+                if(!empty($filter)){
+                    if(is_array($filter)){
+                        $placeholders = array_fill(0, count($filter), '%s');
+                        $whereSQL .= " AND {$key} IN (".implode(', ', $placeholders).")";
+                        $queryArgs = array_merge($queryArgs, $filter);
+                    }else{
+                        $whereSQL .= " AND {$key} = %s";
+                        $queryArgs[] = $filter;
+                    }
+                    
+                }
+              }
+            }
+
+            $query = $wpdb->prepare("SELECT ".implode(', ', $types)." FROM {$table_name} {$whereSQL} ORDER BY {$columnName} {$orderDir} LIMIT {$start}, {$length}", $queryArgs);
+            
+            update_option('test5',$query);
+    
+            $result = $wpdb->get_results($query, $arr_type);
     
             if($result){
                 $data = array_merge($data, $result);
@@ -254,26 +322,14 @@ final class WPDP_Shortcode {
         wp_enqueue_style(WP_DATA_PRESENTATION_NAME.'public');
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'public');
         wp_enqueue_style( 'dashicons' );
-        // $result = $this->get_all_data();
-        // foreach($result as $key => $val){
-        //     if($atts['from'] && new DateTime($val['event_date']) < new DateTime($atts['from'])){
-        //         unset($result[$key]);
-        //     }
-
-        //     if($atts['to'] && new DateTime($val['event_date']) > new DateTime($atts['to'])){
-        //         unset($result[$key]);
-        //     }
-
-        // }
-        // $result = array_values($result);
 
         ?>
 
         <div class="wpdp">
             <?php
             $result = '';
-                // $filters = $this->get_filters($result);
-                // $this->get_html_filter($filters,$atts);
+                $filters = $this->get_filters();
+                $this->get_html_filter($filters,$atts);
                 if($atts['type'] === 'table'){
                     WPDP_Tables::shortcode_output();
                 }elseif($atts['type'] === 'graph'){
@@ -301,7 +357,7 @@ final class WPDP_Shortcode {
     }
 
     function get_html_filter($filters,$atts){ ?>
-        <div class="filter_data">
+        <div class="filter_data" style="display:none;">
             <a class="filter" href=""><span class="dashicons dashicons-image-filter"></span></a>
             <div class="con">
                 <span class="filter_back dashicons dashicons-arrow-left-alt"></span>

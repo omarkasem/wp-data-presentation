@@ -58,7 +58,7 @@ final class WPDP_Tables {
         add_action( 'wp_ajax_wpdp_datatables_find_by_id', array($this,'find_by_id') );
 
         if(isset($_GET['test2'])){
-            var_dump(get_option('test2'));exit;
+            var_dump(get_option('test5'));exit;
         }
 
     }
@@ -101,7 +101,6 @@ final class WPDP_Tables {
     }
 
     public function get_datatables_data(){
-
         $types = [
             'event_date',
             'disorder_type',
@@ -109,6 +108,29 @@ final class WPDP_Tables {
             'fatalities',
             'event_id_cnty'
         ];
+
+
+        $filters = [
+            'disorder_type'=>$_REQUEST['type_val'],
+            'country'=>$_REQUEST['locations_val'],
+            'from'=>$_REQUEST['from_val'],
+            'to'=>$_REQUEST['to_val']
+        ];
+
+        $filter_on = false;
+        foreach($filters as $filter){
+            if(is_array($filter)){
+                foreach($filter as $f){
+                    if($f != ''){
+                        $filter_on = true;
+                    }
+                }
+            }else{
+                if($filter != ''){
+                    $filter_on = true;
+                }
+            }
+        }
 
         $start = $_REQUEST['start']; // Starting row
         $length = $_REQUEST['length']; // Page length
@@ -118,8 +140,12 @@ final class WPDP_Tables {
 
         $totalRecords = WPDP_Shortcode::get_total_records_count(); // Implement a function to get the total number of records
 
-        $data = WPDP_Shortcode::get_data($types, $start, $length, $columnName, $orderDir,true);
-        update_option('test2',[$types, $start, $length, $columnName, $orderDir]);
+        $data = WPDP_Shortcode::get_data($filters,$types, $start, $length, $columnName, $orderDir,true);
+        
+        // if($filter_on){
+
+        //     $totalRecords = count($data);
+        // }
 
         $arr = [
             "draw" => intval($_REQUEST['draw']),
