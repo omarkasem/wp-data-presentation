@@ -61,7 +61,7 @@
   margin-bottom: 15px;
 }
 #wpdp_datatable_filter{
-  /* display:none; */
+  display:none;
 }
 .wpdp_more_info{
   margin:0;

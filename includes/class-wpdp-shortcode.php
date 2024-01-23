@@ -130,7 +130,7 @@ final class WPDP_Shortcode {
         return $filters;
     }
 
-    public static function get_all_data($types,$values_only = false){
+    public static function get_total_records_count(){
         $posts = get_posts(array(
             'post_type'=>'wp-data-presentation',
             'posts_per_page'=>-1,
@@ -141,6 +141,32 @@ final class WPDP_Shortcode {
             return 'No data';
         }
 
+        $arr_type = ARRAY_A;
+        global $wpdb;
+        $count = 0;
+        foreach($posts as $id){
+            $table_name = 'wpdp_data_'.$id;
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
+            if(!$table_exists){
+                continue;
+            }
+            $count += $wpdb->get_var( "SELECT COUNT(*) FROM {$table_name}" );
+        }
+
+        return $count;
+    }
+
+    public static function get_data($types, $start, $length, $columnName, $orderDir, $values_only = false) {
+        $posts = get_posts(array(
+            'post_type' => 'wp-data-presentation',
+            'posts_per_page' => -1,
+            'fields' => 'ids'
+        ));
+    
+        if(empty($posts)){
+            return 'No data';
+        }
+    
         $all_types = [
             'event_date',
             'disorder_type',
@@ -159,14 +185,15 @@ final class WPDP_Shortcode {
             'fatalities',
             'timestamp',
         ];
+    
         if($types == ''){
             $types = $all_types;
         }
+    
         $arr_type = ARRAY_A;
-
+        global $wpdb;
         $data = [];
         foreach($posts as $id){
-            global $wpdb;
             $table_name = 'wpdp_data_'.$id;
             $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
             if(!$table_exists){
@@ -175,15 +202,15 @@ final class WPDP_Shortcode {
             if($values_only){
                 $arr_type = ARRAY_N;
             }
-            $result = $wpdb->get_results( "SELECT ".implode(', ',$types)." FROM {$table_name} LIMIT 500", $arr_type );
-
+    
+            $result = $wpdb->get_results($wpdb->prepare("SELECT ".implode(', ', $types)." FROM {$table_name} ORDER BY {$columnName} {$orderDir} LIMIT %d, %d", $start, $length), $arr_type);
+    
             if($result){
-                $data = array_merge($data,$result);
+                $data = array_merge($data, $result);
             }
         }
-
+    
         return $data;
-        
     }
 
     function printArrayAsList($locations, $level = 0) {
@@ -248,7 +275,7 @@ final class WPDP_Shortcode {
                 // $filters = $this->get_filters($result);
                 // $this->get_html_filter($filters,$atts);
                 if($atts['type'] === 'table'){
-                    WPDP_Tables::shortcode_output($result);
+                    WPDP_Tables::shortcode_output();
                 }elseif($atts['type'] === 'graph'){
                     WPDP_Graphs::shortcode_output($result);
                 }elseif($atts['type'] === 'map'){

@@ -52,30 +52,85 @@ final class WPDP_Tables {
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
         add_action( 'wp_ajax_nopriv_wpdp_datatables_request', array($this,'get_datatables_data') );
         add_action( 'wp_ajax_wpdp_datatables_request', array($this,'get_datatables_data') );
-        if(isset($_GET['test'])){
-            var_dump(get_option('test'));exit;
+
+
+        add_action( 'wp_ajax_nopriv_wpdp_datatables_find_by_id', array($this,'find_by_id') );
+        add_action( 'wp_ajax_wpdp_datatables_find_by_id', array($this,'find_by_id') );
+
+        if(isset($_GET['test2'])){
+            var_dump(get_option('test2'));exit;
         }
+
+    }
+
+    public function find_by_id(){
+        $event_id = $_POST['event_id'];
+
+        if($event_id == ''){
+            wp_send_json_error([]);
+        }
+
+        $posts = get_posts(array(
+            'post_type'=>'wp-data-presentation',
+            'posts_per_page'=>-1,
+            'fields'=>'ids'
+        ));
+
+        if(empty($posts)){
+            return 'No data';
+        }
+        global $wpdb;
+        $result = '';
+        foreach($posts as $post_id){
+            $table_name = 'wpdp_data_'.$post_id;
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
+            if(!$table_exists){
+                continue;
+            }
+            $result = $wpdb->get_row("SELECT event_type, sub_event_type, source, notes, timestamp FROM {$table_name} WHERE event_id_cnty = '{$event_id}'", ARRAY_A);
+            if(!empty($result)){
+                break;
+            }
+        }
+
+        if(empty($result)){
+            wp_send_json_error([]);
+        }
+
+        wp_send_json_success([$result]);
     }
 
     public function get_datatables_data(){
+
         $types = [
             'event_date',
             'disorder_type',
             'country',
             'fatalities',
-            'admin1'
+            'event_id_cnty'
         ];
-        $data = WPDP_Shortcode::get_all_data($types,true);
+
+        $start = $_REQUEST['start']; // Starting row
+        $length = $_REQUEST['length']; // Page length
+        $columnIndex = $_REQUEST['order'][0]['column']; // Column index for sorting
+        $columnName = $types[$columnIndex]; // Column name for sorting
+        $orderDir = $_REQUEST['order'][0]['dir']; // Order direction
+
+        $totalRecords = WPDP_Shortcode::get_total_records_count(); // Implement a function to get the total number of records
+
+        $data = WPDP_Shortcode::get_data($types, $start, $length, $columnName, $orderDir,true);
+        update_option('test2',[$types, $start, $length, $columnName, $orderDir]);
 
         $arr = [
-            "draw"=> 1,
-            "recordsTotal"=> count($data),
-            "recordsFiltered"=> count($data),
-            "data"=> $data,
+            "draw" => intval($_REQUEST['draw']),
+            "recordsTotal" => intval($totalRecords),
+            "recordsFiltered" => intval($totalRecords),
+            "data" => $data,
         ];
 
         echo json_encode($arr);
         wp_die();
+
     }
 
     function enqueue_scripts() {
@@ -87,16 +142,13 @@ final class WPDP_Tables {
     }
     
 
-    public static function shortcode_output($result){
+    public static function shortcode_output(){
 
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'datatables');
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'moment');
         wp_enqueue_style(WP_DATA_PRESENTATION_NAME.'datatables');
         $table = 'wpdp_datatable';
 
-        // if(empty($result)){
-        //     return 'No results found.';
-        // }
         
     ?>
 
@@ -122,7 +174,7 @@ final class WPDP_Tables {
                 </tr>
             </thead>
 
-            <tfoot style2="display:none;">
+            <tfoot style="display:none;">
                 <tr>
                     <th class="date">Date</th>
                     <th class="type">Type</th>
@@ -130,28 +182,6 @@ final class WPDP_Tables {
                     <th class="number">Number</th>
                 </tr>
             </tfoot>
-
-            <!-- <tbody>
-                <?php foreach($result as $k=> $val){
-                    $locs = [$val['country'],$val['region'],$val['admin1'],$val['admin2'],$val['admin3'],$val['location']];
-                    ?>
-                    <tr>
-                        <td event_type="<?php echo $val['event_type']; ?>"><?php echo $val['event_date']; ?></td>
-                        <td sub_event_type="<?php echo $val['sub_event_type']; ?>"><?php echo $val['disorder_type']; ?></td>
-                        <td locs='<?php echo wp_json_encode($locs); ?>' source="<?php echo $val['source']; ?>"><?php echo $val['country']; ?> 
-                        <span style="display:none;">
-                        <?php unset($locs[0]); foreach(array_filter($locs) as $loc): ?>
-                            <?php echo $loc.' '; ?>
-                        <?php endforeach; ?>
-                        </span>
-                    </td>
-                        <td notes="<?php echo $val['notes']; ?>"><?php echo $val['fatalities']; ?></td>
-                        <td timestamp="<?php echo date('c',$val['timestamp']); ?>"><span style="cursor:pointer;color:#cd0202;font-size:26px;" class="more-info dashicons dashicons-info"></span></td>
-                    </tr>
-                    
-                <?php } ?>
-
-            </tbody> -->
 
         </table>
 

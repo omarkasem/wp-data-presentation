@@ -424,7 +424,11 @@
               "data": { action: 'wpdp_datatables_request' }
             },
             processing: true,
-
+            serverSide: true,
+            deferRender: true,
+            pagingType: "full_numbers",
+            lengthChange: false,
+            pageLength: 20,
             dom: 'Bfrtip',
             buttons: [
               { 
@@ -461,6 +465,11 @@
             "columnDefs": [
               { "orderable": false, "targets": 4 }
             ],
+            "createdRow": function(row, data, dataIndex) {
+              $('td:eq(4)', row).html('<span event_id="'+data[4]+'" style="cursor:pointer;color:#cd0202;font-size:26px;" class="more-info dashicons dashicons-info"></span>');
+            },
+
+
             initComplete: function () {
               let count = 0;
               this.api().columns().every( function () {
@@ -552,7 +561,7 @@
         });
 
 
-        $('#wpdp_datatable tbody').on('click', 'span.more-info', function() {
+      $('#wpdp_datatable tbody').on('click', 'span.more-info', function() {
           var tr = $(this).closest('tr');
           var row = table.row(tr);
       
@@ -563,43 +572,59 @@
                  tr.removeClass('shown');
               });
           } else {
-              row.child( format(row.selector.rows[0] ) ).show();
-              tr.next('tr').find('td').wrapInner('<div style="display: none;"></div>');
-              tr.next('tr').find('td > div').slideDown();
-              tr.addClass('shown');
+            format(row.selector.rows[0],row.child,tr)
           }
       });
     
-      function format ( row ) {
-        let event_type = $(row).find('td[event_type]').attr('event_type');
-        let sub_event_type = $(row).find('td[sub_event_type]').attr('sub_event_type');
-        let source = $(row).find('td[source]').attr('source');
-        let notes = $(row).find('td[notes]').attr('notes');
-        let timestamp = $(row).find('td[timestamp]').attr('timestamp');
-        return `
-        <ul class="wpdp_more_info">
-            <li>
-              <b>Event Type:</b>
-              `+event_type+`
-            </li>
-            <li>
-              <b>Sub Event Type:</b>
-              `+sub_event_type+`
-            </li>
-            <li>
-              <b>Source Type:</b>
-              `+source+`
-            </li>
-            <li>
-              <b>Notes:</b>
-              `+notes+`
-            </li>
-            <li>
-              <b>Timestamp:</b>
-              `+timestamp+`
-            </li>
+      function format ( row, child, tr ) {
+        let event_id = $(row).find('span[event_id]').attr('event_id');
+        if(event_id == ''){
+          return;
+        }
 
-            </ul>`;
+        $.ajax({
+            url: wpdp_obj.ajax_url,
+            data: {
+              action:'wpdp_datatables_find_by_id',
+              event_id:event_id
+            },
+            type: 'POST',
+            success: function(response) {
+              
+              var htmlContent = `
+                <ul class="wpdp_more_info">
+                    <li>
+                      <b>Event Type:</b>
+                      `+response.data[0].event_type+`
+                    </li>
+                    <li>
+                      <b>Sub Event Type:</b>
+                      `+response.data[0].sub_event_type+`
+                    </li>
+                    <li>
+                      <b>Source Type:</b>
+                      `+response.data[0].source+`
+                    </li>
+                    <li>
+                      <b>Notes:</b>
+                      `+response.data[0].notes+`
+                    </li>
+                    <li>
+                      <b>Timestamp:</b>
+                      `+response.data[0].timestamp+`
+                    </li>
+        
+                  </ul>
+              `;
+                child(htmlContent).show();
+                tr.next('tr').find('td').wrapInner('<div style="display: none;"></div>');
+                tr.next('tr').find('td > div').slideDown();
+                tr.addClass('shown');
+            },
+            error: function(errorThrown){
+                alert('No data found');
+            }
+        });
       }
           
       }
