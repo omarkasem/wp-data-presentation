@@ -419,10 +419,6 @@
 
     self.dataTables = function(){
       if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
-        // var selectedLocations = [];
-        // $('input[type="checkbox"].wpdp_location:checked').each(function() {
-        //     selectedLocations.push($(this).val());
-        // });
 
         self.table = $('#wpdp_datatable').DataTable({
             ajax: {
@@ -637,10 +633,8 @@
         });
 
         if (typeof Chart !== 'undefined') {
-          if (myChart) {
-            myChart.destroy();
-          }
-          myChart = self.graphChange(typeValue, self.selectedLocations,fromYear,toYear);
+
+          self.graphChange(typeValue, self.selectedLocations,fromYear,toYear);
           $('#wpdp_chart').show();
           $('#wpdp_chart_title').hide();
         }
@@ -664,6 +658,26 @@
     },
       
     self.graphChange = function(typeValue, selectedLocations, fromYear,toYear){
+      $.ajax({
+        url: wpdp_obj.ajax_url,
+        data: {
+          action:'wpdp_graph_request',
+          type_val: typeValue,
+          locations_val: selectedLocations,
+          from_val: fromYear,
+          to_val: toYear
+        },
+        type: 'POST',
+        success: function(response) {
+          self.chartInit(response.data,typeValue,selectedLocations);
+        },
+        error: function(errorThrown){
+            alert('No data found');
+        }
+      });
+    }
+
+    self.chartInit = function(data,typeValue,selectedLocations){
       let chartData = {
         labels: [],
         datasets: []
@@ -672,49 +686,6 @@
       let datasetsMap = {};
 
       for (let val of data) {
-        let all_locations = [
-          val.region,
-          val.country,
-          val.admin1,
-          val.admin2,
-          val.admin3,
-          val.location,
-        ];
-        
-        if(selectedLocations.length > 0){
-          let exist = false;
-          for(let loc of selectedLocations){
-            if(all_locations.includes(loc)){
-              exist = true;
-            }
-          }
-          if(!exist){
-            continue;
-          }
-        }
-
-        if(typeValue.length > 0 && !typeValue.includes(val.disorder_type)){
-          continue;
-        }
-        
-          
-        if(fromYear.length > 0){
-          let date1 = new Date(fromYear);
-          let date2 = new Date(val.event_date);
-          if(date2.getTime() < date1.getTime()) {
-            continue;
-          }
-        }
-
-        if(toYear.length > 0){
-          let date1 = new Date(toYear);
-          let date2 = new Date(val.event_date);
-          if(date2.getTime() > date1.getTime()) {
-            continue;
-          }
-        }
-
-
         let dataset = {
           label: '',
           data: [],
@@ -763,13 +734,16 @@
           
             datasetsMap[val.country].fat.push(val.fatalities);
         }
-
-        chartData.labels.push(val.event_date);
+        let date = new Date(val.event_date);
+        chartData.labels.push(date.toISOString().split('T')[0]);
       }
 
+      if (self.myChart) {
+        self.myChart.destroy();
+      }
 
       let ctx = document.getElementById('wpdp_chart').getContext('2d');
-      var wpdp_chart =  new Chart(ctx, {
+      self.myChart = new Chart(ctx, {
         type: 'line',
         data: chartData,
         options: {
@@ -807,12 +781,8 @@
             }
         }
       });
-
-
-
-
-      return wpdp_chart;
       
+
     }
     
 
