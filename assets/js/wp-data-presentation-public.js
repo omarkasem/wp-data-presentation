@@ -7,6 +7,7 @@
     var table;
     var global_markers = [];
     var markerCluster;
+    var selectedLocations = [];
 
     self.init = function(){
 
@@ -418,10 +419,11 @@
 
     self.dataTables = function(){
       if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
-        var selectedLocations = [];
-        $('input[type="checkbox"].wpdp_location:checked').each(function() {
-            selectedLocations.push($(this).val());
-        });
+        // var selectedLocations = [];
+        // $('input[type="checkbox"].wpdp_location:checked').each(function() {
+        //     selectedLocations.push($(this).val());
+        // });
+
         self.table = $('#wpdp_datatable').DataTable({
             ajax: {
               "url": wpdp_obj.ajax_url,
@@ -431,7 +433,7 @@
                 d.type_val = $('#wpdp_type').val();
                 d.from_val = $('#wpdp_from').val();
                 d.to_val = $('#wpdp_to').val();
-                d.locations_val = selectedLocations;
+                d.locations_val = self.selectedLocations;
               }
             },
             processing: true,
@@ -598,7 +600,6 @@
       });
 
 
-
       $('.expandable > .exp_click').on('click', function(event) {
         event.stopPropagation();
         $(this).parent().toggleClass('expanded');
@@ -629,17 +630,17 @@
         let typeValue = $("#wpdp_type").select2("val");
         let fromYear = $("#wpdp_from").select2("val");
         let toYear = $("#wpdp_to").select2("val");
-        var selectedLocations = [];
-
+        self.selectedLocations = [];
+        
         $('input[type="checkbox"].wpdp_location:checked').each(function() {
-            selectedLocations.push($(this).val());
+            self.selectedLocations.push($(this).val());
         });
 
         if (typeof Chart !== 'undefined') {
           if (myChart) {
             myChart.destroy();
           }
-          myChart = self.graphChange(typeValue, selectedLocations,fromYear,toYear);
+          myChart = self.graphChange(typeValue, self.selectedLocations,fromYear,toYear);
           $('#wpdp_chart').show();
           $('#wpdp_chart_title').hide();
         }
@@ -651,7 +652,7 @@
           markerCluster.clearMarkers();
           global_markers = [];
 
-          self.maps(typeValue, selectedLocations,fromYear,toYear);
+          self.maps(typeValue, self.selectedLocations,fromYear,toYear);
         }
 
         if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
@@ -669,10 +670,6 @@
       };
 
       let datasetsMap = {};
-      data.sort(function(a, b) {
-        return new Date(a.event_date) - new Date(b.event_date);
-      });
-
 
       for (let val of data) {
         let all_locations = [

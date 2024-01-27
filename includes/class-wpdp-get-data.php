@@ -65,7 +65,7 @@ class WPDP_Db_Table {
 
         // Local host only.
         $query = $wpdb->prepare(
-            "LOAD DATA  INFILE %s
+            "LOAD DATA INFILE %s
                      INTO TABLE {$this->table_name}
                      FIELDS TERMINATED BY %s
                      ENCLOSED BY '\"'

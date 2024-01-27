@@ -79,6 +79,7 @@ final class WPDP_Shortcode {
     }
 
     function get_filters(){
+        // delete_transient( 'wpdp_filters' );
         if(!empty(get_transient('wpdp_filters'))){
             return get_transient('wpdp_filters');
         }
@@ -164,6 +165,11 @@ final class WPDP_Shortcode {
 
         }
 
+        usort($years, function($a, $b) {
+            return strtotime($a) - strtotime($b);
+        });
+        
+
         $filters = array(
             'types'=>$types,
             'years'=>$years,
@@ -172,114 +178,9 @@ final class WPDP_Shortcode {
 
         set_transient( 'wpdp_filters',$filters);
 
+        return $filters;
     }
 
-    public static function get_total_records_count(){
-        $posts = get_posts(array(
-            'post_type'=>'wp-data-presentation',
-            'posts_per_page'=>-1,
-            'fields'=>'ids'
-        ));
-
-        if(empty($posts)){
-            return 'No data';
-        }
-
-        $arr_type = ARRAY_A;
-        global $wpdb;
-        $count = 0;
-        foreach($posts as $id){
-            $table_name = 'wpdp_data_'.$id;
-            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
-            if(!$table_exists){
-                continue;
-            }
-            $count += $wpdb->get_var( "SELECT COUNT(*) FROM {$table_name}" );
-        }
-
-        return $count;
-    }
-
-    public static function get_data($filters, $types, $start, $length, $columnName, $orderDir, $values_only = false) {
-        $posts = get_posts(array(
-            'post_type' => 'wp-data-presentation',
-            'posts_per_page' => -1,
-            'fields' => 'ids'
-        ));
-    
-        if(empty($posts)){
-            return 'No data';
-        }
-    
-        $all_types = [
-            'event_date',
-            'disorder_type',
-            'event_type',
-            'sub_event_type',
-            'region',
-            'country',
-            'admin1',
-            'admin2',
-            'admin3',
-            'location',
-            'latitude',
-            'longitude',
-            'source',
-            'notes',
-            'fatalities',
-            'timestamp',
-        ];
-    
-        if($types == ''){
-            $types = $all_types;
-        }
-    
-        $arr_type = ARRAY_A;
-        global $wpdb;
-        $data = [];
-        foreach($posts as $id){
-            $table_name = 'wpdp_data_'.$id;
-            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
-            if(!$table_exists){
-                continue;
-            }
-            if($values_only){
-                $arr_type = ARRAY_N;
-            }
-    
-            $whereSQL = '';
-            $queryArgs = [];
-            
-            if (!empty($filters)) {
-              $whereSQL = ' WHERE 1=1';
-              foreach($filters as $key => $filter) {
-                if(!empty($filter)){
-                    if(is_array($filter)){
-                        $placeholders = array_fill(0, count($filter), '%s');
-                        $whereSQL .= " AND {$key} IN (".implode(', ', $placeholders).")";
-                        $queryArgs = array_merge($queryArgs, $filter);
-                    }else{
-                        $whereSQL .= " AND {$key} = %s";
-                        $queryArgs[] = $filter;
-                    }
-                    
-                }
-              }
-            }
-
-            $query = $wpdb->prepare("SELECT ".implode(', ', $types)." FROM {$table_name} {$whereSQL} ORDER BY {$columnName} {$orderDir} LIMIT {$start}, {$length}", $queryArgs);
-            
-            update_option('test5',$query);
-    
-            $result = $wpdb->get_results($query, $arr_type);
-    
-            if($result){
-                $data = array_merge($data, $result);
-            }
-        }
-    
-        return $data;
-    }
 
     function printArrayAsList($locations, $level = 0) {
         echo '<ul>';
@@ -414,7 +315,6 @@ final class WPDP_Shortcode {
                                 <option></option>
                                 <?php 
                                 $years = array_unique($filters['years']);
-                                sort($years);
                                 foreach($years as $year){
                                         echo '<option value="'.$year.'">'.$year.'</option>';
                                 } ?>

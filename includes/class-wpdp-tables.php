@@ -57,8 +57,8 @@ final class WPDP_Tables {
         add_action( 'wp_ajax_nopriv_wpdp_datatables_find_by_id', array($this,'find_by_id') );
         add_action( 'wp_ajax_wpdp_datatables_find_by_id', array($this,'find_by_id') );
 
-        if(isset($_GET['test2'])){
-            var_dump(get_option('test5'));exit;
+        if(isset($_GET['test6'])){
+            var_dump(get_option('test6'));exit;
         }
 
     }
@@ -112,25 +112,11 @@ final class WPDP_Tables {
 
         $filters = [
             'disorder_type'=>$_REQUEST['type_val'],
-            'country'=>$_REQUEST['locations_val'],
+            'locations'=>$_REQUEST['locations_val'],
             'from'=>$_REQUEST['from_val'],
             'to'=>$_REQUEST['to_val']
         ];
 
-        $filter_on = false;
-        foreach($filters as $filter){
-            if(is_array($filter)){
-                foreach($filter as $f){
-                    if($f != ''){
-                        $filter_on = true;
-                    }
-                }
-            }else{
-                if($filter != ''){
-                    $filter_on = true;
-                }
-            }
-        }
 
         $start = $_REQUEST['start']; // Starting row
         $length = $_REQUEST['length']; // Page length
@@ -138,20 +124,15 @@ final class WPDP_Tables {
         $columnName = $types[$columnIndex]; // Column name for sorting
         $orderDir = $_REQUEST['order'][0]['dir']; // Order direction
 
-        $totalRecords = WPDP_Shortcode::get_total_records_count(); // Implement a function to get the total number of records
+        $totalRecords = $this->get_total_records_count(); // Implement a function to get the total number of records
 
-        $data = WPDP_Shortcode::get_data($filters,$types, $start, $length, $columnName, $orderDir,true);
-        
-        // if($filter_on){
-
-        //     $totalRecords = count($data);
-        // }
+        $data = $this->get_data($filters,$types, $start, $length, $columnName, $orderDir,true);
 
         $arr = [
             "draw" => intval($_REQUEST['draw']),
-            "recordsTotal" => intval($totalRecords),
-            "recordsFiltered" => intval($totalRecords),
-            "data" => $data,
+            "recordsTotal" => intval($data['count']),
+            "recordsFiltered" => intval($data['count']),
+            "data" => $data['data'],
         ];
 
         echo json_encode($arr);
@@ -168,6 +149,144 @@ final class WPDP_Tables {
     }
     
 
+    public function get_total_records_count(){
+        $posts = get_posts(array(
+            'post_type'=>'wp-data-presentation',
+            'posts_per_page'=>-1,
+            'fields'=>'ids'
+        ));
+
+        if(empty($posts)){
+            return 'No data';
+        }
+
+        $arr_type = ARRAY_A;
+        global $wpdb;
+        $count = 0;
+        foreach($posts as $id){
+            $table_name = 'wpdp_data_'.$id;
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
+            if(!$table_exists){
+                continue;
+            }
+            $count += $wpdb->get_var( "SELECT COUNT(*) FROM {$table_name}" );
+        }
+
+        return $count;
+    }
+
+    public function get_data($filters, $types, $start, $length, $columnName, $orderDir, $values_only = false) {
+        $posts = get_posts(array(
+            'post_type' => 'wp-data-presentation',
+            'posts_per_page' => -1,
+            'fields' => 'ids'
+        ));
+    
+        if(empty($posts)){
+            return 'No data';
+        }
+    
+        $all_types = [
+            'event_date',
+            'disorder_type',
+            'event_type',
+            'sub_event_type',
+            'region',
+            'country',
+            'admin1',
+            'admin2',
+            'admin3',
+            'location',
+            'latitude',
+            'longitude',
+            'source',
+            'notes',
+            'fatalities',
+            'timestamp',
+        ];
+    
+        if($types == ''){
+            $types = $all_types;
+        }
+
+        $arr_type = ARRAY_A;
+        global $wpdb;
+        $data = [];
+        $count = 0;
+        foreach($posts as $id){
+            $table_name = 'wpdp_data_'.$id;
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
+            if(!$table_exists){
+                continue;
+            }
+            if($values_only){
+                $arr_type = ARRAY_N;
+            }
+    
+            $whereSQL = '';
+            $queryArgs = [];
+            
+            $columns = array('region', 'country', 'admin1', 'admin2', 'admin3', 'location');
+            
+            if (!empty($filters)) {
+                $whereSQL = ' WHERE 1=1';
+                foreach($filters as $key => $filter) {
+                    if(!empty($filter)){
+                        if(is_array($filter)){
+                            if($key == "locations"){
+                                $conditions = array();
+                                foreach($columns as $column){
+                                    foreach($filter as $value){
+                                        $conditions[] = "$column = %s";
+                                        $queryArgs[] = $value;
+                                    }
+                                }
+                                $whereSQL .= " AND (".implode(' OR ', $conditions).")";
+                            }else{
+                                $placeholders = array_fill(0, count($filter), '%s');
+                                $whereSQL .= " AND {$key} IN (".implode(', ', $placeholders).")";
+                                $queryArgs = array_merge($queryArgs, $filter);
+                            }
+                        }else{
+
+                            if($key === 'from'){
+                                $whereSQL .= " AND STR_TO_DATE({$columnName}, '%%d %%M %%Y') >= STR_TO_DATE(%s, '%%d %%M %%Y')";
+                                $queryArgs[] = $filter;
+                            }elseif($key === 'to'){
+                                $whereSQL .= " AND STR_TO_DATE({$columnName}, '%%d %%M %%Y') <= STR_TO_DATE(%s, '%%d %%M %%Y')";
+                                $queryArgs[] = $filter;
+                            }else{
+                                $whereSQL .= " AND {$key} = %s";
+                                $queryArgs[] = $filter;
+                            }
+
+                        }
+                    }
+                }
+            }
+
+            if($columnName === 'event_date'){
+                $query = $wpdb->prepare("SELECT ".implode(', ', $types)." FROM {$table_name} {$whereSQL} ORDER BY STR_TO_DATE({$columnName}, '%%d %%M %%Y') {$orderDir} LIMIT {$start}, {$length}", $queryArgs);
+            }else{
+                $query = $wpdb->prepare("SELECT ".implode(', ', $types)." FROM {$table_name} {$whereSQL} ORDER BY {$columnName} {$orderDir} LIMIT {$start}, {$length}", $queryArgs);
+            }
+            
+
+            $query_count = $wpdb->prepare("SELECT COUNT(*) FROM {$table_name} {$whereSQL}", $queryArgs);
+            $count += $wpdb->get_var($query_count);
+            
+            $result = $wpdb->get_results($query, $arr_type);
+    
+            if($result){
+                $data = array_merge($data, $result);
+            }
+        }
+    
+        return ['data'=>$data,'count'=>$count];
+    }
+
+
+
     public static function shortcode_output(){
 
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'datatables');
@@ -177,17 +296,6 @@ final class WPDP_Tables {
 
         
     ?>
-
-    <table style="display:none;">
-        <tbody><tr>
-            <td>Minimum date:</td>
-            <td><input type="text" id="wpdp_min" name="min"></td>
-        </tr>
-        <tr>
-            <td>Maximum date:</td>
-            <td><input type="text" id="wpdp_max" name="max"></td>
-        </tr>
-    </tbody></table>
 
         <table id="<?php echo $table; ?>" class="display" style="width:100%">
             <thead>
