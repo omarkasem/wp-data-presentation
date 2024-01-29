@@ -51,21 +51,8 @@ class WPDP_Db_Table {
         }
 
         // Live server only
-        // $query = $wpdb->prepare(
-        //     "LOAD DATA LOCAL INFILE %s
-        //              INTO TABLE {$this->table_name}
-        //              FIELDS TERMINATED BY %s
-        //              ENCLOSED BY '\"'
-        //              LINES TERMINATED BY '\\n'
-        //              IGNORE 1 LINES",
-        //     $csv_file_path,
-        //     $this->delimiter
-        // );
-        // $result = $conn->query($query);
-
-        // Local host only.
         $query = $wpdb->prepare(
-            "LOAD DATA INFILE %s
+            "LOAD DATA LOCAL INFILE %s
                      INTO TABLE {$this->table_name}
                      FIELDS TERMINATED BY %s
                      ENCLOSED BY '\"'
@@ -74,8 +61,21 @@ class WPDP_Db_Table {
             $csv_file_path,
             $this->delimiter
         );
+        $result = $conn->query($query);
+
+        // Local host only.
+        // $query = $wpdb->prepare(
+        //     "LOAD DATA INFILE %s
+        //              INTO TABLE {$this->table_name}
+        //              FIELDS TERMINATED BY %s
+        //              ENCLOSED BY '\"'
+        //              LINES TERMINATED BY '\\n'
+        //              IGNORE 1 LINES",
+        //     $csv_file_path,
+        //     $this->delimiter
+        // );
         
-        $result = $wpdb->query($query);
+        // $result = $wpdb->query($query);
 
         if (false === $result) {
             var_dump('Error importing CSV data - ' . $conn->error);exit;
