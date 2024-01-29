@@ -18,7 +18,7 @@
       self.filtersChange();
       self.expandable();
       self.showMapDetails();
-      // self.graphCountSelector();
+      self.graphCountSelector();
 
     },
 
@@ -26,14 +26,16 @@
       document.getElementById('wpdp_type_selector').addEventListener('change', function () {
         let val = this.value;
         let i = -1;
-        for(let set of myChart.data.datasets){ i++;
+        console.log(val);
+        console.log(self.myChart.data.datasets);
+        for(let set of self.myChart.data.datasets){ i++;
           if(val == 'incident_count'){
-            myChart.data.datasets[i].data = [...set.data].fill(1);
+            self.myChart.data.datasets[i].data = self.myChart.data.datasets[i].count;
           } else {
-            myChart.data.datasets[i].data = set.fat;
+            self.myChart.data.datasets[i].data = self.myChart.data.datasets[i].fat;
           }
         }
-        myChart.update();
+        self.myChart.update();
       });
     };
 
@@ -622,7 +624,7 @@
     },
 
     self.filtersChange = function() {
-      $('#wpdp_type, .wpdp_location,#wpdp_from,#wpdp_to').on('change select2:select select2:unselect',function(e){
+      $('#wpdp_type, .wpdp_location,#wpdp_from,#wpdp_to').on('select2:select select2:unselect',function(e){
         let typeValue = $("#wpdp_type").select2("val");
         let fromYear = $("#wpdp_from").select2("val");
         let toYear = $("#wpdp_to").select2("val");
@@ -670,6 +672,7 @@
         type: 'POST',
         success: function(response) {
           self.chartInit(response.data,typeValue,selectedLocations);
+          // console.log(response.data);
         },
         error: function(errorThrown){
             alert('No data found');
@@ -678,65 +681,97 @@
     }
 
     self.chartInit = function(data,typeValue,selectedLocations){
-      let chartData = {
-        labels: [],
-        datasets: []
-      };
+      // let chartData = {
+      //   labels: [],
+      //   datasets: []
+      // };
 
-      let datasetsMap = {};
+      // let datasetsMap = {};
 
-      for (let val of data) {
+      // for (let val of data) {
+      //   let dataset = {
+      //     label: '',
+      //     data: [],
+      //     fat:[],
+      //     fill: false,
+      //     borderColor: '#' + (Math.random()*0xFFFFFF<<0).toString(16)
+      //   };
+
+      //   // Type
+      //   if (typeValue.length && !datasetsMap[val.disorder_type]) {
+      //     let label = val.disorder_type;
+      //     if(selectedLocations.length){
+      //       label += ' in ' + selectedLocations[0];
+      //     }
+      //     dataset.label = label;
+    
+      //     datasetsMap[val.disorder_type] = dataset;
+      //     chartData.datasets.push(dataset);
+      //   }
+    
+      //   if(val.disorder_type in datasetsMap) {
+      //     if($('#wpdp_type_selector').val() === 'incident_count'){
+      //       datasetsMap[val.disorder_type].data.push(1);
+      //     }else{
+      //       datasetsMap[val.disorder_type].data.push(val.fatalities);
+      //     }
+
+      //       datasetsMap[val.disorder_type].fat.push(val.fatalities);
+      //   }
+
+      //   // Location
+      //   if (selectedLocations.length && !datasetsMap[val.country]) {
+      //     let label = 'Incidents in '+ val.country;
+      //     dataset.label = label;
+    
+      //     datasetsMap[val.country] = dataset;
+      //     chartData.datasets.push(dataset);
+      //   }
+
+      //   if(val.country in datasetsMap) {
+      //     if($('#wpdp_type_selector').val() === 'incident_count'){
+      //       datasetsMap[val.country].data.push(1);
+      //     }else{
+      //       datasetsMap[val.country].data.push(val.fatalities);
+      //     }
+          
+      //       datasetsMap[val.country].fat.push(val.fatalities);
+      //   }
+      //   let date = new Date(val.event_date);
+      //   chartData.labels.push(date.toISOString().split('T')[0]);
+      // }
+
+      
+      var datasets = [];
+      const colors = ["#FF5733", "#FFBD33",  "#75FF33",  "#33FFBD", "#33DBFF", "#3375FF", "#5733FF", "#BD33FF"];
+      var chart_sql = data.chart_sql;
+
+      data = data.data;
+      let i =0;
+      for(let label in data){ i++;
         let dataset = {
-          label: '',
-          data: [],
-          fat:[],
+          label:label,
+          borderColor: colors[i],
           fill: false,
-          borderColor: '#' + (Math.random()*0xFFFFFF<<0).toString(16)
+          data: [],
+          count:[],
+          fat:[],
         };
 
-        // Type
-        if (typeValue.length && !datasetsMap[val.disorder_type]) {
-          let label = val.disorder_type;
-          if(selectedLocations.length){
-            label += ' in ' + selectedLocations[0];
-          }
-          dataset.label = label;
-    
-          datasetsMap[val.disorder_type] = dataset;
-          chartData.datasets.push(dataset);
-        }
-    
-        if(val.disorder_type in datasetsMap) {
+
+        for(let val of data[label]){
           if($('#wpdp_type_selector').val() === 'incident_count'){
-            datasetsMap[val.disorder_type].data.push(1);
+            dataset.data.push({x: val.week_start, y: val.events_count});
           }else{
-            datasetsMap[val.disorder_type].data.push(val.fatalities);
+            dataset.data.push({x: val.week_start, y: val.fatalities_count});
           }
-
-            datasetsMap[val.disorder_type].fat.push(val.fatalities);
+          dataset.fat.push({x: val.week_start, y: val.fatalities_count});
+          dataset.count.push({x: val.week_start, y: val.events_count});
         }
 
-        // Location
-        if (selectedLocations.length && !datasetsMap[val.country]) {
-          let label = 'Incidents in '+ val.country;
-          dataset.label = label;
-    
-          datasetsMap[val.country] = dataset;
-          chartData.datasets.push(dataset);
-        }
-
-        if(val.country in datasetsMap) {
-          if($('#wpdp_type_selector').val() === 'incident_count'){
-            datasetsMap[val.country].data.push(1);
-          }else{
-            datasetsMap[val.country].data.push(val.fatalities);
-          }
-          
-            datasetsMap[val.country].fat.push(val.fatalities);
-        }
-        let date = new Date(val.event_date);
-        chartData.labels.push(date.toISOString().split('T')[0]);
+        datasets.push(dataset);
       }
+
 
       if (self.myChart) {
         self.myChart.destroy();
@@ -745,7 +780,7 @@
       let ctx = document.getElementById('wpdp_chart').getContext('2d');
       self.myChart = new Chart(ctx, {
         type: 'line',
-        data: chartData,
+        data: {datasets:datasets},
         options: {
             responsive: true,
             plugins: {
@@ -763,20 +798,15 @@
             },
             scales: {
                 x: {
-                  type: 'timeseries',
+                  type: 'time',
                   time: {
-                    unit: 'month',  
-                    tooltipFormat: 'DD MMM YYYY'
+                    unit: chart_sql,
                   }
                 },
-                y: {
-                    type: 'linear',
-                    display: true,
-                    title: {
-                        display: true,
-                        text: 'Number of Incidents'
-                    },
-                    beginAtZero: true
+                y:{
+                  type: 'linear',
+                  display: true,
+                  beginAtZero: true
                 }
             }
         }

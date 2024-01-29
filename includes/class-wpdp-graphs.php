@@ -54,6 +54,16 @@ final class WPDP_Graphs {
         add_action( 'wp_ajax_nopriv_wpdp_graph_request', array($this,'get_graph_data') );
         add_action( 'wp_ajax_wpdp_graph_request', array($this,'get_graph_data') );
 
+        if(isset($_GET['test'])){
+            $this->get_data([
+                'disorder_type'=>[
+                    'Political violence',
+                    'Strategic developments',
+                ],
+                'from'=>'',
+                'to'=>'04 June 2004',
+                ],'f');
+        }
 
 
     }
@@ -102,67 +112,97 @@ final class WPDP_Graphs {
         }
 
         global $wpdb;
-        $data = [];
-        $count = 0;
+        $sql_parts = [];
+        $whereSQL = ' WHERE 1=1';
+        $sql_type = 'YEAR';
+        $sql_type2 = 'YEAR';
+        $chart_sql = 'year';
+        $all_filters = WPDP_Shortcode::get_filters();
+
+
+        if($filters['from'] != ''){
+            $whereSQL .= " AND STR_TO_DATE(event_date, '%%d %%M %%Y') >= STR_TO_DATE('{$filters['from']}', '%%d %%M %%Y')";
+        }
+
+        if($filters['to'] != ''){
+            $whereSQL .= " AND STR_TO_DATE(event_date, '%%d %%M %%Y') <= STR_TO_DATE('{$filters['to']}', '%%d %%M %%Y')";
+        }
+
+        if($filters['from'] != '' || $filters['to'] != ''){
+            $all_dates = $all_filters['years'];
+            $filters['from'] = ($filters['from'] ? $filters['from'] : $all_dates[0]);
+            $filters['to'] = ($filters['to'] ? $filters['to'] : end($all_dates));
+
+            $date1 = date_create($filters['from']);
+            $date2 = date_create($filters['to']);
+            $diff = date_diff($date1, $date2);
+            $days = intval($diff->format('%a'));
+            if($days < 40){
+                $sql_type = 'WEEK';
+                $sql_type2 = 'YEARWEEK';
+                $chart_sql = 'week';
+            }elseif($days >= 40 && $days < 365){
+                $sql_type = 'MONTH';
+                $sql_type2 = 'MONTH';
+                $chart_sql = 'month';
+            }elseif($days >= 365 && $days < 700){
+                $sql_type = 'MONTH';
+                $sql_type2 = 'MONTH';
+                $chart_sql = 'quarter';
+            }
+        }
+        $filters['disorder_type'] = (!empty($filters['disorder_type']) ? $filters['disorder_type'] : $all_filters['types']);
+
+   
         foreach($posts as $id){
             $table_name = 'wpdp_data_'.$id;
             $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
             if(!$table_exists){
                 continue;
             }
-    
-            $whereSQL = '';
-            $queryArgs = [];
-            
-            $columns = array('region', 'country', 'admin1', 'admin2', 'admin3', 'location');
-            
-            if (!empty($filters)) {
-                $whereSQL = ' WHERE 1=1';
-                foreach($filters as $key => $filter) {
-                    if(!empty($filter)){
-                        if(is_array($filter)){
-                            if($key == "locations"){
-                                $conditions = array();
-                                foreach($columns as $column){
-                                    foreach($filter as $value){
-                                        $conditions[] = "$column = %s";
-                                        $queryArgs[] = $value;
-                                    }
-                                }
-                                $whereSQL .= " AND (".implode(' OR ', $conditions).")";
-                            }else{
-                                $placeholders = array_fill(0, count($filter), '%s');
-                                $whereSQL .= " AND {$key} IN (".implode(', ', $placeholders).")";
-                                $queryArgs = array_merge($queryArgs, $filter);
-                            }
-                        }else{
 
-                            if($key === 'from'){
-                                $whereSQL .= " AND STR_TO_DATE({$columnName}, '%%d %%M %%Y') >= STR_TO_DATE(%s, '%%d %%M %%Y')";
-                                $queryArgs[] = $filter;
-                            }elseif($key === 'to'){
-                                $whereSQL .= " AND STR_TO_DATE({$columnName}, '%%d %%M %%Y') <= STR_TO_DATE(%s, '%%d %%M %%Y')";
-                                $queryArgs[] = $filter;
-                            }else{
-                                $whereSQL .= " AND {$key} = %s";
-                                $queryArgs[] = $filter;
-                            }
+            $sql_parts[] = "SELECT 
+                SUM(fatalities) as fatalities_count,
+                COUNT(*) as events_count,
+                {$sql_type2}(STR_TO_DATE(event_date, '%%d %%M %%Y')) as year_week,
+                MIN(STR_TO_DATE(event_date, '%%d %%M %%Y')) as week_start,
+                disorder_type
+            FROM {$table_name}
+            ";
 
-                        }
-                    }
-                }
-            }
-
-            $query = $wpdb->prepare("SELECT ".implode(', ', $types)." FROM {$table_name} {$whereSQL} ORDER BY STR_TO_DATE(event_date, '%%d %%M %%Y') asc", $queryArgs);
-
-            $result = $wpdb->get_results($query, ARRAY_A);
-    
-            if($result){
-                $data = array_merge($data, $result);
-            }
+        }
+        
+        if(empty($sql_parts)){
+            return [];
         }
 
-        return $data;
+        
+
+        $data = [];
+        foreach($filters['disorder_type'] as $type){
+            $new_sql = [];
+            $new_where = $whereSQL;
+            $new_where .= " AND disorder_type = '{$type}' ";
+            foreach($sql_parts as $k => $sql){
+                $new_sql[]= $sql.' '.$new_where;
+            }
+  
+            
+            $query = $wpdb->prepare("
+            " . implode(' UNION ALL ', $new_sql) . "
+            GROUP BY year_week 
+            ORDER BY week_start ASC
+            ");
+            
+
+            $data[$type] = $wpdb->get_results($query);
+
+        }
+        
+        return [
+            'data'=>$data,
+            'chart_sql'=>$chart_sql
+        ];
     }
 
 

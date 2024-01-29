@@ -78,13 +78,7 @@ final class WPDP_Shortcode {
 
     }
 
-    function get_filters(){
-        // delete_transient( 'wpdp_filters' );
-        if(!empty(get_transient('wpdp_filters'))){
-            return get_transient('wpdp_filters');
-        }
-
-
+    public static function get_filters(){
         $posts = get_posts(array(
             'post_type'=>'wp-data-presentation',
             'posts_per_page'=>-1,
@@ -169,14 +163,13 @@ final class WPDP_Shortcode {
             return strtotime($a) - strtotime($b);
         });
         
+        $types = array_unique($types);
 
         $filters = array(
             'types'=>$types,
             'years'=>$years,
             'locations'=>$ordered_locations
         );
-
-        set_transient( 'wpdp_filters',$filters);
 
         return $filters;
     }
@@ -229,7 +222,7 @@ final class WPDP_Shortcode {
         <div class="wpdp">
             <?php
             $result = '';
-                $filters = $this->get_filters();
+                $filters = self::get_filters();
                 $this->get_html_filter($filters,$atts);
                 if($atts['type'] === 'table'){
                     WPDP_Tables::shortcode_output();
