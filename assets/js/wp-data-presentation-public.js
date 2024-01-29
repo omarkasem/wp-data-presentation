@@ -624,39 +624,44 @@
     },
 
     self.filtersChange = function() {
-      $('#wpdp_type, .wpdp_location,#wpdp_from,#wpdp_to').on('select2:select select2:unselect',function(e){
-        let typeValue = $("#wpdp_type").select2("val");
-        let fromYear = $("#wpdp_from").select2("val");
-        let toYear = $("#wpdp_to").select2("val");
-        self.selectedLocations = [];
-        
-        $('input[type="checkbox"].wpdp_location:checked').each(function() {
-            self.selectedLocations.push($(this).val());
-        });
-
-        if (typeof Chart !== 'undefined') {
-
-          self.graphChange(typeValue, self.selectedLocations,fromYear,toYear);
-          $('#wpdp_chart').show();
-          $('#wpdp_chart_title').hide();
-        }
-
-        if (typeof google === 'object' && typeof google.maps === 'object') {
-          for(let i=0; i<global_markers.length; i++){
-            global_markers[i].setMap(null);
-          }
-          markerCluster.clearMarkers();
-          global_markers = [];
-
-          self.maps(typeValue, self.selectedLocations,fromYear,toYear);
-        }
-
-        if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
-          self.table.draw(false);
-        }
-
-
+      $('#wpdp_type,#wpdp_from,#wpdp_to').on('select2:select select2:unselect',function(e){
+        self.filterAction();
       });
+      $('.wpdp_location').on('change',function(e){
+        self.filterAction();
+      });
+    },
+
+    self.filterAction = function(){
+      let typeValue = $("#wpdp_type").select2("val");
+      let fromYear = $("#wpdp_from").select2("val");
+      let toYear = $("#wpdp_to").select2("val");
+      self.selectedLocations = [];
+      
+      $('input[type="checkbox"].wpdp_location:checked').each(function() {
+          self.selectedLocations.push($(this).val());
+      });
+
+      if (typeof Chart !== 'undefined') {
+
+        self.graphChange(typeValue, self.selectedLocations,fromYear,toYear);
+        $('#wpdp_chart').show();
+        $('#wpdp_chart_title').hide();
+      }
+
+      if (typeof google === 'object' && typeof google.maps === 'object') {
+        for(let i=0; i<global_markers.length; i++){
+          global_markers[i].setMap(null);
+        }
+        markerCluster.clearMarkers();
+        global_markers = [];
+
+        self.maps(typeValue, self.selectedLocations,fromYear,toYear);
+      }
+
+      if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
+        self.table.draw(false);
+      }
     },
       
     self.graphChange = function(typeValue, selectedLocations, fromYear,toYear){
