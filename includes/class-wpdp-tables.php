@@ -292,12 +292,10 @@ final class WPDP_Tables {
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'datatables');
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'moment');
         wp_enqueue_style(WP_DATA_PRESENTATION_NAME.'datatables');
-        $table = 'wpdp_datatable';
-
         
     ?>
 
-        <table id="<?php echo $table; ?>" class="display" style="width:100%">
+        <table id="wpdp_datatable" style="width:100%">
             <thead>
                 <tr>
                     <th>Date</th>
@@ -308,14 +306,6 @@ final class WPDP_Tables {
                 </tr>
             </thead>
 
-            <tfoot style="display:none;">
-                <tr>
-                    <th class="date">Date</th>
-                    <th class="type">Type</th>
-                    <th class="location">Location</th>
-                    <th class="number">Number</th>
-                </tr>
-            </tfoot>
 
         </table>
 

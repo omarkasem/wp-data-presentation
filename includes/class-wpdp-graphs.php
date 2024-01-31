@@ -215,7 +215,7 @@ final class WPDP_Graphs {
     }
 
 
-    public static function shortcode_output($result){
+    public static function shortcode_output(){
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'chartjs');
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'chartjs-moment');
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'chartjs-adapter');

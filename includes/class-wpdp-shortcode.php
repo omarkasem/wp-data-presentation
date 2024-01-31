@@ -16,6 +16,8 @@ final class WPDP_Shortcode {
      */
     protected static $_instance = null;
 
+    public $shortcode_atts = [];
+
     /**
      * Get instance of the class
      *
@@ -79,6 +81,8 @@ final class WPDP_Shortcode {
     }
 
     public static function get_filters(){
+        $atts = self::get_instance()->shortcode_atts;
+
         $posts = get_posts(array(
             'post_type'=>'wp-data-presentation',
             'posts_per_page'=>-1,
@@ -106,8 +110,18 @@ final class WPDP_Shortcode {
                 $types = array_merge($types,$db_types);
             }
             
+            $whereSQL = ' WHERE 1=1 ';
+            if(isset($atts['from']) && $atts['from'] != ''){
+                $whereSQL .= " AND STR_TO_DATE(event_date, '%d %M %Y') >= STR_TO_DATE('{$atts['from']}', '%d %M %Y')";
+            }
+    
+            if(isset($atts['to']) && $atts['to'] != ''){
+                $whereSQL .= " AND STR_TO_DATE(event_date, '%d %M %Y') <= STR_TO_DATE('{$atts['to']}', '%d %M %Y')";
+            }
+   
 
-            $db_years = $wpdb->get_col("SELECT DISTINCT event_date FROM {$table_name}");
+            $db_years = $wpdb->get_col("SELECT DISTINCT event_date FROM {$table_name} {$whereSQL}");
+
             if(!empty($db_years)){
                 $years = array_merge($years,$db_years);
             }
@@ -155,8 +169,6 @@ final class WPDP_Shortcode {
                 $ordered_locations = $locations;
     
             }
-            
-
         }
 
         usort($years, function($a, $b) {
@@ -209,6 +221,9 @@ final class WPDP_Shortcode {
             'from' => '',
             'to' => ''
         ), $atts);
+
+
+        $this->shortcode_atts = $atts;
     
         ob_start();
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'select2');
@@ -221,27 +236,26 @@ final class WPDP_Shortcode {
 
         <div class="wpdp">
             <?php
-            $result = '';
                 $filters = self::get_filters();
                 $this->get_html_filter($filters,$atts);
-                if($atts['type'] === 'table'){
+                if(isset($atts['type']) && $atts['type'] === 'table'){
                     WPDP_Tables::shortcode_output();
-                }elseif($atts['type'] === 'graph'){
-                    WPDP_Graphs::shortcode_output($result);
-                }elseif($atts['type'] === 'map'){
-                    WPDP_Maps::shortcode_output($result);
+                }elseif(isset($atts['type']) && $atts['type'] === 'graph'){
+                    WPDP_Graphs::shortcode_output();
+                }elseif(isset($atts['type']) && $atts['type'] === 'map'){
+                    WPDP_Maps::shortcode_output();
                 }else{
-                    WPDP_Tables::shortcode_output($result);
+                    WPDP_Tables::shortcode_output();
                     echo '<br><hr>';
-                    WPDP_Graphs::shortcode_output($result);
+                    WPDP_Graphs::shortcode_output();
                     echo '<br><hr>';
-                    WPDP_Maps::shortcode_output($result);
+                    WPDP_Maps::shortcode_output();
                 }
             ?>
         </div>
 
         <script>
-            var wpdp_data = [];
+            var wpdp_shortcode_atts = '<?php echo json_encode($atts); ?>';
         </script>
 
 

@@ -2,7 +2,6 @@
   'use strict';
 
     var self = {};
-    var data = wpdp_data;
     var myChart;
     var table;
     var global_markers = [];
@@ -11,7 +10,6 @@
 
     self.init = function(){
 
-   
 
       self.dataTables();
       self.menuFilters();
@@ -23,20 +21,21 @@
     },
 
     self.graphCountSelector = function(){
-      document.getElementById('wpdp_type_selector').addEventListener('change', function () {
-        let val = this.value;
-        let i = -1;
-        console.log(val);
-        console.log(self.myChart.data.datasets);
-        for(let set of self.myChart.data.datasets){ i++;
-          if(val == 'incident_count'){
-            self.myChart.data.datasets[i].data = self.myChart.data.datasets[i].count;
-          } else {
-            self.myChart.data.datasets[i].data = self.myChart.data.datasets[i].fat;
+      if(document.getElementById('wpdp_type_selector')){
+        document.getElementById('wpdp_type_selector').addEventListener('change', function () {
+          let val = this.value;
+          let i = -1;
+          for(let set of self.myChart.data.datasets){ i++;
+            if(val == 'incident_count'){
+              self.myChart.data.datasets[i].data = self.myChart.data.datasets[i].count;
+            } else {
+              self.myChart.data.datasets[i].data = self.myChart.data.datasets[i].fat;
+            }
           }
-        }
-        self.myChart.update();
-      });
+          self.myChart.update();
+        });
+      }
+
     };
 
     self.showMapDetails = function(){
@@ -421,6 +420,16 @@
 
     self.dataTables = function(){
       if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
+        let wpdp_from = $('#wpdp_from').val();
+        if(wpdp_from == '' && JSON.parse(wpdp_shortcode_atts).from != ''){
+          wpdp_from = JSON.parse(wpdp_shortcode_atts).from;
+        }
+
+        let wpdp_to = $('#wpdp_to').val();
+        if(wpdp_to == '' && JSON.parse(wpdp_shortcode_atts).to != ''){
+          wpdp_to = JSON.parse(wpdp_shortcode_atts).to;
+        }
+        
 
         self.table = $('#wpdp_datatable').DataTable({
             ajax: {
@@ -429,8 +438,8 @@
               "data": function ( d ) {
                 d.action = 'wpdp_datatables_request';
                 d.type_val = $('#wpdp_type').val();
-                d.from_val = $('#wpdp_from').val();
-                d.to_val = $('#wpdp_to').val();
+                d.from_val = wpdp_from;
+                d.to_val = wpdp_to;
                 d.locations_val = self.selectedLocations;
               }
             },
@@ -483,38 +492,6 @@
 
 
         });
-
-
-        // let minDate = $('#wpdp_min');
-        // let maxDate = $('#wpdp_max');
- 
-        // DataTable.ext.search.push(function (settings, data, dataIndex) {
-        //     let min = null;
-        //     let max = null;
-
-        //     if(minDate.val()){
-        //       min = new Date(minDate.val());
-        //     }
-        //     if(maxDate.val()){
-        //       max = new Date(maxDate.val());
-        //     }
-
-        //     let date = new Date(data[0]);
-
-        //     if (
-        //         (min === null && max === null) ||
-        //         (min === null && date <= max) ||
-        //         (min <= date && max === null) ||
-        //         (min <= date && date <= max)
-        //     ) {
-        //         return true;
-        //     }
-        //     return false;
-        // });
-
-        // $('#wpdp_min, #wpdp_max').on('change',function(){
-        //   table.draw();
-        // });
 
 
       $('#wpdp_datatable tbody').on('click', 'span.more-info', function() {
@@ -636,6 +613,15 @@
       let typeValue = $("#wpdp_type").select2("val");
       let fromYear = $("#wpdp_from").select2("val");
       let toYear = $("#wpdp_to").select2("val");
+
+      if(fromYear == '' && JSON.parse(wpdp_shortcode_atts).from != ''){
+        fromYear = JSON.parse(wpdp_shortcode_atts).from;
+      }
+
+      if(toYear == '' && JSON.parse(wpdp_shortcode_atts).to != ''){
+        toYear = JSON.parse(wpdp_shortcode_atts).to;
+      }
+
       self.selectedLocations = [];
       
       $('input[type="checkbox"].wpdp_location:checked').each(function() {
