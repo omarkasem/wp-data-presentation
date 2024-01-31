@@ -176,17 +176,27 @@ final class WPDP_Graphs {
             return [];
         }
 
-        
+        $columns = array('region', 'country', 'admin1', 'admin2', 'admin3', 'location');
 
         $data = [];
         foreach($filters['disorder_type'] as $type){
             $new_sql = [];
             $new_where = $whereSQL;
             $new_where .= " AND disorder_type = '{$type}' ";
+
+            if(!empty($filters['locations'])){
+                $conditions = array();
+                foreach($columns as $column){
+                    foreach($filters['locations'] as $value){
+                        $conditions[] = "$column = '{$value}'";
+                    }
+                }
+                $new_where .= " AND (".implode(' OR ', $conditions).") ";
+            }
+
             foreach($sql_parts as $k => $sql){
                 $new_sql[]= $sql.' '.$new_where;
             }
-  
             
             $query = $wpdb->prepare("
             " . implode(' UNION ALL ', $new_sql) . "
@@ -198,7 +208,6 @@ final class WPDP_Graphs {
             $data[$type] = $wpdb->get_results($query);
 
         }
-        
         return [
             'data'=>$data,
             'chart_sql'=>$chart_sql
