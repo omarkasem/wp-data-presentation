@@ -77,73 +77,35 @@
     },
 
     self.maps = function(typeValue = false , selectedLocations = [],fromYear = false,toYear = false){
-      var mapData = [];
-      for (let val of data) {
-        let all_locations = [
-          val.region,
-          val.country,
-          val.admin1,
-          val.admin2,
-          val.admin3,
-          val.location,
-        ];
-        
-        if(selectedLocations.length > 0){
-          let exist = false;
-          for(let loc of selectedLocations){
-            if(all_locations.includes(loc)){
-              exist = true;
-            }
-          }
-          if(!exist){
-            continue;
-          }
-        }
 
-        if(typeValue.length > 0 && !typeValue.includes(val.disorder_type)){
-          continue;
+      $.ajax({
+        url: wpdp_obj.ajax_url,
+        data: {
+          action:'wpdp_map_request',
+          type_val: typeValue,
+          locations_val: selectedLocations,
+          from_val: fromYear,
+          to_val: toYear
+        },
+        type: 'POST',
+        success: function(response) {
+          self.mapInit(response.data,typeValue,selectedLocations);
+        },
+        error: function(errorThrown){
+            alert('No data found');
         }
-        
-        if(fromYear.length > 0){
-          let date1 = new Date(fromYear);
-          let date2 = new Date(val.event_date);
-          if(date2.getTime() < date1.getTime()) {
-            continue;
-          }
-        }
+      });
 
-        if(toYear.length > 0){
-          let date1 = new Date(toYear);
-          let date2 = new Date(val.event_date);
-          if(date2.getTime() > date1.getTime()) {
-            continue;
-          }
-        }
-        mapData.push({
-            latitude: val.latitude,
-            longitude: val.longitude,
-            date: val.event_date,
-            number: val.fatalities,
-            type: val.disorder_type,
-            location: val.country,
-            timestamp: val.timestamp,
-            event_type: val.event_type,
-            sub_event_type: val.sub_event_type,
-            source: val.source,
-            notes: val.notes,
-        });
-      };
-      
+
+    },
+
+    self.mapInit = function(mapData,typeValue,selectedLocations){
       if(!mapData.length){
         return;
       }
-
-        
       var startLocation = { lat: parseFloat(mapData[0].latitude), lng: parseFloat(mapData[0].longitude) };
 
-      
       if(!self.main_map){
-        
         self.main_map = new google.maps.Map(
           document.getElementById('wpdp_map'),
           {
@@ -348,8 +310,70 @@
       
         };
       }
-        
-      var infoWindow = new google.maps.InfoWindow;
+
+
+
+      // var infoWindow = new google.maps.InfoWindow;
+      // mapData.forEach(function(loc) {
+      //     var location = { lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude) };
+          
+      //     var marker = new google.maps.Marker({
+      //         position: location, 
+      //         map:self.main_map,
+      //         icon: self.svg_marker
+      //     });
+
+      //     global_markers.push(marker);
+      //     let timestamp = new Date(loc.timestamp * 1000);
+
+      //     marker.addListener('click', function() { 
+      //       infoWindow.close(); 
+      //       infoWindow.setContent(`
+      //       <div style="
+      //           color: #333;
+      //           font-size: 16px; 
+      //           padding: 10px;
+      //           line-height: 1.6;
+      //           border: 2px solid #333;
+      //           border-radius: 10px;
+      //           background: #fff;
+      //           ">
+      //               <h2 style="
+      //                   margin: 0 0 10px;
+      //                   font-size: 20px;
+      //                   border-bottom: 1px solid #333;
+      //                   padding-bottom: 5px;
+      //               ">${loc.type}</h2>
+      //               <p style="margin-bottom:0;"><strong>Location:</strong> ${loc.location}</p>
+      //               <p style="margin-bottom:0;"><strong>Number:</strong> ${loc.number}</p>
+      //               <p style="margin-bottom:0;"><strong>Date:</strong> ${loc.date}</p>
+      //               <div class="map_more_details">
+      //                 <span style="cursor:pointer;color:#cd0202;font-size:25px;margin-top:3px;" class="dashicons dashicons-info"></span>
+      //                 <div class="det">
+      //                   <ul>
+      //                     <li><b>Event Type:</b> ${loc.event_type}</li>
+      //                     <li><b>Sub Event Type:</b> ${loc.sub_event_type}</li>
+      //                     <li><b>Source:</b> ${loc.source}</li>
+      //                     <li><b>Notes:</b> ${loc.notes}</li>
+      //                     <li><b>Timestamp:</b> ${timestamp.toISOString()}</li>
+      //                   </ul>
+      //                 </div>
+      //               </div>
+      //           </div>
+      //       `);
+
+      //       infoWindow.open(self.main_map, marker);
+      //     }); 
+
+
+      //     // Close the infoWindow when the map is clicked
+      //     self.main_map.addListener('click', function() {
+      //       infoWindow.close();
+      //     });
+
+      // });
+
+
 
       mapData.forEach(function(loc) {
           var location = { lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude) };
@@ -361,62 +385,98 @@
           });
 
           global_markers.push(marker);
-          let timestamp = new Date(loc.timestamp * 1000);
+          // let timestamp = new Date(loc.timestamp * 1000);
 
-          marker.addListener('click', function() { 
-            infoWindow.close(); 
-            infoWindow.setContent(`
-            <div style="
-                color: #333;
-                font-size: 16px; 
-                padding: 10px;
-                line-height: 1.6;
-                border: 2px solid #333;
-                border-radius: 10px;
-                background: #fff;
-                ">
-                    <h2 style="
-                        margin: 0 0 10px;
-                        font-size: 20px;
-                        border-bottom: 1px solid #333;
-                        padding-bottom: 5px;
-                    ">${loc.type}</h2>
-                    <p style="margin-bottom:0;"><strong>Location:</strong> ${loc.location}</p>
-                    <p style="margin-bottom:0;"><strong>Number:</strong> ${loc.number}</p>
-                    <p style="margin-bottom:0;"><strong>Date:</strong> ${loc.date}</p>
-                    <div class="map_more_details">
-                      <span style="cursor:pointer;color:#cd0202;font-size:25px;margin-top:3px;" class="dashicons dashicons-info"></span>
-                      <div class="det">
-                        <ul>
-                          <li><b>Event Type:</b> ${loc.event_type}</li>
-                          <li><b>Sub Event Type:</b> ${loc.sub_event_type}</li>
-                          <li><b>Source:</b> ${loc.source}</li>
-                          <li><b>Notes:</b> ${loc.notes}</li>
-                          <li><b>Timestamp:</b> ${timestamp.toISOString()}</li>
-                        </ul>
-                      </div>
-                    </div>
-                </div>
-            `);
+          // marker.addListener('click', function() { 
+          //   infoWindow.close(); 
+          //   infoWindow.setContent(`
+          //   <div style="
+          //       color: #333;
+          //       font-size: 16px; 
+          //       padding: 10px;
+          //       line-height: 1.6;
+          //       border: 2px solid #333;
+          //       border-radius: 10px;
+          //       background: #fff;
+          //       ">
+          //           <h2 style="
+          //               margin: 0 0 10px;
+          //               font-size: 20px;
+          //               border-bottom: 1px solid #333;
+          //               padding-bottom: 5px;
+          //           ">${loc.type}</h2>
+          //           <p style="margin-bottom:0;"><strong>Location:</strong> ${loc.location}</p>
+          //           <p style="margin-bottom:0;"><strong>Number:</strong> ${loc.number}</p>
+          //           <p style="margin-bottom:0;"><strong>Date:</strong> ${loc.date}</p>
+          //           <div class="map_more_details">
+          //             <span style="cursor:pointer;color:#cd0202;font-size:25px;margin-top:3px;" class="dashicons dashicons-info"></span>
+          //             <div class="det">
+          //               <ul>
+          //                 <li><b>Event Type:</b> ${loc.event_type}</li>
+          //                 <li><b>Sub Event Type:</b> ${loc.sub_event_type}</li>
+          //                 <li><b>Source:</b> ${loc.source}</li>
+          //                 <li><b>Notes:</b> ${loc.notes}</li>
+          //                 <li><b>Timestamp:</b> ${timestamp.toISOString()}</li>
+          //               </ul>
+          //             </div>
+          //           </div>
+          //       </div>
+          //   `);
 
-            infoWindow.open(self.main_map, marker);
-          }); 
+          //   infoWindow.open(self.main_map, marker);
+          // }); 
 
 
-          // Close the infoWindow when the map is clicked
-          self.main_map.addListener('click', function() {
-            infoWindow.close();
+          // // Close the infoWindow when the map is clicked
+          // self.main_map.addListener('click', function() {
+          //   infoWindow.close();
+          // });
+
+      });
+      var markerCluster = new MarkerClusterer(my_map, global_markers, {
+          imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
+      });
+
+      var newMarkers = []; // store the new markers
+
+      google.maps.event.addListener(markerCluster, 'clusterclick', function(cluster) {
+          const bounds = cluster.getBounds();
+          const ne = bounds.getNorthEast();
+          const sw = bounds.getSouthWest();
+
+          fetch(wpdp_obj.ajax_url, {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded',
+                  'X-Requested-With': 'XMLHttpRequest'
+              },
+              body: new URLSearchParams({
+                  action: 'wpdp_get_markers',
+                  northEastLat: ne.lat(),
+                  northEastLng: ne.lng(),
+                  southWestLat: sw.lat(),
+                  southWestLng: sw.lng()
+              })
+          })
+          .then(response => response.json())
+          .then(data => {
+              // clear the previous new markers
+              newMarkers.forEach(marker => markerCluster.removeMarker(marker));
+              newMarkers = [];
+
+              // create the new markers
+              newMarkers = data.map(markerData => {
+                  let location = { lat: parseFloat(markerData.lat), lng: parseFloat(markerData.lng) };
+                  return new google.maps.Marker({position: location, map: my_map, icon: self.svg_marker});
+              });
+
+              // add the new markers to the cluster
+              markerCluster.addMarkers(newMarkers);
           });
-
       });
 
-      markerCluster = new MarkerClusterer(my_map, global_markers, {
-        // imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
-        imagePath: wpdp_obj.url+'assets/images/m'
-      });
 
     },
-
 
     self.dataTables = function(){
       if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
@@ -663,7 +723,6 @@
         type: 'POST',
         success: function(response) {
           self.chartInit(response.data,typeValue,selectedLocations);
-          // console.log(response.data);
         },
         error: function(errorThrown){
             alert('No data found');
@@ -672,67 +731,6 @@
     }
 
     self.chartInit = function(data,typeValue,selectedLocations){
-      // let chartData = {
-      //   labels: [],
-      //   datasets: []
-      // };
-
-      // let datasetsMap = {};
-
-      // for (let val of data) {
-      //   let dataset = {
-      //     label: '',
-      //     data: [],
-      //     fat:[],
-      //     fill: false,
-      //     borderColor: '#' + (Math.random()*0xFFFFFF<<0).toString(16)
-      //   };
-
-      //   // Type
-      //   if (typeValue.length && !datasetsMap[val.disorder_type]) {
-      //     let label = val.disorder_type;
-      //     if(selectedLocations.length){
-      //       label += ' in ' + selectedLocations[0];
-      //     }
-      //     dataset.label = label;
-    
-      //     datasetsMap[val.disorder_type] = dataset;
-      //     chartData.datasets.push(dataset);
-      //   }
-    
-      //   if(val.disorder_type in datasetsMap) {
-      //     if($('#wpdp_type_selector').val() === 'incident_count'){
-      //       datasetsMap[val.disorder_type].data.push(1);
-      //     }else{
-      //       datasetsMap[val.disorder_type].data.push(val.fatalities);
-      //     }
-
-      //       datasetsMap[val.disorder_type].fat.push(val.fatalities);
-      //   }
-
-      //   // Location
-      //   if (selectedLocations.length && !datasetsMap[val.country]) {
-      //     let label = 'Incidents in '+ val.country;
-      //     dataset.label = label;
-    
-      //     datasetsMap[val.country] = dataset;
-      //     chartData.datasets.push(dataset);
-      //   }
-
-      //   if(val.country in datasetsMap) {
-      //     if($('#wpdp_type_selector').val() === 'incident_count'){
-      //       datasetsMap[val.country].data.push(1);
-      //     }else{
-      //       datasetsMap[val.country].data.push(val.fatalities);
-      //     }
-          
-      //       datasetsMap[val.country].fat.push(val.fatalities);
-      //   }
-      //   let date = new Date(val.event_date);
-      //   chartData.labels.push(date.toISOString().split('T')[0]);
-      // }
-
-      
       var datasets = [];
       const colors = ["#FF5733", "#FFBD33",  "#75FF33",  "#33FFBD", "#33DBFF", "#3375FF", "#5733FF", "#BD33FF"];
       var chart_sql = data.chart_sql;

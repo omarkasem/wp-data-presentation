@@ -57,9 +57,6 @@ final class WPDP_Tables {
         add_action( 'wp_ajax_nopriv_wpdp_datatables_find_by_id', array($this,'find_by_id') );
         add_action( 'wp_ajax_wpdp_datatables_find_by_id', array($this,'find_by_id') );
 
-        if(isset($_GET['test6'])){
-            var_dump(get_option('test6'));exit;
-        }
 
     }
 
