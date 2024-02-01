@@ -76,20 +76,20 @@
       });
     },
 
-    self.maps = function(typeValue = false , selectedLocations = [],fromYear = false,toYear = false){
-
+    self.maps = function(fromYear = false,toYear = false){
+      if(self.main_map){
+        return;
+      }
       $.ajax({
         url: wpdp_obj.ajax_url,
         data: {
           action:'wpdp_map_request',
-          type_val: typeValue,
-          locations_val: selectedLocations,
           from_val: fromYear,
           to_val: toYear
         },
         type: 'POST',
         success: function(response) {
-          self.mapInit(response.data,typeValue,selectedLocations);
+          self.mapInit(response.data);
         },
         error: function(errorThrown){
             alert('No data found');
@@ -99,18 +99,27 @@
 
     },
 
-    self.mapInit = function(mapData,typeValue,selectedLocations){
+    self.mapInit = function(mapData){
       if(!mapData.length){
         return;
       }
+
+
+      var typeValue = [];
+      $("#wpdp_type").find('option').each(function(){
+        typeValue.push($(this).val());
+      });
+
       var startLocation = { lat: parseFloat(mapData[0].latitude), lng: parseFloat(mapData[0].longitude) };
 
       if(!self.main_map){
+
+        var infoWindow = new google.maps.InfoWindow();
+
         self.main_map = new google.maps.Map(
           document.getElementById('wpdp_map'),
           {
-              zoom: 3, 
-              center: startLocation,
+              mapTypeId: 'terrain',
               styles: [
                 {
                     "featureType": "water",
@@ -287,6 +296,9 @@
                     ]
                 }
             ],
+
+              zoom: 3, 
+              center: startLocation,   
               mapTypeControl: false
           }
         );
@@ -299,181 +311,135 @@
 
       var my_map = self.main_map;
 
-      if(!self.svg_marker){     
-        self.svg_marker = {
-          path: "M-20,0a20,20 0 1,0 40,0a20,20 0 1,0 -40,0",
-          fillColor: '#FF0000',
-          fillOpacity: .6,
-          anchor: new google.maps.Point(0,0),
-          strokeWeight: 0,
-          scale: .7
-      
-        };
-      }
+      my_map.data.loadGeoJson('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json', null, function (features) {
+            features.forEach(function (feature) {
+                const country = feature.getProperty('name');
+                const mapDataForCountry = mapData.filter(d => d.country === country);
+                if(mapDataForCountry.length){
+                  let count = 0;
+                  mapDataForCountry.forEach(dataForCountry => {
+                    Object.keys(dataForCountry).forEach(function(key) {
+                        if(key === 'fatalities_count'){
+                          count+= parseInt(dataForCountry[key]);
+                        }
+                        feature.setProperty(key, dataForCountry[key]);
+                    });
+                    feature.setProperty('full_fat',count);
+                  });
+                }
 
+            });
+        });
 
+        my_map.data.setStyle(function(feature) {
+            var fatalities = feature.getProperty('full_fat');
+            var color = getColor(fatalities);
+            const country = feature.getProperty('name');
+            if (mapData.find(d => d.country === country)) {
+              return {
+                  fillColor: color,
+                  strokeWeight: 2
+              };
+            }else{
+              return{
+                strokeWeight: .3
+              }
+            }
+        });
 
-      // var infoWindow = new google.maps.InfoWindow;
-      // mapData.forEach(function(loc) {
-      //     var location = { lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude) };
+      my_map.data.addListener('click', function(event) {
+        const country = event.feature.getProperty('name');
+        
+        if (mapData.find(d => d.country === country)) {
+          const mapDataForCountry = mapData.filter(d => d.country === country);
           
-      //     var marker = new google.maps.Marker({
-      //         position: location, 
-      //         map:self.main_map,
-      //         icon: self.svg_marker
-      //     });
+            my_map.data.revertStyle();
+            my_map.data.overrideStyle(event.feature, {strokeWeight: 2});
+            var location = event.latLng;
 
-      //     global_markers.push(marker);
-      //     let timestamp = new Date(loc.timestamp * 1000);
-
-      //     marker.addListener('click', function() { 
-      //       infoWindow.close(); 
-      //       infoWindow.setContent(`
-      //       <div style="
-      //           color: #333;
-      //           font-size: 16px; 
-      //           padding: 10px;
-      //           line-height: 1.6;
-      //           border: 2px solid #333;
-      //           border-radius: 10px;
-      //           background: #fff;
-      //           ">
-      //               <h2 style="
-      //                   margin: 0 0 10px;
-      //                   font-size: 20px;
-      //                   border-bottom: 1px solid #333;
-      //                   padding-bottom: 5px;
-      //               ">${loc.type}</h2>
-      //               <p style="margin-bottom:0;"><strong>Location:</strong> ${loc.location}</p>
-      //               <p style="margin-bottom:0;"><strong>Number:</strong> ${loc.number}</p>
-      //               <p style="margin-bottom:0;"><strong>Date:</strong> ${loc.date}</p>
-      //               <div class="map_more_details">
-      //                 <span style="cursor:pointer;color:#cd0202;font-size:25px;margin-top:3px;" class="dashicons dashicons-info"></span>
-      //                 <div class="det">
-      //                   <ul>
-      //                     <li><b>Event Type:</b> ${loc.event_type}</li>
-      //                     <li><b>Sub Event Type:</b> ${loc.sub_event_type}</li>
-      //                     <li><b>Source:</b> ${loc.source}</li>
-      //                     <li><b>Notes:</b> ${loc.notes}</li>
-      //                     <li><b>Timestamp:</b> ${timestamp.toISOString()}</li>
-      //                   </ul>
-      //                 </div>
-      //               </div>
-      //           </div>
-      //       `);
-
-      //       infoWindow.open(self.main_map, marker);
-      //     }); 
+          const table = `
+            <table>
+                <thead>
+                    <tr>
+                        <th style="font-size:13px;">${country}</th>
+                        `+typeValue.filter(type => type.trim() !== "").map(type => `<th style="font-size:13px;">${type}</th>`).join('')+`
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="font-size:13px;">Incidents</td>
+                        `+mapDataForCountry.map(data => `<td style="font-size:13px;">${data.events_count}</td>`).join('')+`
+                    </tr>
+                    <tr>
+                        <td style="font-size:13px;">Fatalities</td>
+                        `+mapDataForCountry.map(data => `<td style="font-size:13px;">${data.fatalities_count}</td>`).join('')+`
+                    </tr>
+                    <tr>
+                        <td style="font-size:13px;">Total</td>
+                        
+                    </tr>
+                </tbody>
+            </table>
+            <div class="map_more_details">
+              More Info
+              <span style="cursor:pointer;color:#cd0202;font-size:20px;margin-top:-1px;" class="dashicons dashicons-info"></span>
+              <div class="det">
+                <ul>
+                  <li><b>Event Type:</b> ${mapDataForCountry.event_type}</li>
+                  <li><b>Sub Event Type:</b> ${mapDataForCountry.sub_event_type}</li>
+                  <li><b>Source:</b> ${mapDataForCountry.source}</li>
+                  <li><b>Notes:</b> ${mapDataForCountry.notes}</li>
+                  <li><b>Timestamp:</b> ${mapDataForCountry.timestamp}</li>
+                </ul>
+              </div>
+            </div>
 
 
-      //     // Close the infoWindow when the map is clicked
-      //     self.main_map.addListener('click', function() {
-      //       infoWindow.close();
-      //     });
+        `;
 
-      // });
-
-
-
-      mapData.forEach(function(loc) {
-          var location = { lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude) };
-          
-          var marker = new google.maps.Marker({
-              position: location, 
-              map:self.main_map,
-              icon: self.svg_marker
-          });
-
-          global_markers.push(marker);
-          // let timestamp = new Date(loc.timestamp * 1000);
-
-          // marker.addListener('click', function() { 
-          //   infoWindow.close(); 
-          //   infoWindow.setContent(`
-          //   <div style="
-          //       color: #333;
-          //       font-size: 16px; 
-          //       padding: 10px;
-          //       line-height: 1.6;
-          //       border: 2px solid #333;
-          //       border-radius: 10px;
-          //       background: #fff;
-          //       ">
-          //           <h2 style="
-          //               margin: 0 0 10px;
-          //               font-size: 20px;
-          //               border-bottom: 1px solid #333;
-          //               padding-bottom: 5px;
-          //           ">${loc.type}</h2>
-          //           <p style="margin-bottom:0;"><strong>Location:</strong> ${loc.location}</p>
-          //           <p style="margin-bottom:0;"><strong>Number:</strong> ${loc.number}</p>
-          //           <p style="margin-bottom:0;"><strong>Date:</strong> ${loc.date}</p>
-          //           <div class="map_more_details">
-          //             <span style="cursor:pointer;color:#cd0202;font-size:25px;margin-top:3px;" class="dashicons dashicons-info"></span>
-          //             <div class="det">
-          //               <ul>
-          //                 <li><b>Event Type:</b> ${loc.event_type}</li>
-          //                 <li><b>Sub Event Type:</b> ${loc.sub_event_type}</li>
-          //                 <li><b>Source:</b> ${loc.source}</li>
-          //                 <li><b>Notes:</b> ${loc.notes}</li>
-          //                 <li><b>Timestamp:</b> ${timestamp.toISOString()}</li>
-          //               </ul>
-          //             </div>
-          //           </div>
-          //       </div>
-          //   `);
-
-          //   infoWindow.open(self.main_map, marker);
-          // }); 
-
-
-          // // Close the infoWindow when the map is clicked
-          // self.main_map.addListener('click', function() {
-          //   infoWindow.close();
-          // });
-
-      });
-      var markerCluster = new MarkerClusterer(my_map, global_markers, {
-          imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
+        infoWindow.setContent(table);
+              infoWindow.setPosition(location);
+            infoWindow.open(my_map);
+        }else{
+          infoWindow.close();
+        }
       });
 
-      var newMarkers = []; // store the new markers
+      function calculateTotals(infowindow) {
+        let tempDiv = document.createElement('div');
+        tempDiv.innerHTML = infowindow.getContent();
+        let table = tempDiv.getElementsByTagName('table')[0];
+        
+        let rows = table.rows;
+        let totalRow = rows[rows.length-1]; // The last row is the total row
+    
+        for (let i = 1; i < rows[0].cells.length; i++) { // Start from 1 to skip the first column
+            let total = 0;
+            for (let j = 1; j < rows.length - 1; j++) { // Start from 1 to skip the header row, and minus 1 to skip the total row
+                total += parseInt(rows[j].cells[i].innerText, 10);
+            }
+            let newCell = totalRow.insertCell(i);
+            newCell.style.fontSize = "14px";
+            newCell.innerText = total;
+        }
+        
+        infowindow.setContent(tempDiv.innerHTML);
+    }
+    
+    google.maps.event.addListener(infoWindow, 'domready', function() {
+        calculateTotals(infoWindow);
+    });
 
-      google.maps.event.addListener(markerCluster, 'clusterclick', function(cluster) {
-          const bounds = cluster.getBounds();
-          const ne = bounds.getNorthEast();
-          const sw = bounds.getSouthWest();
-
-          fetch(wpdp_obj.ajax_url, {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/x-www-form-urlencoded',
-                  'X-Requested-With': 'XMLHttpRequest'
-              },
-              body: new URLSearchParams({
-                  action: 'wpdp_get_markers',
-                  northEastLat: ne.lat(),
-                  northEastLng: ne.lng(),
-                  southWestLat: sw.lat(),
-                  southWestLng: sw.lng()
-              })
-          })
-          .then(response => response.json())
-          .then(data => {
-              // clear the previous new markers
-              newMarkers.forEach(marker => markerCluster.removeMarker(marker));
-              newMarkers = [];
-
-              // create the new markers
-              newMarkers = data.map(markerData => {
-                  let location = { lat: parseFloat(markerData.lat), lng: parseFloat(markerData.lng) };
-                  return new google.maps.Marker({position: location, map: my_map, icon: self.svg_marker});
-              });
-
-              // add the new markers to the cluster
-              markerCluster.addMarkers(newMarkers);
-          });
-      });
+    function getColor(accidents) {
+      return accidents > 10000 ? '#800026' :
+            accidents > 8000  ? '#BD0026' :
+            accidents > 5000  ? '#E31A1C' :
+            accidents > 4000  ? '#FC4E2A' :
+            accidents > 3000   ? '#FD8D3C' :
+            accidents > 500   ? '#FEB24C':
+            accidents > 100   ? '#FED976' :
+            '#FFEDA0';
+    }
 
 
     },
@@ -696,13 +662,7 @@
       }
 
       if (typeof google === 'object' && typeof google.maps === 'object') {
-        for(let i=0; i<global_markers.length; i++){
-          global_markers[i].setMap(null);
-        }
-        markerCluster.clearMarkers();
-        global_markers = [];
-
-        self.maps(typeValue, self.selectedLocations,fromYear,toYear);
+        self.maps(fromYear,toYear);
       }
 
       if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
