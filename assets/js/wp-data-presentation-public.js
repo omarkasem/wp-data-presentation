@@ -1,3 +1,4 @@
+
 ( function ( $ ) {
   'use strict';
 
@@ -70,6 +71,7 @@
       });
 
 
+
       
     },
 
@@ -129,14 +131,34 @@
       });
     },
 
-    self.maps = function(fromYear = false,toYear = false){
-      if(self.main_map){
-        return;
+    self.maps = function(typeValue){
+      // if(self.main_map){
+      //   return;
+      // }
+
+      let fromYear = $("#wpdp_from").val();
+      let toYear = $("#wpdp_to").val();
+
+      if(fromYear == '' && JSON.parse(wpdp_shortcode_atts).from != ''){
+        fromYear = JSON.parse(wpdp_shortcode_atts).from;
       }
+
+      if(toYear == '' && JSON.parse(wpdp_shortcode_atts).to != ''){
+        toYear = JSON.parse(wpdp_shortcode_atts).to;
+      }
+
+      self.selectedLocations = [];
+      
+      $('input[type="checkbox"].wpdp_location:checked').each(function() {
+          self.selectedLocations.push($(this).val());
+      });
+
       $.ajax({
         url: wpdp_obj.ajax_url,
         data: {
           action:'wpdp_map_request',
+          type_val: typeValue,
+          locations_val: self.selectedLocations,
           from_val: fromYear,
           to_val: toYear
         },
@@ -153,14 +175,12 @@
     },
 
     self.mapInit = function(mapData){
+      console.log(mapData);
       if(!mapData.length){
         return;
       }
 
-      console.log(mapData);
-
       var startLocation = { lat: parseFloat(mapData[0].latitude), lng: parseFloat(mapData[0].longitude) };
-
       
       if(!self.main_map){
         
@@ -354,7 +374,6 @@
         self.main_map.setZoom(3);
       }
 
-
       var my_map = self.main_map;
 
       if(!self.svg_marker){     
@@ -365,7 +384,6 @@
           anchor: new google.maps.Point(0,0),
           strokeWeight: 0,
           scale: .7
-      
         };
       }
         
@@ -400,10 +418,10 @@
                         font-size: 20px;
                         border-bottom: 1px solid #333;
                         padding-bottom: 5px;
-                    ">${loc.type}</h2>
+                    ">${loc.disorder_type}</h2>
                     <p style="margin-bottom:0;"><strong>Location:</strong> ${loc.location}</p>
-                    <p style="margin-bottom:0;"><strong>Number:</strong> ${loc.number}</p>
-                    <p style="margin-bottom:0;"><strong>Date:</strong> ${loc.date}</p>
+                    <p style="margin-bottom:0;"><strong>Number:</strong> ${loc.fatalities}</p>
+                    <p style="margin-bottom:0;"><strong>Date:</strong> ${loc.event_date}</p>
                     <div class="map_more_details">
                       <span style="cursor:pointer;color:#cd0202;font-size:25px;margin-top:3px;" class="dashicons dashicons-info"></span>
                       <div class="det">
@@ -431,11 +449,9 @@
       });
 
       markerCluster = new MarkerClusterer(my_map, global_markers, {
-        // imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
-        imagePath: wpdp_obj.url+'assets/images/m'
+        imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
+        // imagePath: wpdp_obj.url+'assets/images/m'
       });
-
-
 
 
     },
@@ -660,7 +676,12 @@
       }
 
       if (typeof google === 'object' && typeof google.maps === 'object') {
-        self.maps(fromYear,toYear);
+        for(let i=0; i<global_markers.length; i++){
+          global_markers[i].setMap(null);
+        }
+        markerCluster.clearMarkers();
+        global_markers = [];
+        self.maps(typeValue);
       }
 
       if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
