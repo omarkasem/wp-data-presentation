@@ -69,6 +69,7 @@ final class WPDP_Maps {
 
     function enqueue_scripts() {
         wp_register_script(WP_DATA_PRESENTATION_NAME.'google-maps-api', 'https://maps.googleapis.com/maps/api/js?key='.get_field('google_maps_api_key','option').'&callback=wpdp_maps', array(), null, true);
+        wp_register_script(WP_DATA_PRESENTATION_NAME.'google-maps-cluster',WP_DATA_PRESENTATION_URL. 'assets/js/markerclustererplus.js', array(), null, true);
 
     }
 
@@ -92,8 +93,8 @@ final class WPDP_Maps {
             'location',
             'latitude',
             'longitude',
-            // 'source',
-            // 'notes',
+            'source',
+            'notes',
             'timestamp',
         ];
    
@@ -109,10 +110,8 @@ final class WPDP_Maps {
             }
 
             $result = $wpdb->get_results("SELECT 
-            ".implode(', ', $types).",
-            SUM(fatalities) as fatalities_count,
-            COUNT(*) as events_count
-             FROM {$table_name} GROUP BY disorder_type,country");
+            ".implode(', ', $types)."
+             FROM {$table_name} LIMIT 100");
             $data = array_merge($data,$result);
 
         }
@@ -124,6 +123,7 @@ final class WPDP_Maps {
 
     public static function shortcode_output(){
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'google-maps-api');
+        wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'google-maps-cluster');
         
         
     ?>

@@ -69,9 +69,9 @@ final class WPDP_Shortcode {
         wp_register_style(WP_DATA_PRESENTATION_NAME.'public', WP_DATA_PRESENTATION_URL.'assets/css/wp-data-presentation-public.css', [],WP_DATA_PRESENTATION_VERSION );
 
 
-        wp_register_style(WP_DATA_PRESENTATION_NAME.'jquery-ui', WP_DATA_PRESENTATION_URL.'assets/css/jquery-ui.min.css', [],WP_DATA_PRESENTATION_VERSION );
+        wp_register_style(WP_DATA_PRESENTATION_NAME.'jquery-ui', 'https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/themes/base/jquery-ui.min.css', [],WP_DATA_PRESENTATION_VERSION );
 
-        wp_register_script(WP_DATA_PRESENTATION_NAME.'public', WP_DATA_PRESENTATION_URL.'assets/js/wp-data-presentation-public.js', array('jquery'), WP_DATA_PRESENTATION_VERSION, true);
+        wp_register_script(WP_DATA_PRESENTATION_NAME.'public', WP_DATA_PRESENTATION_URL.'assets/js/wp-data-presentation-public.js', array('jquery','jquery-ui-datepicker'), WP_DATA_PRESENTATION_VERSION, true);
 
         wp_localize_script( WP_DATA_PRESENTATION_NAME.'public','wpdp_obj',[
             'url'=>WP_DATA_PRESENTATION_URL,
@@ -230,6 +230,7 @@ final class WPDP_Shortcode {
         wp_enqueue_style(WP_DATA_PRESENTATION_NAME.'select2');
         wp_enqueue_style(WP_DATA_PRESENTATION_NAME.'public');
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'public');
+        wp_enqueue_style( WP_DATA_PRESENTATION_NAME.'jquery-ui' );
         wp_enqueue_style( 'dashicons' );
 
         ?>
@@ -256,6 +257,7 @@ final class WPDP_Shortcode {
 
         <script>
             var wpdp_shortcode_atts = '<?php echo json_encode($atts); ?>';
+            var wpdp_filter_dates = <?php echo json_encode($filters['years']); ?>;
         </script>
 
 
@@ -315,28 +317,14 @@ final class WPDP_Shortcode {
                         <div class="title">
                             DATE RANGE <span class="dashicons dashicons-arrow-up-alt2"></span>
                         </div>
-                        <div class="content">
+                        <div class="content <?php echo (isset($atts['type']) && $atts['type'] === 'map' ? 'filter_maps' : ''); ?>">
                             <div class="dates">
                                 <label for="wpdp_from">FROM</label>
-                                <select data-allow-clear="true" name="wpdp_from" id="wpdp_from">
-                                <option></option>
-                                <?php 
-                                $years = array_unique($filters['years']);
-                                foreach($years as $year){
-                                        echo '<option value="'.$year.'">'.$year.'</option>';
-                                } ?>
-                                </select>
+                                <input type="text" name="wpdp_from" id="wpdp_from">
                             </div>
                             <div class="dates">
                                 <label style="margin-right: 23px;" for="wpdp_to">TO</label>
-                                <select data-allow-clear="true" name="wpdp_to" id="wpdp_to">
-                                <option></option>
-                                <?php 
-                                $years = array_unique($filters['years']);
-                                foreach($years as $year){
-                                        echo '<option value="'.$year.'">'.$year.'</option>';
-                                } ?>
-                                </select>
+                                <input type="text" name="wpdp_to" id="wpdp_to">
                             </div>
                         </div>
 
