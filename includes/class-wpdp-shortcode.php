@@ -328,11 +328,19 @@ final class WPDP_Shortcode {
                         <div class="content <?php echo (isset($atts['type']) && $atts['type'] === 'map' ? 'filter_maps' : ''); ?>">
                             <div class="dates">
                                 <label for="wpdp_from">FROM</label>
-                                <input value="<?php if(isset($this->shortcode_atts['from']) && $this->shortcode_atts['from'] != ''){echo $this->shortcode_atts['from'];} ?>" type="text" name="wpdp_from" id="wpdp_from">
+                                <input value="<?php if(isset($this->shortcode_atts['from']) && $this->shortcode_atts['from'] != ''){echo $this->shortcode_atts['from'];}else{
+                                    if($atts['type'] === 'map'){
+                                        echo date('d F Y',strtotime('-1 year'));
+                                    }
+                                } ?>" type="text" name="wpdp_from" id="wpdp_from">
                             </div>
                             <div class="dates">
                                 <label style="margin-right: 23px;" for="wpdp_to">TO</label>
-                                <input value="<?php if(isset($this->shortcode_atts['to']) && $this->shortcode_atts['to'] != ''){echo $this->shortcode_atts['to'];} ?>" type="text" name="wpdp_to" id="wpdp_to">
+                                <input value="<?php if(isset($this->shortcode_atts['to']) && $this->shortcode_atts['to'] != ''){echo $this->shortcode_atts['to'];}else{
+                                    if($atts['type'] === 'map'){
+                                        echo date('d F Y',);
+                                    }
+                                } ?>" type="text" name="wpdp_to" id="wpdp_to">
                             </div>
                         </div>
 

@@ -18,6 +18,11 @@
       self.expandable();
       self.showMapDetails();
       self.graphCountSelector();
+      self.datePicker();
+      
+    },
+
+    self.datePicker = function(){
 
       var minDate = new Date(wpdp_filter_dates[0]); 
       var maxDate = new Date(wpdp_filter_dates[wpdp_filter_dates.length - 1]);
@@ -27,6 +32,8 @@
         maxDate: maxDate,
         dateFormat: 'dd MM yy',
         defaultDate: minDate,
+        showButtonPanel: true,
+        closeText: 'Clear',
         changeMonth: true,
         changeYear: true,
         onSelect: function(selectedDate) {
@@ -42,6 +49,16 @@
           }
             self.filterAction();
 
+        },
+        beforeShow: function (input, inst) {
+          setTimeout(function () {
+              var clearButton = $(input)
+                  .datepicker("widget")
+                  .find(".ui-datepicker-close");
+              clearButton.unbind("click").bind("click", function () {
+                  $.datepicker._clearDate(input);
+              });
+          }, 1);
         }
 
       });
@@ -52,6 +69,8 @@
         dateFormat: 'dd MM yy',
         defaultDate: minDate,
         changeMonth: true,
+        showButtonPanel: true,
+        closeText: 'Clear',
         changeYear: true,
         onSelect: function(selectedDate) {
           if($('.content.filter_maps').length > 0){
@@ -66,13 +85,20 @@
           }
 
           self.filterAction();
+        },
+        beforeShow: function (input, inst) {
+          setTimeout(function () {
+              var clearButton = $(input)
+                  .datepicker("widget")
+                  .find(".ui-datepicker-close");
+              clearButton.unbind("click").bind("click", function () {
+                  $.datepicker._clearDate(input);
+              });
+          }, 1);
         }
 
       });
 
-
-
-      
     },
 
     self.graphCountSelector = function(){
@@ -132,9 +158,6 @@
     },
 
     self.maps = function(typeValue){
-      // if(self.main_map){
-      //   return;
-      // }
 
       let fromYear = $("#wpdp_from").val();
       let toYear = $("#wpdp_to").val();

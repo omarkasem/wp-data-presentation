@@ -178,7 +178,6 @@ final class WPDP_Maps {
             }
         }
 
-
         foreach($posts as $id){
             $table_name = 'wpdp_data_'.$id;
             $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
@@ -188,7 +187,7 @@ final class WPDP_Maps {
 
             $result = $wpdb->get_results("SELECT 
             ".implode(', ', $types)." 
-             FROM {$table_name} {$whereSQL} LIMIT 50");
+             FROM {$table_name} {$whereSQL} LIMIT 500");
             $data = array_merge($data,$result);
         }
 
