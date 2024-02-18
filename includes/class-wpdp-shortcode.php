@@ -256,7 +256,7 @@ final class WPDP_Shortcode {
                 }elseif(isset($atts['type']) && $atts['type'] === 'map'){
                     WPDP_Maps::shortcode_output($atts);
                 }else{
-                    WPDP_Tables::shortcode_output();
+                    WPDP_Tables::shortcode_output($atts);
                     echo '<br><hr>';
                     WPDP_Graphs::shortcode_output();
                 }
@@ -303,7 +303,7 @@ final class WPDP_Shortcode {
                         </div>
                         <div class="content">
                             <select multiple="multiple" name="wpdp_type" id="wpdp_type">
-                            <option></option>
+                                <option></option>
                                 <?php foreach($filters['types'] as $type){
                                     echo '<option value="'.$type.'">'.$type.'</option>';
                                 } ?>
@@ -311,7 +311,7 @@ final class WPDP_Shortcode {
                         </div>
                     </div>
 
-                    <div class="grp">
+                    <div class="grp active">
                         <div class="title">
                             LOCATION/REGION <span class="dashicons dashicons-arrow-down-alt2"></span>
                         </div>

@@ -11,8 +11,9 @@
 
     self.init = function(){
 
-
-      self.dataTables();
+      if($('#wpdp_chart_title').length <= 0){
+        self.dataTables();
+      }
       self.menuFilters();
       self.filtersChange();
       self.expandable();
@@ -547,11 +548,33 @@
               exportOptions: {
                   columns: [0,1,2,3]
               }
-            }
+            },
+            {
+              text: 'Filter',
+              action: function ( e, dt, node, config ) {
+                setTimeout(function() {
+                    $('.wpdp .filter').trigger('click');
+                }, 10);
+              }
+            },
+
             ],
             "columnDefs": [
-              { "orderable": false, "targets": 4 }
+              { "orderable": false, "targets": 4 },
+              {
+                "targets": 0,
+                "render": function(data, type, row) {
+                  if (type === 'display' || type === 'filter') {
+                    var date = new Date(data);
+                    let day = date.getDate().toString().padStart(2, '0');
+
+                    return day + ' ' + date.toLocaleString('default', { month: 'short' }) + ' ' + date.getFullYear();
+                  }
+                  return data;
+                }
+              }
             ],
+          
             "createdRow": function(row, data, dataIndex) {
               $('td:eq(4)', row).html('<span event_id="'+data[4]+'" style="cursor:pointer;color:#cd0202;font-size:26px;" class="more-info dashicons dashicons-info"></span>');
             },
@@ -650,6 +673,7 @@
       $('.expandable > .exp_click').on('click', function(event) {
         event.stopPropagation();
         $(this).parent().toggleClass('expanded');
+        $(this).find(".dashicons").toggleClass("dashicons-arrow-down-alt2 dashicons-arrow-up-alt2");
       });
 
       $('.filter_data li:not(:has(li))').find('.dashicons').remove();
@@ -662,7 +686,7 @@
       });
     
       $(document).click(function(e) {
-        if (!$(e.target).closest('.wpdp .con').length && !$(e.target).hasClass('hasDatepicker') && !$(e.target).closest('.ui-datepicker').length) {
+        if (!$(e.target).closest('.wpdp .con').length && !$(e.target).hasClass('hasDatepicker') && !$(e.target).closest('.ui-datepicker').length && !$(e.target).hasClass('select2-selection__choice__remove')) {
           $('.wpdp .con').css('left','-100%').removeClass('active');
         }
       });
@@ -672,8 +696,8 @@
         $('.wpdp .con').css('left','-100%').removeClass('active');
       });
     
-      $('#wpdp_type,#wpdp_location').select2({
-        placeholder:"All",
+      $('#wpdp_type').select2({
+        placeholder:"Select",
         width: 'resolve',
       });
     },
@@ -684,12 +708,6 @@
         $('.wpdp #filter_loader').show();
         self.filterAction();
       });
-      // $('#wpdp_type').on('select2:select select2:unselect',function(e){
-      //   self.filterAction();
-      // });
-      // $('.wpdp_location').on('change',function(e){
-      //   self.filterAction();
-      // });
     },
 
     self.filterAction = function(){
@@ -729,7 +747,12 @@
       }
 
       if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
-        self.table.draw(false);
+        if(!self.table){
+          self.dataTables();
+          $('#wpdp_datatable').show();
+        }else{
+          self.table.draw(false);
+        }
       }
     },
       
@@ -796,6 +819,7 @@
         data: {datasets:datasets},
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 tooltips: {
                   callbacks: {

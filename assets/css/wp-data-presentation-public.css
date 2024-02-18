@@ -8,7 +8,11 @@
   margin-left: 10px;
   display: none;
 }
-
+.select2-search__field{
+  width:100% !important;
+  margin-left: 10px;
+  margin-top: 10px!important;
+}
 .wpdp .con{
   position: fixed;
   left:-100%;

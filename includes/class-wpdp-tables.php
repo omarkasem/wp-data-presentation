@@ -284,7 +284,7 @@ final class WPDP_Tables {
 
 
 
-    public static function shortcode_output(){
+    public static function shortcode_output($atts = []){
 
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'datatables');
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'moment');
@@ -292,14 +292,14 @@ final class WPDP_Tables {
         
     ?>
 
-        <table id="wpdp_datatable" style="width:100%">
+        <table id="wpdp_datatable" style="width:100%;<?php if(isset($atts['type']) && $atts['type'] == ''){echo 'display:none;';} ?>">
             <thead>
                 <tr>
                     <th>Date</th>
                     <th>Type</th>
                     <th>Location</th>
-                    <th>Number</th>
-                    <th>More Details</th>
+                    <th>No.</th>
+                    <th> </th>
                 </tr>
             </thead>
 
