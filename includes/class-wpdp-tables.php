@@ -84,7 +84,7 @@ final class WPDP_Tables {
             if(!$table_exists){
                 continue;
             }
-            $result = $wpdb->get_row("SELECT event_type, sub_event_type, source, notes, timestamp FROM {$table_name} WHERE event_id_cnty = '{$event_id}'", ARRAY_A);
+            $result = $wpdb->get_row("SELECT event_type, sub_event_type, source, notes, region, country, admin1, admin2, admin3, location, event_id_cnty, timestamp FROM {$table_name} WHERE event_id_cnty = '{$event_id}'", ARRAY_A);
             if(!empty($result)){
                 break;
             }

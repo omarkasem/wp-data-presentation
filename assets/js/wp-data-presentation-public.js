@@ -444,16 +444,18 @@
                         border-bottom: 1px solid #333;
                         padding-bottom: 5px;
                     ">${loc.disorder_type}</h2>
-                    <p style="margin-bottom:0;"><strong>Location:</strong> ${loc.location}</p>
                     <p style="margin-bottom:0;"><strong>Number:</strong> ${loc.fatalities}</p>
                     <p style="margin-bottom:0;"><strong>Date:</strong> ${loc.event_date}</p>
                     <div class="map_more_details">
                       <span style="cursor:pointer;color:#cd0202;font-size:25px;margin-top:3px;" class="dashicons dashicons-info"></span>
                       <div class="det">
                         <ul>
+
+                          <li><b>Event ID:</b> ${loc.event_id_cnty}</li>
                           <li><b>Event Type:</b> ${loc.event_type}</li>
                           <li><b>Sub Event Type:</b> ${loc.sub_event_type}</li>
                           <li><b>Source:</b> ${loc.source}</li>
+                          <li><b>Full Location:</b> ${loc.region} ${loc.country} ${loc.admin1} ${loc.admin2} ${loc.admin3} ${loc.location} </li>
                           <li><b>Notes:</b> ${loc.notes}</li>
                           <li><b>Timestamp:</b> ${timestamp.toISOString()}</li>
                         </ul>
@@ -617,6 +619,10 @@
               var htmlContent = `
                 <ul class="wpdp_more_info">
                     <li>
+                      <b>Event ID:</b>
+                      `+response.data[0].event_id_cnty+`
+                    </li>
+                    <li>
                       <b>Event Type:</b>
                       `+response.data[0].event_type+`
                     </li>
@@ -627,6 +633,15 @@
                     <li>
                       <b>Source Type:</b>
                       `+response.data[0].source+`
+                    </li>
+                    <li>
+                      <b>Event Full Location:</b>
+                      `+response.data[0].region+`
+                      `+response.data[0].country+` 
+                      `+response.data[0].admin1+` 
+                      `+response.data[0].admin2+` 
+                      `+response.data[0].admin3+` 
+                      `+response.data[0].location+` 
                     </li>
                     <li>
                       <b>Notes:</b>
