@@ -3,6 +3,11 @@
   position:relative;
 }
 
+.wpdp #filter_loader{
+  width: 22px;
+  margin-left: 10px;
+  display: none;
+}
 
 .wpdp .con{
   position: fixed;
@@ -16,6 +21,7 @@
   overflow-y: scroll;
   height: 100vh;
   top:50px;
+  padding-bottom: 90px;
 }
 .filter_back{
   cursor:pointer;

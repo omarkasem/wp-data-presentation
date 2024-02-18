@@ -279,7 +279,7 @@ final class WPDP_Shortcode {
             <a class="filter" href=""><span class="dashicons dashicons-image-filter"></span></a>
             <div class="con">
                 <span class="filter_back dashicons dashicons-arrow-left-alt"></span>
-                <form action="" style="margin-top:15px;">
+                <form id="filter_form" action="" style="margin-top:15px;">
 
                     <?php if($atts['type'] === 'graph' || $atts['type'] == ''){ ?>
                     <div class="grp active">
@@ -344,7 +344,10 @@ final class WPDP_Shortcode {
                             </div>
                         </div>
 
-                    </div>           
+                    </div>
+                    
+                    <input type="submit" value="Apply Filters">
+                    <img id="filter_loader" src="<?php echo admin_url('images/loading.gif'); ?>" alt="">
 
                 </form>
             </div>

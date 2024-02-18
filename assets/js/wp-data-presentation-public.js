@@ -47,8 +47,6 @@
               $('#wpdp_to').datepicker('setDate', endDate);
             }
           }
-            self.filterAction();
-
         },
         beforeShow: function (input, inst) {
           setTimeout(function () {
@@ -84,7 +82,6 @@
             }
           }
 
-          self.filterAction();
         },
         beforeShow: function (input, inst) {
           setTimeout(function () {
@@ -104,16 +101,19 @@
     self.graphCountSelector = function(){
       if(document.getElementById('wpdp_type_selector')){
         document.getElementById('wpdp_type_selector').addEventListener('change', function () {
-          let val = this.value;
-          let i = -1;
-          for(let set of self.myChart.data.datasets){ i++;
-            if(val == 'incident_count'){
-              self.myChart.data.datasets[i].data = self.myChart.data.datasets[i].count;
-            } else {
-              self.myChart.data.datasets[i].data = self.myChart.data.datasets[i].fat;
+          if(self.myChart){
+            let val = this.value;
+            let i = -1;
+            for(let set of self.myChart.data.datasets){ i++;
+              if(val == 'incident_count'){
+                self.myChart.data.datasets[i].data = self.myChart.data.datasets[i].count;
+              } else {
+                self.myChart.data.datasets[i].data = self.myChart.data.datasets[i].fat;
+              }
             }
+            self.myChart.update();
           }
-          self.myChart.update();
+
         });
       }
 
@@ -188,6 +188,7 @@
         type: 'POST',
         success: function(response) {
           self.mapInit(response.data);
+          $('.wpdp #filter_loader').hide();
         },
         error: function(errorThrown){
             alert('No data found');
@@ -505,6 +506,10 @@
                 d.locations_val = self.selectedLocations;
               }
             },
+            drawCallback: function(settings, json) {
+              $('.wpdp #filter_loader').hide();
+            },
+
             processing: true,
             serverSide: true,
             deferRender: true,
@@ -657,7 +662,7 @@
       });
     
       $(document).click(function(e) {
-        if (!$(e.target).closest('.wpdp .con').length) {
+        if (!$(e.target).closest('.wpdp .con').length && !$(e.target).hasClass('hasDatepicker') && !$(e.target).closest('.ui-datepicker').length) {
           $('.wpdp .con').css('left','-100%').removeClass('active');
         }
       });
@@ -674,12 +679,17 @@
     },
 
     self.filtersChange = function() {
-      $('#wpdp_type').on('select2:select select2:unselect',function(e){
+      $('.wpdp #filter_form').on('submit',function(e){
+        e.preventDefault();
+        $('.wpdp #filter_loader').show();
         self.filterAction();
       });
-      $('.wpdp_location').on('change',function(e){
-        self.filterAction();
-      });
+      // $('#wpdp_type').on('select2:select select2:unselect',function(e){
+      //   self.filterAction();
+      // });
+      // $('.wpdp_location').on('change',function(e){
+      //   self.filterAction();
+      // });
     },
 
     self.filterAction = function(){
@@ -736,6 +746,7 @@
         type: 'POST',
         success: function(response) {
           self.chartInit(response.data,typeValue,selectedLocations);
+          $('.wpdp #filter_loader').hide();
         },
         error: function(errorThrown){
             alert('No data found');
