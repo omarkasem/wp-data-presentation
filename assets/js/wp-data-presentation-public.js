@@ -629,7 +629,12 @@
 
       setTimeout(function() {
           $('.wpdp .filter_data').show();
-      }, 1000);
+
+          if($('#wpdp_chart_title').length > 0){
+            $('.wpdp .filter').trigger('click');
+          }
+
+      }, 500);
 
 
       $('.filter_data li input[type="checkbox"]').on('change', function() {
@@ -651,6 +656,12 @@
         $('.wpdp .con').css('left','0').addClass('active');
       });
     
+      $(document).click(function(e) {
+        if (!$(e.target).closest('.wpdp .con').length) {
+          $('.wpdp .con').css('left','-100%').removeClass('active');
+        }
+      });
+
       $('.wpdp .filter_back').click(function(e){
         e.preventDefault();
         $('.wpdp .con').css('left','-100%').removeClass('active');
