@@ -10,10 +10,8 @@
     var selectedLocations = [];
 
     self.init = function(){
-
-      if($('#wpdp_chart_title').length <= 0){
-        self.dataTables();
-      }
+      self.graphChange();
+      self.dataTables();
       self.menuFilters();
       self.filtersChange();
       self.expandable();
@@ -673,9 +671,9 @@
       setTimeout(function() {
           $('.wpdp .filter_data').show();
 
-          if($('#wpdp_chart_title').length > 0){
-            $('.wpdp .filter').trigger('click');
-          }
+          // if($('#wpdp_chart_title').length > 0){
+          //   $('.wpdp .filter').trigger('click');
+          // }
 
       }, 500);
 
@@ -746,10 +744,7 @@
       });
 
       if (typeof Chart !== 'undefined') {
-
         self.graphChange(typeValue, self.selectedLocations,fromYear,toYear);
-        $('#wpdp_chart').show();
-        $('#wpdp_chart_title').hide();
       }
 
       if (typeof google === 'object' && typeof google.maps === 'object') {
@@ -762,12 +757,7 @@
       }
 
       if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
-        if(!self.table){
-          self.dataTables();
-          $('#wpdp_datatable').show();
-        }else{
-          self.table.draw(false);
-        }
+        self.table.draw(false);
       }
     },
       
@@ -785,6 +775,7 @@
         success: function(response) {
           self.chartInit(response.data,typeValue,selectedLocations);
           $('.wpdp #filter_loader').hide();
+          $('#graph_loader').hide();
         },
         error: function(errorThrown){
             alert('No data found');
@@ -827,40 +818,46 @@
       if (self.myChart) {
         self.myChart.destroy();
       }
-
+      
+      console.log(chart_sql);
       let ctx = document.getElementById('wpdp_chart').getContext('2d');
       self.myChart = new Chart(ctx, {
         type: 'line',
         data: {datasets:datasets},
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                tooltips: {
-                  callbacks: {
-                    title: function(tooltipItems, data) {
-                      return ''; 
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            tooltip: {
+                callbacks: {
+                    title: function(tooltipItems) {
+                        var date = new Date(tooltipItems[0].parsed.x);
+                        var monthNames = ["January", "February", "March", "April", "May", "June",
+                                          "July", "August", "September", "October", "November", "December"];
+                        return monthNames[date.getMonth()] + ' ' + date.getFullYear();
                     }
-                  }
-                },
-                title: {
-                    display: true,
-                    text: 'Incidents by Type'
-                },
-            },
-            scales: {
-                x: {
-                  type: 'time',
-                  time: {
-                    unit: chart_sql,
-                  }
-                },
-                y:{
-                  type: 'linear',
-                  display: true,
-                  beginAtZero: true
                 }
-            }
+            },
+              title: {
+                  display: true,
+                  text: 'Incidents by Type'
+              },
+          },
+          scales: {
+              x: {
+                type: 'time',
+                time: {
+                  unit: chart_sql,
+                }
+              },
+              y:{
+                type: 'linear',
+                display: true,
+                beginAtZero: true
+              }
+          },
+        
+
         }
       });
       

@@ -292,7 +292,7 @@ final class WPDP_Tables {
         
     ?>
 
-        <table id="wpdp_datatable" style="width:100%;<?php if(isset($atts['type']) && $atts['type'] == ''){echo 'display:none;';} ?>">
+        <table id="wpdp_datatable" style="width:100%;">
             <thead>
                 <tr>
                     <th>Date</th>

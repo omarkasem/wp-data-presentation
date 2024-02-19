@@ -54,17 +54,6 @@ final class WPDP_Graphs {
         add_action( 'wp_ajax_nopriv_wpdp_graph_request', array($this,'get_graph_data') );
         add_action( 'wp_ajax_wpdp_graph_request', array($this,'get_graph_data') );
 
-        if(isset($_GET['test'])){
-            $this->get_data([
-                'disorder_type'=>[
-                    'Political violence',
-                    'Strategic developments',
-                ],
-                'from'=>'',
-                'to'=>'04 June 2004',
-                ],'f');
-        }
-
 
     }
 
@@ -220,10 +209,8 @@ final class WPDP_Graphs {
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'chartjs-moment');
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'chartjs-adapter');
     ?>
-        <h2 id="wpdp_chart_title">
-            You have to use the filter to show the chart.
-        </h2>
-        <canvas style="display:none;" id="wpdp_chart" width="800" ></canvas>
+        <img style="width: 25px;" id="graph_loader" src="<?php echo admin_url('images/loading.gif'); ?>" alt="">
+        <canvas id="wpdp_chart" width="800" ></canvas>
     <?php }
 
 
