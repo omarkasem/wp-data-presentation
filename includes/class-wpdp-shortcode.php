@@ -274,7 +274,32 @@ final class WPDP_Shortcode {
         return $output;
     }
 
-    function get_html_filter($filters,$atts){ ?>
+    function get_from_date_value($filters,$atts){
+        if(isset($this->shortcode_atts['from']) && $this->shortcode_atts['from'] != ''){
+            echo $this->shortcode_atts['from'];
+        }else{
+            if($atts['type'] === 'map'){
+                echo date('d F Y',strtotime('-1 year'));
+            }else{
+                echo date('d F Y',strtotime($filters['years'][0]));
+            }
+        }
+    }
+
+    function get_to_date_value($filters,$atts){
+        if(isset($this->shortcode_atts['from']) && $this->shortcode_atts['from'] != ''){
+            echo $this->shortcode_atts['from'];
+        }else{
+            if($atts['type'] === 'map'){
+                echo date('d F Y');
+            }else{
+                echo date('d F Y',strtotime(end($filters['years'])));
+            }
+        }
+    }
+
+    function get_html_filter($filters,$atts){
+        ?>
         <div class="filter_data" style="display:none;">
             <a class="filter" href=""><span class="dashicons dashicons-image-filter"></span></a>
             <div class="con">
@@ -305,7 +330,7 @@ final class WPDP_Shortcode {
                             <select multiple="multiple" name="wpdp_type" id="wpdp_type">
                                 <option></option>
                                 <?php foreach($filters['types'] as $type){
-                                    echo '<option value="'.$type.'">'.$type.'</option>';
+                                    echo '<option selected="selected" value="'.$type.'">'.$type.'</option>';
                                 } ?>
                             </select>
                         </div>
@@ -328,19 +353,11 @@ final class WPDP_Shortcode {
                         <div class="content <?php echo (isset($atts['type']) && $atts['type'] === 'map' ? 'filter_maps' : ''); ?>">
                             <div class="dates">
                                 <label for="wpdp_from">FROM</label>
-                                <input value="<?php if(isset($this->shortcode_atts['from']) && $this->shortcode_atts['from'] != ''){echo $this->shortcode_atts['from'];}else{
-                                    if($atts['type'] === 'map'){
-                                        echo date('d F Y',strtotime('-1 year'));
-                                    }
-                                } ?>" type="text" name="wpdp_from" id="wpdp_from">
+                                <input value="<?php $this->get_from_date_value($filters,$atts); ?>" type="text" name="wpdp_from" id="wpdp_from">
                             </div>
                             <div class="dates">
                                 <label style="margin-right: 23px;" for="wpdp_to">TO</label>
-                                <input value="<?php if(isset($this->shortcode_atts['to']) && $this->shortcode_atts['to'] != ''){echo $this->shortcode_atts['to'];}else{
-                                    if($atts['type'] === 'map'){
-                                        echo date('d F Y',);
-                                    }
-                                } ?>" type="text" name="wpdp_to" id="wpdp_to">
+                                <input value="<?php $this->get_to_date_value($filters,$atts); ?>" type="text" name="wpdp_to" id="wpdp_to">
                             </div>
                         </div>
 
