@@ -25,7 +25,7 @@
 
       var minDate = new Date(wpdp_filter_dates[0]); 
       var maxDate = new Date(wpdp_filter_dates[wpdp_filter_dates.length - 1]);
-      
+
       $('#wpdp_from').datepicker({
         minDate: minDate,
         maxDate: maxDate,
@@ -35,6 +35,7 @@
         closeText: 'Clear',
         changeMonth: true,
         changeYear: true,
+        yearRange: "c-100:c+100",
         onSelect: function(selectedDate) {
           if($('.content.filter_maps').length > 0){
             var endDate = new Date(selectedDate);
@@ -64,11 +65,12 @@
         minDate: minDate,
         maxDate: maxDate,
         dateFormat: 'dd MM yy',
-        defaultDate: minDate,
+        defaultDate: maxDate,
         changeMonth: true,
         showButtonPanel: true,
         closeText: 'Clear',
         changeYear: true,
+        yearRange: "c-100:c+100",
         onSelect: function(selectedDate) {
           if($('.content.filter_maps').length > 0){
             var startDate = new Date(selectedDate);
@@ -699,10 +701,19 @@
       });
     
       $(document).click(function(e) {
-        if (!$(e.target).closest('.wpdp .con').length && !$(e.target).hasClass('hasDatepicker') && !$(e.target).closest('.ui-datepicker').length && !$(e.target).hasClass('select2-selection__choice__remove')) {
-          $('.wpdp .con').css('left','-100%').removeClass('active');
+        if ($('#wpdp_from').datepicker('widget').is(':visible')) {
+            // Don't do anything if datepicker is visible
+            return;
         }
-      });
+        if (!$(e.target).closest('.wpdp .con').length && 
+            !$(e.target).hasClass('hasDatepicker') && 
+            !$(e.target).closest('.ui-datepicker').length && 
+            !$(e.target).hasClass('select2-selection__choice__remove') &&
+            !$(e.target).hasClass('ui-datepicker-trigger')) {
+            $('.wpdp .con').css('left','-100%').removeClass('active');
+        }
+    });
+    
 
       $('.wpdp .filter_back').click(function(e){
         e.preventDefault();
