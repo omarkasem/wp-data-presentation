@@ -1,4 +1,3 @@
-
 ( function ( $ ) {
   'use strict';
 
@@ -200,7 +199,7 @@
     },
 
     self.mapInit = function(mapData){
-      console.log(mapData);
+
       if(!mapData.length){
         return;
       }
@@ -543,13 +542,50 @@
                 extend: 'pdfHtml5',
                 exportOptions: {
                     columns: [0,1,2,3]
-                }
+                },
+				
+				customize: function (doc) {
+					// Get the chart as a base64 image
+					var canvas = document.getElementById('wpdp_chart');
+					var chartImage = canvas.toDataURL('image/png');
+					
+					doc.content.push({
+						text: ' ',
+						margin: [0, 10] // Adjust margin as needed for spacing
+					});
+					// Add the image to the PDF after the table
+					doc.content.push({
+						image: chartImage,
+						width: 500 // Adjust the width as needed
+					});
+				}
+
+			
             },
             {
               extend: 'print',
               exportOptions: {
                   columns: [0,1,2,3]
-              }
+              },
+				
+				
+				customize: function (win) {
+					// Get the chart as a base64 image
+					var canvas = document.getElementById('wpdp_chart');
+					var chartImage = canvas.toDataURL('image/png');
+
+					// Create an image element for the chart
+					var img = $('<img>').attr('src', chartImage).css({
+						width: '500px', // Adjust the width as needed
+						marginTop: '10px' // Add some space before the chart image
+					});
+
+					// Append the chart image after the table
+					$(win.document.body).find('table').after(img);
+				}
+
+				
+				
             },
             {
               text: 'Filter',
@@ -694,12 +730,7 @@
       $('.filter_data li:not(:has(li))').find('.dashicons').remove();
 
 
-      $('.wpdp .filter').click(function(e){
-        e.preventDefault();
-        e.stopPropagation();
-        $('.wpdp .con').css('left','0').addClass('active');
-      });
-    
+
       $(document).click(function(e) {
         if ($('#wpdp_from').datepicker('widget').is(':visible')) {
             // Don't do anything if datepicker is visible
@@ -710,14 +741,27 @@
             !$(e.target).closest('.ui-datepicker').length && 
             !$(e.target).hasClass('select2-selection__choice__remove') &&
             !$(e.target).hasClass('ui-datepicker-trigger')) {
-            $('.wpdp .con').css('left','-100%').removeClass('active');
+            $('.wpdp .con').css('left','-152%').removeClass('active');
+			$('.wpdp .filter span').attr('class','fas fa-sliders-h');
         }
     });
     
 
-      $('.wpdp .filter_back').click(function(e){
+    
+      $('.wpdp .filter').click(function(e){
         e.preventDefault();
-        $('.wpdp .con').css('left','-100%').removeClass('active');
+        e.stopPropagation();
+
+		if($(this).find('span').hasClass('fa-close')){
+			$('.wpdp .con').css('left','-152%').removeClass('active');
+			$('.wpdp .filter span').attr('class','fas fa-sliders-h');
+		}else{
+			$('.wpdp .con').css('left','0').addClass('active');
+			let that = $(this);
+			setTimeout(function () {
+				that.find('span').attr('class','fas fa-close');
+			},200);
+		}
       });
     
       $('#wpdp_type').select2({
@@ -830,8 +874,11 @@
         self.myChart.destroy();
       }
       
-      console.log(chart_sql);
-      let ctx = document.getElementById('wpdp_chart').getContext('2d');
+      if(!document.getElementById('wpdp_chart')){
+		return;  
+	  }
+	  let ctx = document.getElementById('wpdp_chart').getContext('2d');
+      
       self.myChart = new Chart(ctx, {
         type: 'line',
         data: {datasets:datasets},

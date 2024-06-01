@@ -1,4 +1,3 @@
-
 .wpdp-presentation{
   position:relative;
 }
@@ -15,7 +14,7 @@
 }
 .wpdp .con{
   position: fixed;
-  left:-100%;
+  left:-152%;
   border: 1px solid #cdcdcd;
   transition: all .5s ease;
   background: #eaeaea;
@@ -23,9 +22,9 @@
   width: 400px;
   padding: 20px;
   overflow-y: scroll;
-  height: 100vh;
-  top:50px;
-  padding-bottom: 90px;
+  height: 100%;
+  top: 135px;
+  padding-bottom: 150px;
 }
 .filter_back{
   cursor:pointer;
@@ -39,14 +38,16 @@
 .wpdp .filter{
   position: fixed;
   border: 1px solid #acacac;
-  box-shadow: 0px 1px #acacac;
   transition: all .5s ease;
-  z-index: 98;
+  z-index: 9999999999;
   left: 10px;
   background: #fff;
-  padding: 4px 7px
+  padding: 4px 7px;
+  margin-top: 15px;
+  color: rgb(42, 39, 94);
 }
-.wpdp .filter:hover{
+
+/* .wpdp .filter:hover{
   background:#2f2f2f;
 }
 .wpdp .filter:hover .dashicons{
@@ -54,10 +55,10 @@
 }
 .wpdp .filter .dashicons{
   color: #000;
-}
+} */
 #wpdp_map{
   width:100%;
-  height: 500px;
+  height: calc(100vh - 85px);
 }
 
 
@@ -98,6 +99,7 @@
 }
 
 .wpdp_modal.modal {
+	z-index:9999999999999999!important;
   display: none; 
   position: fixed; 
   z-index: 1;
@@ -230,4 +232,10 @@
 
 .expandable.expanded > .arrow {
   transform: rotate(180deg);
+}
+
+@media only screen and (max-width: 400px) {
+	.wpdp .con{
+		width: 310px;
+	}
 }

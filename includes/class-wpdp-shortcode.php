@@ -301,16 +301,16 @@ final class WPDP_Shortcode {
     function get_html_filter($filters,$atts){
         ?>
         <div class="filter_data" style="display:none;">
-            <a class="filter" href=""><span class="dashicons dashicons-image-filter"></span></a>
+            <a class="filter" href=""><span class="fas fa-sliders-h"></span></a>
             <div class="con">
-                <span class="filter_back dashicons dashicons-arrow-left-alt"></span>
+<!--                 <span class="filter_back dashicons dashicons-arrow-left-alt"></span> -->
                 <form id="filter_form" action="" style="margin-top:15px;">
 
                     <?php if($atts['type'] === 'graph' || $atts['type'] == ''){ ?>
-                    <div class="grp active">
+                    <div class="grp ">
 
                         <div class="title">
-                            COUNT TYPE <span class="dashicons dashicons-arrow-up-alt2"></span>
+                            COUNT TYPE <span class="dashicons dashicons-arrow-down-alt2"></span>
                         </div>
                         <div class="content">
                             <select name="wpdp_type_selector" id="wpdp_type_selector">
@@ -321,10 +321,10 @@ final class WPDP_Shortcode {
                     </div>
                     <?php } ?>
 
-                    <div class="grp active">
+                    <div class="grp ">
 
                         <div class="title">
-                            INCIDENT TYPE <span class="dashicons dashicons-arrow-up-alt2"></span>
+                            INCIDENT TYPE <span class="dashicons dashicons-arrow-down-alt2"></span>
                         </div>
                         <div class="content">
                             <select multiple="multiple" name="wpdp_type" id="wpdp_type">
@@ -336,7 +336,7 @@ final class WPDP_Shortcode {
                         </div>
                     </div>
 
-                    <div class="grp active">
+                    <div class="grp ">
                         <div class="title">
                             LOCATION/REGION <span class="dashicons dashicons-arrow-down-alt2"></span>
                         </div>
@@ -345,10 +345,10 @@ final class WPDP_Shortcode {
                         </div>
                     </div>
 
-                    <div class="grp active">
+                    <div class="grp ">
 
                         <div class="title">
-                            DATE RANGE <span class="dashicons dashicons-arrow-up-alt2"></span>
+                            DATE RANGE <span class="dashicons dashicons-arrow-down-alt2"></span>
                         </div>
                         <div class="content <?php echo (isset($atts['type']) && $atts['type'] === 'map' ? 'filter_maps' : ''); ?>">
                             <div class="dates">
