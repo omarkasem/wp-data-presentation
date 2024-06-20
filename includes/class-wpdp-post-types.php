@@ -53,9 +53,40 @@ final class WPDP_Post_Types {
         add_filter( 'acf/settings/save_json', array($this,'my_acf_json_save_point') );
         add_filter( 'acf/settings/load_json', array($this,'my_acf_json_load_point') );
         add_action('acf/init',array($this,'my_acf_op_init'));
+
+        add_filter('manage_wp-data-presentation_posts_columns', array($this,'add_updated_status_column'));
+
+        add_action('manage_wp-data-presentation_posts_custom_column', array($this,'show_updated_status_column'), 10, 2);
+
+
     }
 
     
+    function add_updated_status_column($columns) {
+        $new_columns = array();
+        foreach ($columns as $key => $value) {
+            if ($key == 'title') {
+                $new_columns[$key] = $value;
+                $new_columns['updated_status'] = __('Countries Edited');
+            } else {
+                $new_columns[$key] = $value;
+            }
+        }
+        return $new_columns;
+    }
+    
+    function show_updated_status_column($column_name, $post_id) {
+        if ($column_name == 'updated_status') {
+            $updated = get_post_meta($post_id, 'wpdp_countries_updated', true);
+            if ($updated) {
+                echo '<span style="color: green; font-weight: bold;">Success</span>';
+            } else {
+                echo '';
+            }
+        }
+    }
+
+
     function my_acf_op_init() {
     
         if( function_exists('acf_add_options_sub_page') ) {

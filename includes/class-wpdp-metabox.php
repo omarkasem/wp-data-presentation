@@ -52,7 +52,117 @@ final class WPDP_Metabox {
 
         add_action('save_post',array($this,'save_presentation'));
 
+        add_filter('acf/load_field/name=countries_to_show', array($this,'countries_field'));
+        add_action('acf/save_post', array($this,'save_option_page'), 20);
+
+        add_action( 'ok_wpdp_remove_countries_records', array($this,'remove_countries_records'), 10, 3 );
+
     }
+
+
+    function save_option_page( $post_id ) {
+        // Check if it's not an autosave
+        if( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) {
+            return;
+        }
+
+        // Check if it's our specific option field
+        if( isset($_POST['acf']['field_66747fef0e941']) ) { 
+            $new_value = $_POST['acf']['field_66747fef0e941'];
+            $this->remove_other_countires_records_cron_job($new_value);
+        }
+    }
+
+
+    function remove_countries_records( $table_name, $countries, $post_id ) {
+        global $wpdb;
+        $countries_placeholders = implode(', ', array_fill(0, count($countries), '%s'));
+        $sql = $wpdb->prepare("DELETE FROM {$table_name} WHERE country NOT IN ($countries_placeholders)", ...$countries);
+        $result = $wpdb->query($sql);
+
+        if ($result === false) {
+            $error = $wpdb->last_error;
+            error_log("Database error: " . $error); // Log the error in WordPress error log
+            update_post_meta($post_id,'wpdp_countries_updated_error',$error);
+        } else {
+            // Operation was successful
+            update_post_meta($post_id,'wpdp_countries_updated',true);
+        }
+        
+    }
+    
+
+    public function remove_other_countires_records_cron_job($countries){
+
+        if(empty($countries)){
+            return;
+        }
+
+        $posts = get_posts(array(
+            'post_type'=>'wp-data-presentation',
+            'posts_per_page'=>-1,
+            'fields'=>'ids'
+        ));
+
+        if(empty($posts)){
+            return [];
+        }
+
+        global $wpdb;
+        foreach($posts as $id){
+            $table_name = 'wpdp_data_'.$id;
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
+            if(!$table_exists){
+                continue;
+            }
+
+            wp_schedule_single_event( time(), 'ok_wpdp_remove_countries_records', array( $table_name, $countries, $id) );
+
+        }
+    }
+    
+    public function countries_field( $field ) {
+        $posts = get_posts(array(
+            'post_type'=>'wp-data-presentation',
+            'posts_per_page'=>-1,
+            'fields'=>'ids'
+        ));
+
+        if(empty($posts)){
+            return [];
+        }
+
+        global $wpdb;
+        $countries = [];
+        foreach($posts as $id){
+            $table_name = 'wpdp_data_'.$id;
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
+            if(!$table_exists){
+                continue;
+            }
+
+            $db_countries = $wpdb->get_col("SELECT DISTINCT country FROM {$table_name}");
+            if(!empty($db_countries)){
+                $countries = array_merge($countries,$db_countries);
+            }
+
+        }
+        
+        // Initialize choices array
+        $field['choices'] = array();
+        
+        // Populate choices
+        if (!empty($countries)) {
+            foreach ($countries as $country) {
+                $field['choices'][ $country ] = $country;
+            }
+        }
+        
+        // Return the field
+        return $field;
+    }
+    
+
 
     public function save_presentation($post_id){
         if(get_post_type($post_id) !== 'wp-data-presentation'){
@@ -77,6 +187,8 @@ final class WPDP_Metabox {
             if (!$import->import_csv()) {
                 var_dump('Error in importing');exit;
             }
+
+            delete_post_meta($post_id,'wpdp_countries_updated');
 
         }
 

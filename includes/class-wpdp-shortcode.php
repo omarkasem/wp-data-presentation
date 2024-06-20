@@ -175,7 +175,17 @@ final class WPDP_Shortcode {
             return strtotime($a) - strtotime($b);
         });
         
-        $types = array_unique($types);
+        // Check for ; in types
+        foreach($types as $key => $type){
+            if(strpos($type,';') !== false){
+                $explode = explode(';',$type);
+                $types = array_merge($types,$explode);
+                unset($types[$key]);
+            }
+        }
+
+        $types = array_unique(array_map('trim', $types));
+                
 
         $filters = array(
             'types'=>$types,
@@ -222,17 +232,6 @@ final class WPDP_Shortcode {
             'to' => ''
         ), $atts);
 
-        // if(isset($atts['type']) && $atts['type'] === 'map'){
-        //     if(isset($atts['from']) && $atts['from'] != '' && isset($atts['to']) && $atts['to'] != ''){
-        //         $date1 = date_create($atts['from']);
-        //         $date2 = date_create($atts['to']);
-        //         $diff = date_diff($date1, $date2);
-        //         $days = intval($diff->format('%a'));
-        //         if($days > 366){
-                    
-        //         }
-        //     }
-        // }
         $this->shortcode_atts = $atts;
     
         ob_start();

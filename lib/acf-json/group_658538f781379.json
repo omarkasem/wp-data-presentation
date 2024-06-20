@@ -3,6 +3,23 @@
     "title": "Data Presentations - Options",
     "fields": [
         {
+            "key": "field_66747fd30e93f",
+            "label": "Keys & Serials",
+            "name": "",
+            "aria-label": "",
+            "type": "tab",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "placement": "top",
+            "endpoint": 0
+        },
+        {
             "key": "field_6585397f51a7a",
             "label": "Google Maps API Key",
             "name": "google_maps_api_key",
@@ -21,6 +38,70 @@
             "placeholder": "",
             "prepend": "",
             "append": ""
+        },
+        {
+            "key": "field_66747fe50e940",
+            "label": "Countries",
+            "name": "",
+            "aria-label": "",
+            "type": "tab",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "placement": "top",
+            "endpoint": 0
+        },
+        {
+            "key": "field_66747fef0e941",
+            "label": "Countries to show",
+            "name": "countries_to_show",
+            "aria-label": "",
+            "type": "select",
+            "instructions": "They are gathered from all data presentations databases.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "choices": {
+                "Algeria": "Algeria",
+                "Angola": "Angola",
+                "Botswana": "Botswana",
+                "Cameroon": "Cameroon",
+                "Central African Republic": "Central African Republic",
+                "Chad": "Chad",
+                "Democratic Republic of Congo": "Democratic Republic of Congo",
+                "Egypt": "Egypt",
+                "Equatorial Guinea": "Equatorial Guinea",
+                "eSwatini": "eSwatini",
+                "Gabon": "Gabon",
+                "Lesotho": "Lesotho",
+                "Libya": "Libya",
+                "Morocco": "Morocco",
+                "Namibia": "Namibia",
+                "Republic of Congo": "Republic of Congo",
+                "Saint Helena, Ascension and Tristan da Cunha": "Saint Helena, Ascension and Tristan da Cunha",
+                "Sao Tome and Principe": "Sao Tome and Principe",
+                "South Africa": "South Africa",
+                "Sudan": "Sudan",
+                "Tunisia": "Tunisia",
+                "Zambia": "Zambia",
+                "Zimbabwe": "Zimbabwe"
+            },
+            "default_value": [],
+            "return_format": "value",
+            "multiple": 1,
+            "allow_null": 0,
+            "ui": 1,
+            "ajax": 0,
+            "placeholder": ""
         }
     ],
     "location": [
@@ -41,5 +122,5 @@
     "active": true,
     "description": "",
     "show_in_rest": 0,
-    "modified": 1703229831
+    "modified": 1718911480
 }
