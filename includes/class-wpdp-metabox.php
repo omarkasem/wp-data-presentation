@@ -54,11 +54,96 @@ final class WPDP_Metabox {
 
         add_filter('acf/load_field/name=countries_to_show', array($this,'countries_field'));
         add_action('acf/save_post', array($this,'save_option_page'), 20);
-
+        
         add_action( 'ok_wpdp_remove_countries_records', array($this,'remove_countries_records'), 10, 3 );
-
+        
+        // Mapping
+        add_filter('acf/load_field/name=incident_type_filter', array($this,'disorder_type'));
     }
 
+    private function get_db_column($column_name){
+        $posts = get_posts(array(
+            'post_type'=>'wp-data-presentation',
+            'posts_per_page'=>-1,
+            'fields'=>'ids'
+        ));
+
+        if(empty($posts)){
+            return [];
+        }
+
+        global $wpdb;
+        $column = [];
+        foreach($posts as $id){
+            $table_name = 'wpdp_data_'.$id;
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
+            if(!$table_exists){
+                continue;
+            }
+
+            $db_column = $wpdb->get_col("SELECT DISTINCT {$column_name} FROM {$table_name}");
+            if(!empty($db_column)){
+                if($column_name !== 'country'){
+                    $db_column = array_map(function($value) use ($column_name) {
+                        return $value . '__' . $column_name;
+                    }, $db_column);
+                }
+                $column = array_merge($column, $db_column);
+            }
+
+
+        }
+
+        return $column;
+    }
+
+    function load_choices($sub_field) {
+        $db_columns = array(
+            'disorder_type',
+            'event_type',
+            'sub_event_type'
+        );
+        $types = [];
+        foreach($db_columns as $column){
+            $types= array_merge($types,$this->get_db_column($column));
+        }
+        
+        // Initialize choices array
+        $sub_field['choices'] = array();
+        
+        // Populate choices
+        if (!empty($types)) {
+            foreach ($types as $type) {
+                $val_type = explode('_',$type);
+                $sub_field['choices'][$type] = $val_type[0];
+            }
+        }
+        
+        return $sub_field;
+    }
+
+    function disorder_type($field) {
+        if (!empty($field['sub_fields'])) {
+            // Iterate through each sub-field in the main repeater
+            foreach ($field['sub_fields'] as &$sub_field) {
+                // If the sub-field is a repeater itself, iterate its sub-fields
+                if (isset($sub_field['sub_fields']) && is_array($sub_field['sub_fields'])) {
+                    foreach ($sub_field['sub_fields'] as &$inner_sub_field) {
+                        // Check each inner sub-field type and load choices accordingly
+                        if (isset($inner_sub_field['name']) && $inner_sub_field['name'] == 'database_db_column') {
+                            $inner_sub_field = $this->load_choices($inner_sub_field);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Return the field
+        return $field;
+    }
+        
+    
+    
 
     function save_option_page( $post_id ) {
         // Check if it's not an autosave
@@ -122,31 +207,7 @@ final class WPDP_Metabox {
     }
     
     public function countries_field( $field ) {
-        $posts = get_posts(array(
-            'post_type'=>'wp-data-presentation',
-            'posts_per_page'=>-1,
-            'fields'=>'ids'
-        ));
-
-        if(empty($posts)){
-            return [];
-        }
-
-        global $wpdb;
-        $countries = [];
-        foreach($posts as $id){
-            $table_name = 'wpdp_data_'.$id;
-            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
-            if(!$table_exists){
-                continue;
-            }
-
-            $db_countries = $wpdb->get_col("SELECT DISTINCT country FROM {$table_name}");
-            if(!empty($db_countries)){
-                $countries = array_merge($countries,$db_countries);
-            }
-
-        }
+        $countries = $this->get_db_column('country');
         
         // Initialize choices array
         $field['choices'] = array();

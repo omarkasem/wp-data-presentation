@@ -102,6 +102,181 @@
             "ui": 1,
             "ajax": 0,
             "placeholder": ""
+        },
+        {
+            "key": "field_667583ba060cc",
+            "label": "Mapping",
+            "name": "",
+            "aria-label": "",
+            "type": "tab",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "placement": "top",
+            "endpoint": 0
+        },
+        {
+            "key": "field_667583c2060cd",
+            "label": "Incident Type Filter",
+            "name": "incident_type_filter",
+            "aria-label": "",
+            "type": "repeater",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "layout": "block",
+            "pagination": 0,
+            "min": 0,
+            "max": 0,
+            "collapsed": "",
+            "button_label": "Add Group",
+            "rows_per_page": 20,
+            "sub_fields": [
+                {
+                    "key": "field_667ced43d9c6d",
+                    "label": "Filter",
+                    "name": "filter",
+                    "aria-label": "",
+                    "type": "repeater",
+                    "instructions": "",
+                    "required": 0,
+                    "conditional_logic": 0,
+                    "wrapper": {
+                        "width": "",
+                        "class": "",
+                        "id": ""
+                    },
+                    "layout": "table",
+                    "min": 0,
+                    "max": 0,
+                    "collapsed": "",
+                    "button_label": "Add Selector",
+                    "rows_per_page": 20,
+                    "sub_fields": [
+                        {
+                            "key": "field_667ceced0bce3",
+                            "label": "Text",
+                            "name": "text",
+                            "aria-label": "",
+                            "type": "text",
+                            "instructions": "",
+                            "required": 0,
+                            "conditional_logic": 0,
+                            "wrapper": {
+                                "width": "",
+                                "class": "",
+                                "id": ""
+                            },
+                            "default_value": "",
+                            "maxlength": "",
+                            "placeholder": "",
+                            "prepend": "",
+                            "append": "",
+                            "parent_repeater": "field_667ced43d9c6d"
+                        },
+                        {
+                            "key": "field_667cecf60bce4",
+                            "label": "Hierarchial",
+                            "name": "hierarchial",
+                            "aria-label": "",
+                            "type": "select",
+                            "instructions": "",
+                            "required": 0,
+                            "conditional_logic": 0,
+                            "wrapper": {
+                                "width": "",
+                                "class": "",
+                                "id": ""
+                            },
+                            "choices": {
+                                "Parent": "Parent",
+                                "Child 1": "Child 1",
+                                "Child 2": "Child 2",
+                                "Child 3": "Child 3"
+                            },
+                            "default_value": false,
+                            "return_format": "value",
+                            "multiple": 0,
+                            "allow_null": 0,
+                            "ui": 0,
+                            "ajax": 0,
+                            "placeholder": "",
+                            "parent_repeater": "field_667ced43d9c6d"
+                        },
+                        {
+                            "key": "field_667cedc9223a2",
+                            "label": "Database DB Value",
+                            "name": "database_db_column",
+                            "aria-label": "",
+                            "type": "select",
+                            "instructions": "",
+                            "required": 0,
+                            "conditional_logic": 0,
+                            "wrapper": {
+                                "width": "",
+                                "class": "",
+                                "id": ""
+                            },
+                            "choices": {
+                                "Demonstrations__disorder_type": "Demonstrations",
+                                "Political violence__disorder_type": "Political violence",
+                                "Political violence; Demonstrations__disorder_type": "Political violence; Demonstrations",
+                                "Strategic developments__disorder_type": "Strategic developments",
+                                "Violence against civilians__event_type": "Violence against civilians",
+                                "Strategic developments__event_type": "Strategic developments",
+                                "Protests__event_type": "Protests",
+                                "Riots__event_type": "Riots",
+                                "Battles__event_type": "Battles",
+                                "Explosions\/Remote violence__event_type": "Explosions\/Remote violence",
+                                "Attack__sub_event_type": "Attack",
+                                "Other__sub_event_type": "Other",
+                                "Peaceful protest__sub_event_type": "Peaceful protest",
+                                "Violent demonstration__sub_event_type": "Violent demonstration",
+                                "Armed clash__sub_event_type": "Armed clash",
+                                "Shelling\/artillery\/missile attack__sub_event_type": "Shelling\/artillery\/missile attack",
+                                "Change to group\/activity__sub_event_type": "Change to group\/activity",
+                                "Air\/drone strike__sub_event_type": "Air\/drone strike",
+                                "Agreement__sub_event_type": "Agreement",
+                                "Arrests__sub_event_type": "Arrests",
+                                "Non-state actor overtakes territory__sub_event_type": "Non-state actor overtakes territory",
+                                "Government regains territory__sub_event_type": "Government regains territory",
+                                "Abduction\/forced disappearance__sub_event_type": "Abduction\/forced disappearance",
+                                "Looting\/property destruction__sub_event_type": "Looting\/property destruction",
+                                "Mob violence__sub_event_type": "Mob violence",
+                                "Disrupted weapons use__sub_event_type": "Disrupted weapons use",
+                                "Non-violent transfer of territory__sub_event_type": "Non-violent transfer of territory",
+                                "Excessive force against protesters__sub_event_type": "Excessive force against protesters",
+                                "Protest with intervention__sub_event_type": "Protest with intervention",
+                                "Remote explosive\/landmine\/IED__sub_event_type": "Remote explosive\/landmine\/IED",
+                                "Sexual violence__sub_event_type": "Sexual violence",
+                                "Headquarters or base established__sub_event_type": "Headquarters or base established",
+                                "Grenade__sub_event_type": "Grenade",
+                                "Suicide bomb__sub_event_type": "Suicide bomb",
+                                "Chemical weapon__sub_event_type": "Chemical weapon"
+                            },
+                            "default_value": [],
+                            "return_format": "value",
+                            "multiple": 1,
+                            "allow_null": 0,
+                            "ui": 1,
+                            "ajax": 0,
+                            "placeholder": "",
+                            "parent_repeater": "field_667ced43d9c6d"
+                        }
+                    ],
+                    "parent_repeater": "field_667583c2060cd"
+                }
+            ]
         }
     ],
     "location": [
@@ -122,5 +297,5 @@
     "active": true,
     "description": "",
     "show_in_rest": 0,
-    "modified": 1718911480
+    "modified": 1719465852
 }
