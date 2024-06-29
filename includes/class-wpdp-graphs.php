@@ -140,7 +140,6 @@ final class WPDP_Graphs {
                 $chart_sql = 'quarter';
             }
         }
-        $filters['disorder_type'] = (!empty($filters['disorder_type']) ? $filters['disorder_type'] : $all_filters['types']);
 
    
         foreach($posts as $id){
@@ -155,7 +154,7 @@ final class WPDP_Graphs {
                 COUNT(*) as events_count,
                 {$sql_type2}(STR_TO_DATE(event_date, '%%d %%M %%Y')) as year_week,
                 MIN(STR_TO_DATE(event_date, '%%d %%M %%Y')) as week_start,
-                disorder_type
+                disorder_type,event_type,sub_event_type
             FROM {$table_name}
             ";
 
@@ -170,8 +169,33 @@ final class WPDP_Graphs {
         $data = [];
         foreach($filters['disorder_type'] as $type){
             $new_sql = [];
+            $conditions2 = [];
             $new_where = $whereSQL;
-            $new_where .= " AND disorder_type = '{$type}' ";
+
+            if(strpos($type,'+') !== false){
+                $type = explode('+',$type);
+                $text = '';
+                $i=0;
+                foreach($type as $type_v){$i++;
+                    $type_v = explode('__',$type_v);
+                    $column = $type_v[1];
+                    $text .= $type_v[0];
+                    if(count($type) != $i){
+                        $text.= ' & ';
+                    }
+                    $conditions2[] = "{$column} = '{$text}'";
+                }
+            }else{
+                $type = explode('__',$type);
+                $column = $type[1];
+                $text = $type[0];
+                $conditions2[] = "{$column} = '{$text}'";
+            }
+
+            $test = get_option('test5');
+            $test[] = $text;
+
+            $new_where .= " AND (".implode(' OR ', $conditions2).")";
 
             if(!empty($filters['locations'])){
                 $conditions = array();
@@ -189,14 +213,15 @@ final class WPDP_Graphs {
             
             $query = $wpdb->prepare("
             " . implode(' UNION ALL ', $new_sql) . "
-            GROUP BY year_week 
+            GROUP BY year_week, disorder_type,event_type,sub_event_type  
             ORDER BY week_start ASC
             ");
             
-
-            $data[$type] = $wpdb->get_results($query);
-
+            $data[$text] = $wpdb->get_results($query);
+            
         }
+
+
         return [
             'data'=>$data,
             'chart_sql'=>$chart_sql

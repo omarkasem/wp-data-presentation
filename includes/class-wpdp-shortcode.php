@@ -56,7 +56,8 @@ final class WPDP_Shortcode {
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
 
         if (isset($_GET['t'])) {
-            var_dump($this->get_filters());exit;
+            var_dump(get_option('test5'));exit;
+            // var_dump($this->get_filters());exit;
         }
 
     }
@@ -94,7 +95,6 @@ final class WPDP_Shortcode {
 
         $arr_type = ARRAY_A;
         global $wpdb;
-        $types             = [];
         $years             = [];
         $ordered_locations = [];
         foreach ($posts as $id) {
@@ -102,11 +102,6 @@ final class WPDP_Shortcode {
             $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
             if (!$table_exists) {
                 continue;
-            }
-
-            $db_types = $wpdb->get_col("SELECT DISTINCT disorder_type FROM {$table_name}");
-            if (!empty($db_types)) {
-                $types = array_merge($types, $db_types);
             }
 
             $whereSQL = ' WHERE 1=1 ';
@@ -172,19 +167,26 @@ final class WPDP_Shortcode {
             return strtotime($a) - strtotime($b);
         });
 
-        // Check for ; in types
-        foreach ($types as $key => $type) {
-            if (strpos($type, ';') !== false) {
-                $explode = explode(';', $type);
-                $types   = array_merge($types, $explode);
-                unset($types[$key]);
+        $mapping = get_field('incident_type_filter','option');
+        $inc_type = [];
+        foreach($mapping as $k1 => $value){
+            foreach($value as $k2 => $value2){
+                foreach($value2 as $k3 => $value3){
+                    if($value3['hierarchial'] !== 'Parent'){
+                        continue;
+                    }
+                    if(!empty($value3['database_db_column'])){
+                        $inc_type[$value3['text']] = $value3['database_db_column'];
+                    }
+                }
             }
         }
 
-        $types = array_unique(array_map('trim', $types));
+
+
 
         $filters = array(
-            'types'     => $types,
+            'types'     => $inc_type,
             'years'     => $years,
             'locations' => $ordered_locations,
         );
@@ -241,7 +243,7 @@ final class WPDP_Shortcode {
 
         <div class="wpdp">
             <?php
-$filters = self::get_filters();
+        $filters = self::get_filters();
         $this->get_html_filter($filters, $atts);
         if (isset($atts['type']) && 'table' === $atts['type']) {
             WPDP_Tables::shortcode_output();
@@ -307,7 +309,7 @@ $filters = self::get_filters();
                 if ($filter['hierarchial'] === $hierarchy) {
                     if ($hierarchy === 'Parent') {
                         echo '<li class="expandable">';
-                        echo '<input type="checkbox" value="' . implode('+',$filter['database_db_column']) . '">';
+                        echo '<input class="wpdp_incident_type" type="checkbox" value="' . implode('+',$filter['database_db_column']) . '">';
                         echo '<div class="exp_click">';
                         echo '<span>' . htmlspecialchars($filter['text']) . '</span>';
                         echo '<span class="dashicons arrow dashicons-arrow-down-alt2"></span>';
@@ -316,7 +318,7 @@ $filters = self::get_filters();
                         echo '</li>';
                     } elseif ($hierarchy === 'Child 1') {
                         echo '<li class="expandable">';
-                        echo '<input type="checkbox" value="' . implode('+',$filter['database_db_column']) . '">';
+                        echo '<input class="wpdp_incident_type" type="checkbox" value="' . implode('+',$filter['database_db_column']) . '">';
                         echo '<div class="exp_click">';
                         echo '<span>' . htmlspecialchars($filter['text']) . '</span>';
                         echo '<span class="dashicons arrow dashicons-arrow-down-alt2"></span>';
@@ -325,7 +327,7 @@ $filters = self::get_filters();
                         echo '</li>';
                     } elseif ($hierarchy === 'Child 2') {
                         echo '<li class="expandable">';
-                        echo '<input type="checkbox" value="' . implode('+',$filter['database_db_column']) . '">';
+                        echo '<input class="wpdp_incident_type" type="checkbox" value="' . implode('+',$filter['database_db_column']) . '">';
                         echo '<div class="exp_click">';
                         echo '<span>' . htmlspecialchars($filter['text']) . '</span>';
                         echo '<span class="dashicons arrow dashicons-arrow-down-alt2"></span>';
@@ -334,7 +336,7 @@ $filters = self::get_filters();
                         echo '</li>';
                     } elseif ($hierarchy === 'Child 3') {
                         echo '<li class="expandable">';
-                        echo '<input type="checkbox" value="' . implode('+',$filter['database_db_column']) . '">';
+                        echo '<input class="wpdp_incident_type" type="checkbox" value="' . implode('+',$filter['database_db_column']) . '">';
                         echo '<div class="exp_click">';
                         echo '<span>' . htmlspecialchars($filter['text']) . '</span>';
                         echo '</div>';
@@ -399,7 +401,7 @@ $filters = self::get_filters();
                         </div>
                     </div>
 
-                    <div class="grp ">
+                    <div class="grp">
 
                         <div class="title">
                             DATE RANGE <span class="dashicons dashicons-arrow-down-alt2"></span>

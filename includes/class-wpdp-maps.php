@@ -65,23 +65,6 @@ final class WPDP_Maps {
         }, 10, 2);
         
 
-        if(isset($_GET['test1'])){
-            var_dump($this->get_data([
-               
-            ],[
-                'event_date',
-                'disorder_type',
-                'event_type',
-                'sub_event_type',
-                'country',
-                'location',
-                'latitude',
-                'longitude',
-                'source',
-                'notes',
-                'timestamp',
-            ]));exit;
-        }
     }
 
 
@@ -191,7 +174,7 @@ final class WPDP_Maps {
             $data = array_merge($data,$result);
         }
 
-        // var_dump($data);exit;
+
         return $data;
 
     }

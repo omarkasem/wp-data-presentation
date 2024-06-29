@@ -115,6 +115,7 @@ final class WPDP_Tables {
         ];
 
 
+
         $start = $_REQUEST['start']; // Starting row
         $length = $_REQUEST['length']; // Page length
         $columnIndex = $_REQUEST['order'][0]['column']; // Column index for sorting
@@ -240,9 +241,30 @@ final class WPDP_Tables {
                                 }
                                 $whereSQL .= " AND (".implode(' OR ', $conditions).")";
                             }else{
-                                $placeholders = array_fill(0, count($filter), '%s');
-                                $whereSQL .= " AND {$key} IN (".implode(', ', $placeholders).")";
-                                $queryArgs = array_merge($queryArgs, $filter);
+                                $conditions2 = array();
+   
+                                foreach($filter as $inc_v){
+
+                                    if(strpos($inc_v,'+') !== false){
+                                        $inc_v = explode('+',$inc_v);
+                                        $i=0;
+                                        foreach($inc_v as $inc_v2){$i++;
+                                            $inc_v2 = explode('__',$inc_v2);
+                                            $inc_type[$inc_v2[1]][] = $inc_v2[0];
+                                        }
+                                    }else{
+                                        $inc_v = explode('__',$inc_v);
+                                        $inc_type[$inc_v[1]][] = $inc_v[0];
+                                    }
+
+                                }
+               
+                                foreach($inc_type as $inc_type_k => $inc_type_v){$i++;
+                                    $placeholders = array_fill(0, count($inc_type_v), '%s');
+                                    $conditions2[] = "{$inc_type_k} IN (".implode(', ', $placeholders).")";
+                                    $queryArgs = array_merge($queryArgs, $inc_type_v);
+                                }
+                                $whereSQL .= " AND (".implode(' OR ', $conditions2).")";
                             }
                         }else{
 

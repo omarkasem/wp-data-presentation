@@ -34,8 +34,7 @@
                 "id": ""
             },
             "choices": {
-                "Upload": "Upload",
-                "URL": "URL"
+                "Upload": "Upload"
             },
             "default_value": false,
             "return_format": "value",
@@ -72,31 +71,6 @@
             "min_size": "",
             "max_size": "",
             "mime_types": "xlsx,csv"
-        },
-        {
-            "key": "field_657aa859cb9c6",
-            "label": "Excel File URL",
-            "name": "excel_file_url",
-            "aria-label": "",
-            "type": "url",
-            "instructions": "",
-            "required": 0,
-            "conditional_logic": [
-                [
-                    {
-                        "field": "field_657aa840cb9c5",
-                        "operator": "==",
-                        "value": "URL"
-                    }
-                ]
-            ],
-            "wrapper": {
-                "width": "",
-                "class": "",
-                "id": ""
-            },
-            "default_value": "",
-            "placeholder": ""
         },
         {
             "key": "field_65a800a69e6d3",
@@ -137,5 +111,5 @@
     "active": true,
     "description": "",
     "show_in_rest": 0,
-    "modified": 1705509067
+    "modified": 1719587131
 }

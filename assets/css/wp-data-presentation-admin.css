@@ -62,3 +62,14 @@
     margin: 0;
     margin-left: 10px;
 }
+#empty_cats {
+    display: flex;
+    flex-wrap: wrap;
+    list-style-type: none;
+    padding: 0;
+}
+#empty_cats li {
+    flex: 1 1 33.33%;
+    box-sizing: border-box;
+    text-align: left;
+}
