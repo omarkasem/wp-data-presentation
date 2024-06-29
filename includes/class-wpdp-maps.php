@@ -154,7 +154,29 @@ final class WPDP_Maps {
                             }
                             $whereSQL .= " AND (".implode(' OR ', $conditions).")";
                         }elseif($key === 'disorder_type'){
-                            $whereSQL .= " AND {$key} IN ('" . implode("', '", $filter) . "')";
+                            $conditions2 = [];
+                            foreach($filter as $inc_v){
+
+                                if(strpos($inc_v,'+') !== false){
+                                    $inc_v = explode('+',$inc_v);
+                                    $i=0;
+                                    foreach($inc_v as $inc_v2){$i++;
+                                        $inc_v2 = explode('__',$inc_v2);
+                                        $inc_type[$inc_v2[1]][] = $inc_v2[0];
+                                    }
+                                }else{
+                                    $inc_v = explode('__',$inc_v);
+                                    $inc_type[$inc_v[1]][] = $inc_v[0];
+                                }
+
+                            }
+
+                            foreach($inc_type as $inc_type_k => $inc_type_v){$i++;
+                                $conditions2[] = "{$inc_type_k} IN ('" . implode("', '", $inc_type_v) . "')";
+                            }
+
+                            $whereSQL .= " AND (".implode(' OR ', $conditions2).")";
+ 
                         }
                     }
                 }

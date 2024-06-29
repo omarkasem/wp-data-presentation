@@ -176,7 +176,7 @@
           self.selectedLocations.push($(this).val());
       });
 
-      
+      self.selectedIncidents = [];
       $('input[type="checkbox"].wpdp_incident_type:checked').each(function() {
         self.selectedIncidents.push($(this).val());
       });
