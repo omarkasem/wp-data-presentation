@@ -156,7 +156,7 @@
                         "class": "",
                         "id": ""
                     },
-                    "layout": "table",
+                    "layout": "row",
                     "min": 0,
                     "max": 0,
                     "collapsed": "",
@@ -185,8 +185,36 @@
                             "parent_repeater": "field_667ced43d9c6d"
                         },
                         {
+                            "key": "field_66832d5c90b8e",
+                            "label": "Type",
+                            "name": "type",
+                            "aria-label": "",
+                            "type": "select",
+                            "instructions": "",
+                            "required": 0,
+                            "conditional_logic": 0,
+                            "wrapper": {
+                                "width": "",
+                                "class": "",
+                                "id": ""
+                            },
+                            "choices": {
+                                "disorder_type": "Disorder",
+                                "event_type": "Event",
+                                "sub_event_type": "Sub Event"
+                            },
+                            "default_value": false,
+                            "return_format": "value",
+                            "multiple": 0,
+                            "allow_null": 0,
+                            "ui": 0,
+                            "ajax": 0,
+                            "placeholder": "",
+                            "parent_repeater": "field_667ced43d9c6d"
+                        },
+                        {
                             "key": "field_667cecf60bce4",
-                            "label": "Hierarchial",
+                            "label": "Hierarchical",
                             "name": "hierarchial",
                             "aria-label": "",
                             "type": "select",
@@ -199,10 +227,9 @@
                                 "id": ""
                             },
                             "choices": {
-                                "Parent": "Parent",
-                                "Child 1": "Child 1",
-                                "Child 2": "Child 2",
-                                "Child 3": "Child 3"
+                                "Level 1": "Level 1",
+                                "Level 2": "Level 2",
+                                "Level 3": "Level 3"
                             },
                             "default_value": false,
                             "return_format": "value",
@@ -214,14 +241,22 @@
                             "parent_repeater": "field_667ced43d9c6d"
                         },
                         {
-                            "key": "field_667cedc9223a2",
-                            "label": "Database DB Value",
-                            "name": "database_db_column",
+                            "key": "field_6681ef5030093",
+                            "label": "Disorder type",
+                            "name": "disorder_type",
                             "aria-label": "",
                             "type": "select",
                             "instructions": "",
                             "required": 0,
-                            "conditional_logic": 0,
+                            "conditional_logic": [
+                                [
+                                    {
+                                        "field": "field_66832d5c90b8e",
+                                        "operator": "==",
+                                        "value": "disorder_type"
+                                    }
+                                ]
+                            ],
                             "wrapper": {
                                 "width": "",
                                 "class": "",
@@ -231,13 +266,79 @@
                                 "Demonstrations__disorder_type": "Demonstrations",
                                 "Political violence__disorder_type": "Political violence",
                                 "Political violence; Demonstrations__disorder_type": "Political violence; Demonstrations",
-                                "Strategic developments__disorder_type": "Strategic developments",
+                                "Strategic developments__disorder_type": "Strategic developments"
+                            },
+                            "default_value": [],
+                            "return_format": "value",
+                            "multiple": 1,
+                            "allow_null": 0,
+                            "ui": 1,
+                            "ajax": 0,
+                            "placeholder": "",
+                            "parent_repeater": "field_667ced43d9c6d"
+                        },
+                        {
+                            "key": "field_6681ef6d30094",
+                            "label": "Event Type",
+                            "name": "event_type",
+                            "aria-label": "",
+                            "type": "select",
+                            "instructions": "",
+                            "required": 0,
+                            "conditional_logic": [
+                                [
+                                    {
+                                        "field": "field_66832d5c90b8e",
+                                        "operator": "==",
+                                        "value": "event_type"
+                                    }
+                                ]
+                            ],
+                            "wrapper": {
+                                "width": "",
+                                "class": "",
+                                "id": ""
+                            },
+                            "choices": {
                                 "Violence against civilians__event_type": "Violence against civilians",
                                 "Strategic developments__event_type": "Strategic developments",
                                 "Protests__event_type": "Protests",
                                 "Riots__event_type": "Riots",
                                 "Battles__event_type": "Battles",
-                                "Explosions\/Remote violence__event_type": "Explosions\/Remote violence",
+                                "Explosions\/Remote violence__event_type": "Explosions\/Remote violence"
+                            },
+                            "default_value": [],
+                            "return_format": "value",
+                            "multiple": 1,
+                            "allow_null": 0,
+                            "ui": 1,
+                            "ajax": 0,
+                            "placeholder": "",
+                            "parent_repeater": "field_667ced43d9c6d"
+                        },
+                        {
+                            "key": "field_6681ef9430095",
+                            "label": "Sub Event Type",
+                            "name": "sub_event_type",
+                            "aria-label": "",
+                            "type": "select",
+                            "instructions": "",
+                            "required": 0,
+                            "conditional_logic": [
+                                [
+                                    {
+                                        "field": "field_66832d5c90b8e",
+                                        "operator": "==",
+                                        "value": "sub_event_type"
+                                    }
+                                ]
+                            ],
+                            "wrapper": {
+                                "width": "",
+                                "class": "",
+                                "id": ""
+                            },
+                            "choices": {
                                 "Attack__sub_event_type": "Attack",
                                 "Other__sub_event_type": "Other",
                                 "Peaceful protest__sub_event_type": "Peaceful protest",
@@ -280,7 +381,7 @@
         },
         {
             "key": "field_667ed6bc35cf2",
-            "label": "Empty Mapping Categories",
+            "label": "Unmatched Event Categories",
             "name": "",
             "aria-label": "",
             "type": "message",
@@ -292,7 +393,7 @@
                 "class": "",
                 "id": ""
             },
-            "message": "",
+            "message": "<div id=\"empty_cats\">\n            <div>\n            <h2>Disorder Types<\/h2>\n            <ul>\n        <li>Demonstrations<\/li><li>Political violence; Demonstrations<\/li><li>Strategic developments<\/li><\/div><\/ul>\n            <div>\n            <h2>Event Types<\/h2>\n            <ul>\n        <li>Strategic developments<\/li><li>Explosions\/Remote violence<\/li><\/div><\/ul>\n            <div>\n            <h2>Sub Event Types<\/h2>\n            <ul>\n        <li>Attack<\/li><li>Other<\/li><li>Peaceful protest<\/li><li>Armed clash<\/li><li>Shelling\/artillery\/missile attack<\/li><li>Change to group\/activity<\/li><li>Air\/drone strike<\/li><li>Agreement<\/li><li>Non-state actor overtakes territory<\/li><li>Government regains territory<\/li><li>Abduction\/forced disappearance<\/li><li>Disrupted weapons use<\/li><li>Non-violent transfer of territory<\/li><li>Remote explosive\/landmine\/IED<\/li><li>Sexual violence<\/li><li>Headquarters or base established<\/li><li>Suicide bomb<\/li><li>Chemical weapon<\/li><\/div><\/ul><\/div>",
             "new_lines": "wpautop",
             "esc_html": 0
         }
@@ -315,5 +416,5 @@
     "active": true,
     "description": "",
     "show_in_rest": 0,
-    "modified": 1719588813
+    "modified": 1719873460
 }

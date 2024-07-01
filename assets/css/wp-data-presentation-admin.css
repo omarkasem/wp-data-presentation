@@ -67,6 +67,11 @@
     flex-wrap: wrap;
     list-style-type: none;
     padding: 0;
+    gap: 60px;
+}
+#empty_cats h2{
+    margin:0;
+    padding:0;
 }
 #empty_cats li {
     flex: 1 1 33.33%;

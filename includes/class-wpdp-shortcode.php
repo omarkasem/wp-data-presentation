@@ -172,18 +172,18 @@ final class WPDP_Shortcode {
         foreach($mapping as $k1 => $value){
             foreach($value as $k2 => $value2){
                 foreach($value2 as $k3 => $value3){
-                    if($value3['hierarchial'] !== 'Parent'){
+                    if($value3['hierarchial'] !== 'Level 1'){
                         continue;
                     }
-                    if(!empty($value3['database_db_column'])){
-                        $inc_type[$value3['text']] = $value3['database_db_column'];
+                    $incident_type = $value3['type'].'_type';
+
+
+                    if(!empty($value3[$incident_type])){
+                        $inc_type[$value3['text']] = $value3[$incident_type];
                     }
                 }
             }
         }
-
-
-
 
         $filters = array(
             'types'     => $inc_type,
@@ -296,50 +296,39 @@ final class WPDP_Shortcode {
     }
 
     function generateCheckboxes($arr) {
-        function renderCheckbox($filter) {
-            echo '<li>';
-            echo '<input type="checkbox" value="' . implode('+',$filter['database_db_column']) . '">';
-            echo '<label>' . htmlspecialchars($filter['text']) . '</label>';
-            echo '</li>';
-        }
-    
-        function renderFilters($filters, $hierarchy = 'Parent') {
+
+        function renderFilters($filters, $hierarchy = 'Level 1') {
             echo '<ul>';
+
             foreach ($filters as $filter) {
+                $type = $filter['type'];
                 if ($filter['hierarchial'] === $hierarchy) {
-                    if ($hierarchy === 'Parent') {
+                    if ($hierarchy === 'Level 1') {
                         echo '<li class="expandable">';
-                        echo '<input class="wpdp_incident_type" type="checkbox" value="' . implode('+',$filter['database_db_column']) . '">';
+                        echo '<input class="wpdp_incident_type" type="checkbox" value="' . implode('+',$filter[$type]) . '">';
                         echo '<div class="exp_click">';
                         echo '<span>' . htmlspecialchars($filter['text']) . '</span>';
                         echo '<span class="dashicons arrow dashicons-arrow-down-alt2"></span>';
                         echo '</div>';
-                        renderFilters($filters, 'Child 1');
+                        renderFilters($filters, 'Level 2');
                         echo '</li>';
-                    } elseif ($hierarchy === 'Child 1') {
+                    } elseif ($hierarchy === 'Level 1') {
                         echo '<li class="expandable">';
-                        echo '<input class="wpdp_incident_type" type="checkbox" value="' . implode('+',$filter['database_db_column']) . '">';
+                        echo '<input class="wpdp_incident_type" type="checkbox" value="' . implode('+',$filter[$type]) . '">';
                         echo '<div class="exp_click">';
                         echo '<span>' . htmlspecialchars($filter['text']) . '</span>';
                         echo '<span class="dashicons arrow dashicons-arrow-down-alt2"></span>';
                         echo '</div>';
-                        renderFilters($filters, 'Child 2');
+                        renderFilters($filters, 'Level 2');
                         echo '</li>';
-                    } elseif ($hierarchy === 'Child 2') {
+                    } elseif ($hierarchy === 'Level 2') {
                         echo '<li class="expandable">';
-                        echo '<input class="wpdp_incident_type" type="checkbox" value="' . implode('+',$filter['database_db_column']) . '">';
+                        echo '<input class="wpdp_incident_type" type="checkbox" value="' . implode('+',$filter[$type]) . '">';
                         echo '<div class="exp_click">';
                         echo '<span>' . htmlspecialchars($filter['text']) . '</span>';
                         echo '<span class="dashicons arrow dashicons-arrow-down-alt2"></span>';
                         echo '</div>';
-                        renderFilters($filters, 'Child 3');
-                        echo '</li>';
-                    } elseif ($hierarchy === 'Child 3') {
-                        echo '<li class="expandable">';
-                        echo '<input class="wpdp_incident_type" type="checkbox" value="' . implode('+',$filter['database_db_column']) . '">';
-                        echo '<div class="exp_click">';
-                        echo '<span>' . htmlspecialchars($filter['text']) . '</span>';
-                        echo '</div>';
+                        renderFilters($filters, 'Level 3');
                         echo '</li>';
                     }
                 }

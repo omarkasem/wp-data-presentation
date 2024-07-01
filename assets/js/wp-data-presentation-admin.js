@@ -89,10 +89,11 @@ jQuery(document).ready(function($){
         },
         getExtension:function(url) {
             return url.split('.').pop().split(/\#|\?/)[0];
-        }
-        
+        },
+
 
     }
+
 
 
 

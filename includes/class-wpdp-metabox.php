@@ -58,14 +58,19 @@ final class WPDP_Metabox {
         add_action( 'ok_wpdp_remove_countries_records', array($this,'remove_countries_records'), 10, 3 );
         
         // Mapping
-        add_filter('acf/load_field/name=incident_type_filter', array($this,'disorder_type'));
+        add_filter('acf/load_field/name=incident_type_filter', array($this,'load_incidents_choices'));
 
         add_filter('acf/load_value/name=incident_type_filter', array($this,'set_default_repeater_values'), 10, 3);
 
 
         add_filter('acf/load_field/key=field_667ed6bc35cf2', array($this,'empty_mapping_categories'));
 
+        if(isset($_GET['test'])){
+            var_dump(get_option('test661'));exit;
+        }
+
     }
+
 
     function empty_mapping_categories($field){
         $mapping = get_field('incident_type_filter','option');
@@ -86,7 +91,10 @@ final class WPDP_Metabox {
         foreach($mapping as $k1 => $value){
             foreach($value as $k2 => $value2){
                 foreach($value2 as $k3 => $value3){
-                    if(!empty($value3['database_db_column'])){
+
+                    $incident_type = $value3['type'];
+
+                    if(!empty($value3[$incident_type])){
                         $result = $this->find_element($types, $value3['text'],true);
                         if($result !== false){
                             unset($types[$result]);
@@ -100,23 +108,48 @@ final class WPDP_Metabox {
             return $field;
         }
 
-        $message = '<ul id="empty_cats">';
-        
+        $message = '<div id="empty_cats">';
+        $message .= '
+            <div>
+            <h2>Disorder Types</h2>
+            <ul>
+        ';
         foreach($types as $type){
             $text = explode('__', $type);
-            $message .= '<li>'.$text[0].'</li>';
-        }
-        
-        // Ensure that there are exactly 3 items per row by adding empty <li> elements if necessary
-        $totalItems = count($types);
-        $remainder = $totalItems % 3;
-        if ($remainder != 0) {
-            for ($i = 0; $i < 3 - $remainder; $i++) {
-                $message .= '<li></li>';
+            if($text[1] === 'disorder_type'){
+                $message .= '<li>'.$text[0].'</li>';
             }
         }
-        
-        $message .= '</ul>';
+        $message .= '</div></ul>';
+
+        $message .= '
+            <div>
+            <h2>Event Types</h2>
+            <ul>
+        ';
+        foreach($types as $type){
+            $text = explode('__', $type);
+            if($text[1] === 'event_type'){
+                $message .= '<li>'.$text[0].'</li>';
+            }
+        }
+        $message .= '</div></ul>';
+
+        $message .= '
+            <div>
+            <h2>Sub Event Types</h2>
+            <ul>
+        ';
+        foreach($types as $type){
+            $text = explode('__', $type);
+            if($text[1] === 'sub_event_type'){
+                $message .= '<li>'.$text[0].'</li>';
+            }
+        }
+        $message .= '</div></ul>';
+
+
+        $message .= '</div>';
         
         $field['message'] = $message;
         return $field;
@@ -124,116 +157,15 @@ final class WPDP_Metabox {
 
 
     function set_default_repeater_values($value, $post_id, $field) {
-        // Check if the value is empty
-        if (empty($value)) {
-            $value = array(
-                array(
-                    'field_667ced43d9c6d' => array(
-                        array(
-                            'field_667ceced0bce3' => 'Political violence',
-                            'field_667cecf60bce4' => 'Parent',
-                            'field_667cedc9223a2' => array('Political violence__disorder_type'),
-                        ),
-                        array(
-                            'field_667ceced0bce3' => 'Battles',
-                            'field_667cecf60bce4' => 'Child 1',
-                            'field_667cedc9223a2' => array('Battles__event_type'),
-                        ),
-                        array(
-                            'field_667ceced0bce3' => 'Explosions and remote violence',
-                            'field_667cecf60bce4' => 'Child 1',
-                            'field_667cedc9223a2' => array('Explosions/Remote violence__event_type'),
-                        ),
-                        array(
-                            'field_667ceced0bce3' => 'Violence against civilians',
-                            'field_667cecf60bce4' => 'Child 1',
-                            'field_667cedc9223a2' => array('Violence against civilians__event_type'),
-                        ),
-                    ),
-                ),
-                array(
-                    'field_667ced43d9c6d' => array(
-                        array(
-                            'field_667ceced0bce3' => 'Protests and riots',
-                            'field_667cecf60bce4' => 'Parent',
-                            'field_667cedc9223a2' => array('Protests__event_type', 'Riots__event_type'),
-                        ),
-                        array(
-                            'field_667ceced0bce3' => 'Protests',
-                            'field_667cecf60bce4' => 'Child 1',
-                            'field_667cedc9223a2' => array('Protests__event_type'),
-                        ),
-                        array(
-                            'field_667ceced0bce3' => 'Peacefull protests',
-                            'field_667cecf60bce4' => 'Child 2',
-                            'field_667cedc9223a2' => array('Peaceful protest__sub_event_type'),
-                        ),
-                        array(
-                            'field_667ceced0bce3' => 'Protest with intervention',
-                            'field_667cecf60bce4' => 'Child 2',
-                            'field_667cedc9223a2' => array('Protest with intervention__sub_event_type'),
-                        ),
-                        array(
-                            'field_667ceced0bce3' => 'Excessive force against protesters',
-                            'field_667cecf60bce4' => 'Child 2',
-                            'field_667cedc9223a2' => array('Excessive force against protesters__sub_event_type'),
-                        ),
-                        array(
-                            'field_667ceced0bce3' => 'Riots',
-                            'field_667cecf60bce4' => 'Child 1',
-                            'field_667cedc9223a2' => array('Riots__event_type'),
-                        ),
-                        array(
-                            'field_667ceced0bce3' => 'Violent demonstration',
-                            'field_667cecf60bce4' => 'Child 2',
-                            'field_667cedc9223a2' => array('Violent demonstration__sub_event_type'),
-                        ),
-                        array(
-                            'field_667ceced0bce3' => 'Mob violence',
-                            'field_667cecf60bce4' => 'Child 2',
-                            'field_667cedc9223a2' => array('Mob violence__sub_event_type'),
-                        ),
-                    ),
-                ),
-                array(
-                    'field_667ced43d9c6d' => array(
-                        array(
-                            'field_667ceced0bce3' => 'Looting/property destruction',
-                            'field_667cecf60bce4' => 'Parent',
-                            'field_667cedc9223a2' => array('Looting/property destruction__sub_event_type'),
-                        ),
-                    ),
-                ),
-                array(
-                    'field_667ced43d9c6d' => array(
-                        array(
-                            'field_667ceced0bce3' => 'Arrests',
-                            'field_667cecf60bce4' => 'Parent',
-                            'field_667cedc9223a2' => array('Arrests__sub_event_type'),
-                        ),
-                    ),
-                ),
-                array(
-                    'field_667ced43d9c6d' => array(
-                        array(
-                            'field_667ceced0bce3' => 'Agreements',
-                            'field_667cecf60bce4' => 'Parent',
-                            'field_667cedc9223a2' => array('Agreement__sub_event_type'),
-                        ),
-                    ),
-                ),
-                array(
-                    'field_667ced43d9c6d' => array(
-                        array(
-                            'field_667ceced0bce3' => 'Change of Group Activity',
-                            'field_667cecf60bce4' => 'Parent',
-                            'field_667cedc9223a2' => array('Change to group/activity__sub_event_type'),
-                        ),
-                    ),
-                ),
-            );
+        if(!empty($value)){
+            return $value;
         }
-        return $value;
+
+        $filePath = WP_DATA_PRESENTATION_PATH . '/lib/acf-json/default_incident_types.json';
+
+        $jsonContent = file_get_contents($filePath);
+
+        return json_decode($jsonContent, true);
     }
 
 
@@ -274,16 +206,8 @@ final class WPDP_Metabox {
         return $column;
     }
 
-    function load_choices($sub_field) {
-        $db_columns = array(
-            'disorder_type',
-            'event_type',
-            'sub_event_type'
-        );
-        $types = [];
-        foreach($db_columns as $column){
-            $types= array_merge($types,$this->get_db_column($column));
-        }
+    function load_choices($column,$sub_field) {
+        $types= $this->get_db_column($column);
         
         // Initialize choices array
         $sub_field['choices'] = array();
@@ -299,16 +223,21 @@ final class WPDP_Metabox {
         return $sub_field;
     }
 
-    function disorder_type($field) {
+    function load_incidents_choices($field) {
         if (!empty($field['sub_fields'])) {
             // Iterate through each sub-field in the main repeater
             foreach ($field['sub_fields'] as &$sub_field) {
                 // If the sub-field is a repeater itself, iterate its sub-fields
                 if (isset($sub_field['sub_fields']) && is_array($sub_field['sub_fields'])) {
+                    
                     foreach ($sub_field['sub_fields'] as &$inner_sub_field) {
                         // Check each inner sub-field type and load choices accordingly
-                        if (isset($inner_sub_field['name']) && $inner_sub_field['name'] == 'database_db_column') {
-                            $inner_sub_field = $this->load_choices($inner_sub_field);
+                        if (isset($inner_sub_field['name']) && $inner_sub_field['name'] == 'disorder_type') {
+                            $inner_sub_field = $this->load_choices('disorder_type',$inner_sub_field);
+                        }elseif (isset($inner_sub_field['name']) && $inner_sub_field['name'] == 'event_type') {
+                            $inner_sub_field = $this->load_choices('event_type',$inner_sub_field);
+                        }elseif (isset($inner_sub_field['name']) && $inner_sub_field['name'] == 'sub_event_type') {
+                            $inner_sub_field = $this->load_choices('sub_event_type',$inner_sub_field);
                         }
                     }
                 }
@@ -446,12 +375,16 @@ final class WPDP_Metabox {
         foreach($mapping as $k1 => $value){
             foreach($value as $k2 => $value2){
                 foreach($value2 as $k3 => $value3){
-                    if(empty(array_filter($value3['database_db_column']))){
+                    $incident_type = $value3['type'];
+                    if(is_array($value3[$incident_type]) && empty(array_filter($value3[$incident_type]))){
                         $result = $this->find_element($types, $value3['text']);
+
                         if($result === false){
                             return;
                         }
-                        $mapping[$k1][$k2][$k3]['database_db_column'] = array($result);
+
+                        $mapping[$k1][$k2][$k3]['type'] = $this->find_type($result);
+                        $mapping[$k1][$k2][$k3][$incident_type] = array($result);
                         $changed = true;
                     }
                 }
@@ -462,6 +395,14 @@ final class WPDP_Metabox {
             update_field('incident_type_filter',$mapping,'option');
         }
 
+    }
+
+    function find_type($cat_value) {
+        foreach (['sub_event_type', 'disorder_type', 'event_type'] as $type) {
+            if (strpos($cat_value, $type) !== false) {
+                return $type;
+            }
+        }
     }
 
     function find_element($array, $text, $return_key = false) {

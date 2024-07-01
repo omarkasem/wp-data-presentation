@@ -1,0 +1,154 @@
+[
+    {
+        "field_667ced43d9c6d": [
+            {
+                "field_667ceced0bce3": "Political violence",
+                "field_66832d5c90b8e": "disorder_type",
+                "field_667cecf60bce4": "Level 1",
+                "field_6681ef5030093": ["Political violence__disorder_type"],
+                "field_6681ef6d30094": [],
+                "field_6681ef9430095": []
+            },
+            {
+                "field_667ceced0bce3": "Battles",
+                "field_66832d5c90b8e": "event_type",
+                "field_667cecf60bce4": "Level 2",
+                "field_6681ef5030093": ["Battles__event_type"],
+                "field_6681ef6d30094": ["Battles__event_type"],
+                "field_6681ef9430095": []
+            },
+            {
+                "field_667ceced0bce3": "Explosions and remote violence",
+                "field_66832d5c90b8e": "event_type",
+                "field_667cecf60bce4": "Level 2",
+                "field_6681ef5030093": [""],
+                "field_6681ef6d30094": ["Explosions/Remote violence__event_type"],
+                "field_6681ef9430095": []
+            },
+            {
+                "field_667ceced0bce3": "Violence against civilians",
+                "field_66832d5c90b8e": "event_type",
+                "field_667cecf60bce4": "Level 2",
+                "field_6681ef5030093": ["Violence against civilians__event_type"],
+                "field_6681ef6d30094": ["Violence against civilians__event_type"],
+                "field_6681ef9430095": []
+            }
+        ]
+    },
+    {
+        "field_667ced43d9c6d": [
+            {
+                "field_667ceced0bce3": "Protests and riots",
+                "field_66832d5c90b8e": "event_type",
+                "field_667cecf60bce4": "Level 1",
+                "field_6681ef5030093": [""],
+                "field_6681ef6d30094": ["Protests__event_type", "Riots__event_type"],
+                "field_6681ef9430095": []
+            },
+            {
+                "field_667ceced0bce3": "Protests",
+                "field_66832d5c90b8e": "event_type",
+                "field_667cecf60bce4": "Level 2",
+                "field_6681ef5030093": ["Protests__event_type"],
+                "field_6681ef6d30094": ["Protests__event_type"],
+                "field_6681ef9430095": []
+            },
+            {
+                "field_667ceced0bce3": "Peacefull protests",
+                "field_66832d5c90b8e": "sub_event_type",
+                "field_667cecf60bce4": "Level 3",
+                "field_6681ef5030093": [""],
+                "field_6681ef6d30094": [],
+                "field_6681ef9430095": ["Peaceful protest__sub_event_type"]
+            },
+            {
+                "field_667ceced0bce3": "Protest with intervention",
+                "field_66832d5c90b8e": "sub_event_type",
+                "field_667cecf60bce4": "Level 3",
+                "field_6681ef5030093": ["Protest with intervention__sub_event_type"],
+                "field_6681ef6d30094": [],
+                "field_6681ef9430095": ["Protest with intervention__sub_event_type"]
+            },
+            {
+                "field_667ceced0bce3": "Excessive force against protesters",
+                "field_66832d5c90b8e": "sub_event_type",
+                "field_667cecf60bce4": "Level 3",
+                "field_6681ef5030093": ["Excessive force against protesters__sub_event_type"],
+                "field_6681ef6d30094": [],
+                "field_6681ef9430095": ["Excessive force against protesters__sub_event_type"]
+            },
+            {
+                "field_667ceced0bce3": "Riots",
+                "field_66832d5c90b8e": "event_type",
+                "field_667cecf60bce4": "Level 2",
+                "field_6681ef5030093": ["Riots__event_type"],
+                "field_6681ef6d30094": ["Riots__event_type"],
+                "field_6681ef9430095": []
+            },
+            {
+                "field_667ceced0bce3": "Violent demonstration",
+                "field_66832d5c90b8e": "sub_event_type",
+                "field_667cecf60bce4": "Level 3",
+                "field_6681ef5030093": ["Violent demonstration__sub_event_type"],
+                "field_6681ef6d30094": [],
+                "field_6681ef9430095": ["Violent demonstration__sub_event_type"]
+            },
+            {
+                "field_667ceced0bce3": "Mob violence",
+                "field_66832d5c90b8e": "sub_event_type",
+                "field_667cecf60bce4": "Level 3",
+                "field_6681ef5030093": ["Mob violence__sub_event_type"],
+                "field_6681ef6d30094": [],
+                "field_6681ef9430095": ["Mob violence__sub_event_type"]
+            }
+        ]
+    },
+    {
+        "field_667ced43d9c6d": [
+            {
+                "field_667ceced0bce3": "Looting/property destruction",
+                "field_66832d5c90b8e": "sub_event_type",
+                "field_667cecf60bce4": "Level 1",
+                "field_6681ef5030093": ["Looting/property destruction__sub_event_type"],
+                "field_6681ef6d30094": [],
+                "field_6681ef9430095": ["Looting/property destruction__sub_event_type"]
+            }
+        ]
+    },
+    {
+        "field_667ced43d9c6d": [
+            {
+                "field_667ceced0bce3": "Arrests",
+                "field_66832d5c90b8e": "sub_event_type",
+                "field_667cecf60bce4": "Level 1",
+                "field_6681ef5030093": ["Arrests__sub_event_type"],
+                "field_6681ef6d30094": [],
+                "field_6681ef9430095": ["Arrests__sub_event_type"]
+            }
+        ]
+    },
+    {
+        "field_667ced43d9c6d": [
+            {
+                "field_667ceced0bce3": "Agreements",
+                "field_66832d5c90b8e": "sub_event_type",
+                "field_667cecf60bce4": "Level 1",
+                "field_6681ef5030093": [""],
+                "field_6681ef6d30094": [],
+                "field_6681ef9430095": ["Agreement__sub_event_type"]
+            }
+        ]
+    },
+    {
+        "field_667ced43d9c6d": [
+            {
+                "field_667ceced0bce3": "Change of Group Activity",
+                "field_66832d5c90b8e": "sub_event_type",
+                "field_667cecf60bce4": "Level 1",
+                "field_6681ef5030093": [""],
+                "field_6681ef6d30094": [],
+                "field_6681ef9430095": ["Change to group/activity__sub_event_type"]
+            }
+        ]
+    }
+]
