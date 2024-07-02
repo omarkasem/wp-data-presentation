@@ -194,7 +194,7 @@ final class WPDP_Shortcode {
         return $filters;
     }
 
-    function printArrayAsList($locations, $level = 0) {
+    function printArrayAsList($locations, $level = 0, $parent_key = false) {
 
         echo '<ul>';
         foreach ($locations as $key => $value) {
@@ -208,11 +208,15 @@ final class WPDP_Shortcode {
 
             if (is_array($value)) {
                 $key_val = explode('__',$key);
+                $input_val = $key;
+                if($parent_key !== false){
+                    $input_val = $parent_key . ' + '.$key;
+                }
                 echo '<li class="expandable">';
-                echo '<input type="checkbox" class="wpdp_location" value="' . $key . '">';
+                echo '<input type="checkbox" class="wpdp_location" value="' . $input_val . '">';
                 echo '<div class="exp_click"><span for="' . $key . '">' . $key_val[0] . '</span>';
                 echo '<span class="dashicons dashicons-arrow-up-alt2 arrow"></span></div>';
-                $this->printArrayAsList($value, $level + 1);
+                $this->printArrayAsList($value, $level + 1, $input_val);
             } else {
                 echo '<li>';
                 echo $value;
@@ -354,20 +358,6 @@ final class WPDP_Shortcode {
 <!--                 <span class="filter_back dashicons dashicons-arrow-left-alt"></span> -->
                 <form id="filter_form" action="" style="margin-top:15px;">
 
-                    <?php if ('graph' === $atts['type'] || '' == $atts['type']) {?>
-                    <div class="grp ">
-
-                        <div class="title">
-                            COUNT TYPE <span class="dashicons dashicons-arrow-down-alt2"></span>
-                        </div>
-                        <div class="content">
-                            <select name="wpdp_type_selector" id="wpdp_type_selector">
-                                <option value="fatalities">Fatalities</option>
-                                <option value="incident_count">Incident Count</option>
-                            </select>
-                        </div>
-                    </div>
-                    <?php }?>
 
                     <div class="grp ">
 
@@ -409,6 +399,23 @@ final class WPDP_Shortcode {
                         </div>
 
                     </div>
+
+
+                    <?php if ('graph' === $atts['type'] || '' == $atts['type']) {?>
+                    <div class="grp ">
+
+                        <div class="title">
+                            COUNT TYPE <span class="dashicons dashicons-arrow-down-alt2"></span>
+                        </div>
+                        <div class="content">
+                            <select name="wpdp_type_selector" id="wpdp_type_selector">
+                                <option value="fatalities">Fatalities</option>
+                                <option value="incident_count">Incident Count</option>
+                            </select>
+                        </div>
+                    </div>
+                    <?php }?>
+
 
                     <input type="submit" value="Apply Filters">
                     <img id="filter_loader" src="<?php echo admin_url('images/loading.gif'); ?>" alt="">

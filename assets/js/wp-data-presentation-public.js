@@ -18,9 +18,9 @@
       self.showMapDetails();
       self.graphCountSelector();
       self.datePicker();
-      setTimeout(() => {
-        self.updateCheckboxValues();
-      }, 1000);
+      // setTimeout(() => {
+        // self.updateCheckboxValues();
+      // }, 1000);
     },
 
     self.updateCheckboxValues = function () { 
@@ -231,8 +231,12 @@
 
       self.selectedLocations = [];
       $('input[type="checkbox"].wpdp_location:checked').each(function() {
+        var isChildChecked = $(this).closest('ul').parent().children('input[type="checkbox"].wpdp_location:checked').length > 0;
+        if (!isChildChecked) {
           self.selectedLocations.push($(this).val());
+        }
       });
+
 
       self.selectedIncidents = [];
       $('input[type="checkbox"].wpdp_incident_type:checked').each(function() {
@@ -275,7 +279,7 @@
         self.main_map = new google.maps.Map(
           document.getElementById('wpdp_map'),
           {
-              zoom: 3, 
+              zoom: 3.3, 
               center: startLocation,
               styles: [
                 {
@@ -861,7 +865,6 @@
         }
       });
 
-      console.log(self.selectedLocations);
       
       self.selectedIncidents = [];      
       $('input[type="checkbox"].wpdp_incident_type:checked').each(function() {

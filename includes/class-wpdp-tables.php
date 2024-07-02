@@ -235,8 +235,8 @@ final class WPDP_Tables {
                                 $loci = 0;
                                 foreach($filter as $value){ $loci++;
                                     $conditions = array();
-                                    if(strpos($value,'>') !== false){
-                                        $value = explode(' > ',$value);
+                                    if(strpos($value,'+') !== false){
+                                        $value = explode(' + ',$value);
                                         foreach($value as $v){
                                             $real_v = explode('__',$v);
                                             $column = $real_v[1];

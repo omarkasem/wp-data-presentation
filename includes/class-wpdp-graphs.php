@@ -199,8 +199,8 @@ final class WPDP_Graphs {
                 $loci = 0;
                 foreach($filters['locations'] as $value){ $loci++;
                     $conditions = array();
-                    if(strpos($value,'>') !== false){
-                        $value = explode(' > ',$value);
+                    if(strpos($value,'+') !== false){
+                        $value = explode(' + ',$value);
                         foreach($value as $v){
                             $real_v = explode('__',$v);
                             $column = $real_v[1];
@@ -227,7 +227,7 @@ final class WPDP_Graphs {
             
             $query = $wpdb->prepare("
             " . implode(' UNION ALL ', $new_sql) . "
-            GROUP BY year_week, disorder_type,event_type,sub_event_type  
+            GROUP BY year_week, disorder_type  
             ORDER BY week_start ASC
             ");
             
