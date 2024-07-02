@@ -45,6 +45,7 @@ final class WPDP_Metabox {
 
     public function _add_hooks(){
         
+        $this->de_acf_free();
         add_filter('acf/settings/url', array($this,'my_acf_settings_url'));
         add_filter('acf/settings/show_admin', array($this,'show_admin'));
         add_filter('acf/render_field/key=field_657e4ec5e8971', array($this,'shortcode_box'), 20, 1);
@@ -71,6 +72,27 @@ final class WPDP_Metabox {
 
     }
 
+    function de_acf_free(){
+        if ( ! function_exists( 'is_plugin_active' ) ) {
+            include_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
+
+        // Check if the ACF free plugin is activated
+        if ( is_plugin_active( 'advanced-custom-fields/acf.php' ) ) {
+            // Free plugin activated
+            // Free plugin activated, show notice
+            add_action( 'admin_notices', function () {
+                ?>
+                <div class="updated" style="border-left: 4px solid #ffba00;">
+                    <p>The ACF plugin cannot be activated at the same time as Third-Party Product and has been deactivated. Please keep ACF installed to allow you to use ACF functionality.</p>
+                </div>
+                <?php
+            }, 99 );
+
+            // Disable ACF free plugin
+            deactivate_plugins( 'advanced-custom-fields/acf.php' );
+        }
+    }
 
     function empty_mapping_categories($field){
         $mapping = get_field('incident_type_filter','option');
@@ -184,7 +206,7 @@ final class WPDP_Metabox {
         global $wpdb;
         $column = [];
         foreach($posts as $id){
-            $table_name = 'wpdp_data_'.$id;
+            $table_name = $wpdb->prefix. 'wpdp_data_'.$id;
             $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
             if(!$table_exists){
                 continue;
@@ -301,7 +323,7 @@ final class WPDP_Metabox {
 
         global $wpdb;
         foreach($posts as $id){
-            $table_name = 'wpdp_data_'.$id;
+            $table_name = $wpdb->prefix. 'wpdp_data_'.$id;
             $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
             if(!$table_exists){
                 continue;
@@ -340,7 +362,7 @@ final class WPDP_Metabox {
             return;
         }
         
-        $table_name = 'wpdp_data_'.$post_id;
+        $table_name = $wpdb->prefix. 'wpdp_data_'.$post_id;
         if(get_field('override_csv_file') === true){
             if(get_field('import_file') === 'Upload'){
                 $file_path = get_attached_file(get_field('upload_excel_file'));

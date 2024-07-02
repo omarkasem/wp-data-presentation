@@ -184,7 +184,7 @@ final class WPDP_Maps {
         }
 
         foreach($posts as $id){
-            $table_name = 'wpdp_data_'.$id;
+            $table_name = $wpdb->prefix. 'wpdp_data_'.$id;
             $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
             if(!$table_exists){
                 continue;

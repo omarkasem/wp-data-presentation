@@ -79,7 +79,7 @@ final class WPDP_Tables {
         global $wpdb;
         $result = '';
         foreach($posts as $post_id){
-            $table_name = 'wpdp_data_'.$post_id;
+            $table_name = $wpdb->prefix. 'wpdp_data_'.$post_id;
             $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
             if(!$table_exists){
                 continue;
@@ -162,7 +162,7 @@ final class WPDP_Tables {
         global $wpdb;
         $count = 0;
         foreach($posts as $id){
-            $table_name = 'wpdp_data_'.$id;
+            $table_name = $wpdb->prefix. 'wpdp_data_'.$id;
             $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
             if(!$table_exists){
                 continue;
@@ -212,7 +212,7 @@ final class WPDP_Tables {
         $data = [];
         $count = 0;
         foreach($posts as $id){
-            $table_name = 'wpdp_data_'.$id;
+            $table_name = $wpdb->prefix. 'wpdp_data_'.$id;
             $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
             if(!$table_exists){
                 continue;

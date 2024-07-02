@@ -20,10 +20,35 @@ class WPDP_Db_Table {
      * @since 1.0.0
      */
     public function __construct($table_name,$file_path) {
-        $this->table_name    = $table_name;
+        global $wpdb;
+        $this->table_name    =  $wpdb->prefix . $table_name;
         $this->csv_file_path = $file_path;
-        $this->delimiter     = ',';
+        $this->delimiter     = ';';
     }
+
+
+    public function detect_delimiter($file_path) {
+        $delimiters = array(
+            ',' => 0,
+            ';' => 0,
+            "\t" => 0,
+            '|' => 0
+        );
+    
+        $handle = fopen($file_path, 'r');
+    
+        if ($handle) {
+            $line = fgets($handle);
+            fclose($handle);
+    
+            foreach ($delimiters as $delimiter => &$count) {
+                $count = substr_count($line, $delimiter);
+            }
+        }
+    
+        return array_search(max($delimiters), $delimiters);
+    }
+    
 
     /**
      * Import CSV file into database table
@@ -49,6 +74,8 @@ class WPDP_Db_Table {
         if ($conn->connect_error) {
             die("Connection failed: " . $conn->connect_error);
         }
+
+        $this->delimiter = $this->detect_delimiter($this->csv_file_path);
 
         // Live server only
         $query = $wpdb->prepare(
@@ -107,6 +134,7 @@ class WPDP_Db_Table {
      */
     public function create_table() {
         global $wpdb;
+        $charset_collate = $wpdb->get_charset_collate();
 
         $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$this->table_name}'") === $this->table_name;
 
@@ -116,7 +144,6 @@ class WPDP_Db_Table {
 
         // Get the column names from the CSV file
         $column_names = $this->get_column_names();
-
         if (empty($column_names)) {
             // Unable to get column names from the CSV file
             return;
@@ -139,8 +166,12 @@ class WPDP_Db_Table {
 
         // Execute the query
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-        dbDelta($sql);
+        $wpdb->query($sql);
 
+        // Check if the table was created successfully
+        if ($wpdb->last_error) {
+            var_dump($wpdb->last_error);exit;
+        }
         return true;
     }
 
@@ -179,11 +210,16 @@ class WPDP_Db_Table {
         }
 
         $column_names = array();
-        $row          = fgetcsv($handle);
+        $row = fgetcsv($handle);
 
-        if ($row) {
+        if ($row && is_array($row)) {
             // Get column names from the first row of the CSV file
             $column_names = array_map('trim', $row);
+
+            // Split columns if they are concatenated in one string
+            if (count($column_names) == 1 && strpos($column_names[0], ';') !== false) {
+                $column_names = array_map('trim', explode(';', $column_names[0]));
+            }
         }
 
         fclose($handle);
