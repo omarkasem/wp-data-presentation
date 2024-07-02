@@ -146,13 +146,30 @@ final class WPDP_Maps {
                 if(!empty($filter)){
                     if(is_array($filter)){
                         if($key == "locations"){
-                            $conditions = array();
-                            foreach($columns as $column){
-                                foreach($filter as $value){
-                                    $conditions[] = "$column = '{$value}'";
+
+                            $whereSQL .= ' AND ';
+                            $loci = 0;
+                            foreach($filter as $value){ $loci++;
+                                $conditions = array();
+                                if(strpos($value,'>') !== false){
+                                    $value = explode(' > ',$value);
+                                    foreach($value as $v){
+                                        $real_v = explode('__',$v);
+                                        $column = $real_v[1];
+                                        $real_value = $real_v[0];
+                                        $conditions[] = "$column = '{$real_value}'";
+                                    }
+                                }else{
+                                    $real_v = explode('__',$value);
+                                    $column = $real_v[1];
+                                    $real_value = $real_v[0];
+                                    $conditions[] = "$column = '{$real_value}'";
+                                }
+                                $whereSQL .= " (".implode(' AND ', $conditions).")";
+                                if($loci !== count($filters['locations'])){
+                                    $whereSQL.= ' OR ';
                                 }
                             }
-                            $whereSQL .= " AND (".implode(' OR ', $conditions).")";
                         }elseif($key === 'disorder_type'){
                             $conditions2 = [];
                             foreach($filter as $inc_v){

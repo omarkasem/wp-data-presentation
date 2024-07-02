@@ -122,12 +122,12 @@ final class WPDP_Shortcode {
             $db_locations = $wpdb->get_results("SELECT DISTINCT region,country,admin1,admin2,admin3,location FROM {$table_name}", ARRAY_A);
 
             foreach ($db_locations as $location) {
-                $region   = $location['region'];
-                $country  = $location['country'];
-                $admin1   = $location['admin1'];
-                $admin2   = $location['admin2'];
-                $admin3   = $location['admin3'];
-                $location = $location['location'];
+                $region   = $location['region'].'__region';
+                $country  = $location['country'].'__country';
+                $admin1   = $location['admin1'].'__admin1';
+                $admin2   = $location['admin2'].'__admin2';
+                $admin3   = $location['admin3'].'__admin3';
+                $location = $location['location'].'__location';
 
                 if (!empty($region)) {
                     $locations[$region] = $locations[$region] ?? [];
@@ -195,6 +195,7 @@ final class WPDP_Shortcode {
     }
 
     function printArrayAsList($locations, $level = 0) {
+
         echo '<ul>';
         foreach ($locations as $key => $value) {
             if (!is_array($value) && intval($value) === 0) {
@@ -206,9 +207,10 @@ final class WPDP_Shortcode {
             }
 
             if (is_array($value)) {
+                $key_val = explode('__',$key);
                 echo '<li class="expandable">';
                 echo '<input type="checkbox" class="wpdp_location" value="' . $key . '">';
-                echo '<div class="exp_click"><span for="' . $key . '">' . $key . '</span>';
+                echo '<div class="exp_click"><span for="' . $key . '">' . $key_val[0] . '</span>';
                 echo '<span class="dashicons dashicons-arrow-up-alt2 arrow"></span></div>';
                 $this->printArrayAsList($value, $level + 1);
             } else {

@@ -224,7 +224,6 @@ final class WPDP_Tables {
             $whereSQL = '';
             $queryArgs = [];
             
-            $columns = array('region', 'country', 'admin1', 'admin2', 'admin3', 'location');
             
             if (!empty($filters)) {
                 $whereSQL = ' WHERE 1=1';
@@ -232,14 +231,30 @@ final class WPDP_Tables {
                     if(!empty($filter)){
                         if(is_array($filter)){
                             if($key == "locations"){
-                                $conditions = array();
-                                foreach($columns as $column){
-                                    foreach($filter as $value){
+                                $whereSQL .= ' AND ';
+                                $loci = 0;
+                                foreach($filter as $value){ $loci++;
+                                    $conditions = array();
+                                    if(strpos($value,'>') !== false){
+                                        $value = explode(' > ',$value);
+                                        foreach($value as $v){
+                                            $real_v = explode('__',$v);
+                                            $column = $real_v[1];
+                                            $conditions[] = "$column = %s";
+                                            $queryArgs[] = $real_v[0];
+                                        }
+                                    }else{
+                                        $real_v = explode('__',$value);
+                                        $column = $real_v[1];
                                         $conditions[] = "$column = %s";
-                                        $queryArgs[] = $value;
+                                        $queryArgs[] = $real_v[0];
+                                    }
+                                    $whereSQL .= " (".implode(' AND ', $conditions).")";
+                                    if($loci !== count($filter)){
+                                        $whereSQL.= ' OR ';
                                     }
                                 }
-                                $whereSQL .= " AND (".implode(' OR ', $conditions).")";
+
                             }else{
                                 $conditions2 = array();
    

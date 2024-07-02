@@ -18,8 +18,66 @@
       self.showMapDetails();
       self.graphCountSelector();
       self.datePicker();
-      
+      setTimeout(() => {
+        self.updateCheckboxValues();
+      }, 1000);
     },
+
+    self.updateCheckboxValues = function () { 
+
+      $('input[type="checkbox"].wpdp_location').each(function() {
+        var $this = $(this);
+        var currentVal = $this.val();
+        var $parent = $this.closest('li.expandable').parent().closest('li.expandable');
+        var hierarchy = [];
+        
+        // Build the hierarchy from bottom to top
+        while ($parent.length > 0) {
+            var parentCheckbox = $parent.find('> input[type="checkbox"].wpdp_location');
+            if (parentCheckbox.length > 0) {
+                var parentVal = parentCheckbox.val().split(' > ').pop(); // Get the last part of the value
+                hierarchy.unshift(parentVal); // Add to the beginning of the array
+            }
+            $parent = $parent.parent().closest('li.expandable');
+        }
+        
+        // Add the current value (last part only) to the hierarchy
+        hierarchy.push(currentVal.split(' > ').pop());
+        
+        // Join the unique values
+        var newVal = [...new Set(hierarchy)].join(' > ');
+        
+        if (newVal !== currentVal) {
+            $this.val(newVal);
+        }
+    });
+
+
+
+    }
+
+    // self.updateCheckboxValues = function () { 
+    //   const checkboxes = $('.wpdp_location');
+      
+    //   function traverseAndUpdate($checkbox, parentValue = '') {
+    //       let newValue = parentValue ? `${parentValue} + ${$checkbox.val()}` : $checkbox.val();
+    //       $checkbox.val(newValue);
+          
+    //       let $nextUl = $checkbox.closest('li').children('ul');
+    //       if ($nextUl.length > 0) {
+    //           $nextUl.find('> li > input.wpdp_location').each(function() {
+    //               traverseAndUpdate($(this), newValue);
+    //           });
+    //       }
+    //   }
+  
+    //   checkboxes.each(function() {
+    //       if ($(this).closest('ul').parent().is('li')) {
+    //           traverseAndUpdate($(this));
+    //       }
+    //   });
+    // };
+
 
     self.datePicker = function(){
 
@@ -795,12 +853,17 @@
       }
 
       self.selectedLocations = [];
-      self.selectedIncidents = [];
       
       $('input[type="checkbox"].wpdp_location:checked').each(function() {
+        var isChildChecked = $(this).closest('ul').parent().children('input[type="checkbox"].wpdp_location:checked').length > 0;
+        if (!isChildChecked) {
           self.selectedLocations.push($(this).val());
+        }
       });
 
+      console.log(self.selectedLocations);
+      
+      self.selectedIncidents = [];      
       $('input[type="checkbox"].wpdp_incident_type:checked').each(function() {
         self.selectedIncidents.push($(this).val());
       });
