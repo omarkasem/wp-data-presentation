@@ -18,66 +18,8 @@
       self.showMapDetails();
       self.graphCountSelector();
       self.datePicker();
-      // setTimeout(() => {
-        // self.updateCheckboxValues();
-      // }, 1000);
+
     },
-
-    self.updateCheckboxValues = function () { 
-
-      $('input[type="checkbox"].wpdp_location').each(function() {
-        var $this = $(this);
-        var currentVal = $this.val();
-        var $parent = $this.closest('li.expandable').parent().closest('li.expandable');
-        var hierarchy = [];
-        
-        // Build the hierarchy from bottom to top
-        while ($parent.length > 0) {
-            var parentCheckbox = $parent.find('> input[type="checkbox"].wpdp_location');
-            if (parentCheckbox.length > 0) {
-                var parentVal = parentCheckbox.val().split(' > ').pop(); // Get the last part of the value
-                hierarchy.unshift(parentVal); // Add to the beginning of the array
-            }
-            $parent = $parent.parent().closest('li.expandable');
-        }
-        
-        // Add the current value (last part only) to the hierarchy
-        hierarchy.push(currentVal.split(' > ').pop());
-        
-        // Join the unique values
-        var newVal = [...new Set(hierarchy)].join(' > ');
-        
-        if (newVal !== currentVal) {
-            $this.val(newVal);
-        }
-    });
-
-
-
-    }
-
-    // self.updateCheckboxValues = function () { 
-    //   const checkboxes = $('.wpdp_location');
-      
-    //   function traverseAndUpdate($checkbox, parentValue = '') {
-    //       let newValue = parentValue ? `${parentValue} + ${$checkbox.val()}` : $checkbox.val();
-    //       $checkbox.val(newValue);
-          
-    //       let $nextUl = $checkbox.closest('li').children('ul');
-    //       if ($nextUl.length > 0) {
-    //           $nextUl.find('> li > input.wpdp_location').each(function() {
-    //               traverseAndUpdate($(this), newValue);
-    //           });
-    //       }
-    //   }
-  
-    //   checkboxes.each(function() {
-    //       if ($(this).closest('ul').parent().is('li')) {
-    //           traverseAndUpdate($(this));
-    //       }
-    //   });
-    // };
-
 
     self.datePicker = function(){
 
@@ -480,73 +422,69 @@
       }
         
       var infoWindow = new google.maps.InfoWindow;
-
+      var global_markers = []; // Ensure global_markers is defined
+      var seenLocations = {};
+    
       mapData.forEach(function(loc) {
-          var location = { lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude) };
-          
-          var marker = new google.maps.Marker({
-              position: location, 
-              map:self.main_map,
-              icon: self.svg_marker
-          });
-
-          global_markers.push(marker);
-          let timestamp = new Date(loc.timestamp * 1000);
-
-          marker.addListener('click', function() { 
-            infoWindow.close(); 
-            infoWindow.setContent(`
-            <div style="
-                color: #333;
-                font-size: 16px; 
-                padding: 10px;
-                line-height: 1.6;
-                border: 2px solid #333;
-                border-radius: 10px;
-                background: #fff;
-                ">
-                    <h2 style="
-                        margin: 0 0 10px;
-                        font-size: 20px;
-                        border-bottom: 1px solid #333;
-                        padding-bottom: 5px;
-                    ">${loc.disorder_type}</h2>
-                    <p style="margin-bottom:0;"><strong>Number:</strong> ${loc.fatalities}</p>
-                    <p style="margin-bottom:0;"><strong>Date:</strong> ${loc.event_date}</p>
-                    <div class="map_more_details">
-                      <span style="cursor:pointer;color:#cd0202;font-size:25px;margin-top:3px;" class="dashicons dashicons-info"></span>
-                      <div class="det">
-                        <ul>
-
-                          <li><b>Event ID:</b> ${loc.event_id_cnty}</li>
-                          <li><b>Event Type:</b> ${loc.event_type}</li>
-                          <li><b>Sub Event Type:</b> ${loc.sub_event_type}</li>
-                          <li><b>Source:</b> ${loc.source}</li>
-                          <li><b>Full Location:</b> ${loc.region} ${loc.country} ${loc.admin1} ${loc.admin2} ${loc.admin3} ${loc.location} </li>
-                          <li><b>Notes:</b> ${loc.notes}</li>
-                          <li><b>Timestamp:</b> ${timestamp.toISOString()}</li>
-                        </ul>
-                      </div>
-                    </div>
+        var originalLocation = loc.latitude + ',' + loc.longitude;
+        var offset = 0.0001; // Small offset value
+    
+        if (seenLocations[originalLocation]) {
+          // Apply a small random offset to avoid overlapping
+          loc.latitude = parseFloat(loc.latitude) + (Math.random() - 0.5) * offset;
+          loc.longitude = parseFloat(loc.longitude) + (Math.random() - 0.5) * offset;
+        } else {
+          seenLocations[originalLocation] = true;
+        }
+    
+        var location = { lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude) };
+    
+        var marker = new google.maps.Marker({
+          position: location,
+          map: self.main_map,
+          icon: self.svg_marker
+        });
+    
+        global_markers.push(marker);
+        let timestamp = new Date(loc.timestamp * 1000);
+    
+        marker.addListener('click', function() {
+          infoWindow.close();
+          infoWindow.setContent(`
+            <div style="color: #333; font-size: 16px; padding: 10px; line-height: 1.6; border: 2px solid #333; border-radius: 10px; background: #fff;">
+              <h2 style="margin: 0 0 10px; font-size: 20px; border-bottom: 1px solid #333; padding-bottom: 5px;">
+                ${loc.disorder_type}
+              </h2>
+              <p style="margin-bottom:0;"><strong>Number:</strong> ${loc.fatalities}</p>
+              <p style="margin-bottom:0;"><strong>Date:</strong> ${loc.event_date}</p>
+              <div class="map_more_details">
+                <span style="cursor:pointer;color:#cd0202;font-size:25px;margin-top:3px;" class="dashicons dashicons-info"></span>
+                <div class="det">
+                  <ul>
+                    <li><b>Event ID:</b> ${loc.event_id_cnty}</li>
+                    <li><b>Event Type:</b> ${loc.event_type}</li>
+                    <li><b>Sub Event Type:</b> ${loc.sub_event_type}</li>
+                    <li><b>Source:</b> ${loc.source}</li>
+                    <li><b>Full Location:</b> ${loc.region} ${loc.country} ${loc.admin1} ${loc.admin2} ${loc.admin3} ${loc.location}</li>
+                    <li><b>Notes:</b> ${loc.notes}</li>
+                    <li><b>Timestamp:</b> ${timestamp.toISOString()}</li>
+                  </ul>
                 </div>
-            `);
-
-            infoWindow.open(self.main_map, marker);
-          }); 
-
-
-          // Close the infoWindow when the map is clicked
-          self.main_map.addListener('click', function() {
-            infoWindow.close();
-          });
-
+              </div>
+            </div>
+          `);
+          infoWindow.open(self.main_map, marker);
+        });
+    
+        self.main_map.addListener('click', function() {
+          infoWindow.close();
+        });
       });
-
+    
       markerCluster = new MarkerClusterer(my_map, global_markers, {
         imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
         // imagePath: wpdp_obj.url+'assets/images/m'
       });
-
 
     },
 
