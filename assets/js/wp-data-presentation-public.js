@@ -18,8 +18,56 @@
       self.showMapDetails();
       self.graphCountSelector();
       self.datePicker();
+      self.actors();
 
     },
+
+    self.actors = function() {
+      function updateIncidentType() {
+          $('.inident_type .wpdp_incident_type').each(function() {
+              var $incidentCheckbox = $(this);
+              var values = $incidentCheckbox.val().split('+');
+              var checked = false;
+  
+              values.forEach(function(value) {
+                  if ($('.actors .wpdp_actors:checked, .actors .wpdp_fat:checked').filter(function() {
+                      return $(this).val().split('+').includes(value);
+                  }).length > 0) {
+                      checked = true;
+                  }
+              });
+  
+              $incidentCheckbox.prop('checked', checked);
+          });
+      }
+  
+      function updateActorsAndFat() {
+          $('.inident_type .wpdp_incident_type').each(function() {
+              var $incidentCheckbox = $(this);
+              var values = $incidentCheckbox.val().split('+');
+              var checked = $incidentCheckbox.prop('checked');
+  
+              values.forEach(function(value) {
+                  if (!checked) {
+                      $('.actors .wpdp_actors, .actors .wpdp_fat').filter(function() {
+                          return $(this).val().split('+').includes(value);
+                      }).prop('checked', false);
+                  }
+              });
+          });
+      }
+  
+      $('.actors .wpdp_actors, .actors .wpdp_fat').on('change', function() {
+          updateIncidentType();
+      });
+  
+      $('.inident_type .wpdp_incident_type').on('change', function() {
+          updateActorsAndFat();
+      });
+  
+      // Initialize checkboxes based on current state
+      updateIncidentType();
+  };
 
     self.datePicker = function(){
 
@@ -714,16 +762,11 @@
 
       setTimeout(function() {
           $('.wpdp .filter_data').show();
-
-          // if($('#wpdp_chart_title').length > 0){
-          //   $('.wpdp .filter').trigger('click');
-          // }
-
       }, 500);
 
 
       $('.filter_data li input[type="checkbox"]').on('change', function() {
-          $(this).parent().find('li input[type="checkbox"]').prop('checked', this.checked);
+          $(this).parent().find('li input[type="checkbox"]').prop('checked', this.checked).change();
       });
 
 

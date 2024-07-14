@@ -301,50 +301,46 @@ final class WPDP_Shortcode {
         }
     }
 
-    function generateCheckboxes($arr) {
-
-        function renderFilters($filters, $hierarchy = 'Level 1') {
-            echo '<ul>';
-
-            foreach ($filters as $filter) {
-                $type = $filter['type'];
-                if ($filter['hierarchial'] === $hierarchy) {
-                    if ($hierarchy === 'Level 1') {
-                        echo '<li class="expandable">';
-                        echo '<input class="wpdp_incident_type" type="checkbox" value="' . implode('+',$filter[$type]) . '">';
-                        echo '<div class="exp_click">';
-                        echo '<span>' . htmlspecialchars($filter['text']) . '</span>';
-                        echo '<span class="dashicons arrow dashicons-arrow-down-alt2"></span>';
-                        echo '</div>';
-                        renderFilters($filters, 'Level 2');
-                        echo '</li>';
-                    } elseif ($hierarchy === 'Level 1') {
-                        echo '<li class="expandable">';
-                        echo '<input class="wpdp_incident_type" type="checkbox" value="' . implode('+',$filter[$type]) . '">';
-                        echo '<div class="exp_click">';
-                        echo '<span>' . htmlspecialchars($filter['text']) . '</span>';
-                        echo '<span class="dashicons arrow dashicons-arrow-down-alt2"></span>';
-                        echo '</div>';
-                        renderFilters($filters, 'Level 2');
-                        echo '</li>';
-                    } elseif ($hierarchy === 'Level 2') {
-                        echo '<li class="expandable">';
-                        echo '<input class="wpdp_incident_type" type="checkbox" value="' . implode('+',$filter[$type]) . '">';
-                        echo '<div class="exp_click">';
-                        echo '<span>' . htmlspecialchars($filter['text']) . '</span>';
-                        echo '<span class="dashicons arrow dashicons-arrow-down-alt2"></span>';
-                        echo '</div>';
-                        renderFilters($filters, 'Level 3');
-                        echo '</li>';
+    private function renderFilters($filters, $hierarchy = 'Level 1', $actors = false) {
+        echo '<ul>';
+        $class = 'wpdp_incident_type';
+        foreach ($filters as $filter) {
+            $type = $filter['type'];
+            $value = $filter[$type];
+            if ($actors) {
+                $value = [];
+                $types = ['disorder_type', 'event_type', 'sub_event_type'];
+                foreach ($types as $one_type) {
+                    if (!empty($filter[$one_type])) {
+                        $value = array_merge($value, $filter[$one_type]);
                     }
                 }
+                $class = 'wpdp_actors';
+                if($actors === 'fat'){
+                    $class = 'wpdp_fat';
+                }
             }
-            echo '</ul>';
+            if ($filter['hierarchial'] === $hierarchy) {
+                echo '<li class="expandable">';
+                echo '<input class="'.$class.'" type="checkbox" value="' . implode('+', $value) . '">';
+                echo '<div class="exp_click">';
+                echo '<span>' . htmlspecialchars($filter['text']) . '</span>';
+                echo '<span class="dashicons arrow dashicons-arrow-down-alt2"></span>';
+                echo '</div>';
+                if ($hierarchy !== 'Level 4') {
+                    $nextHierarchy = 'Level ' . (intval(substr($hierarchy, -1)) + 1);
+                    $this->renderFilters($filters, $nextHierarchy, $actors);
+                }
+                echo '</li>';
+            }
         }
-    
+        echo '</ul>';
+    }
+
+    public function generateCheckboxes($arr, $actors = false) {
         echo '<ul>';
         foreach ($arr as $section) {
-            renderFilters($section['filter']);
+            $this->renderFilters($section['filter'], 'Level 1', $actors);
         }
         echo '</ul>';
     }
@@ -359,7 +355,7 @@ final class WPDP_Shortcode {
                 <form id="filter_form" action="" style="margin-top:15px;">
 
 
-                    <div class="grp ">
+                    <div class="grp inident_type">
 
                         <div class="title">
                             INCIDENT TYPE <span class="dashicons dashicons-arrow-down-alt2"></span>
@@ -368,6 +364,37 @@ final class WPDP_Shortcode {
                             <?php 
                                 $filter = get_field('incident_type_filter','option');
                                 $this->generateCheckboxes($filter);
+                            ?>
+
+                        </div>
+                    </div>
+
+
+                    <div class="grp actors">
+
+                        <div class="title">
+                            ACTORS <span class="dashicons dashicons-arrow-down-alt2"></span>
+                        </div>
+                        <div class="content">
+                            <?php 
+                                $filter = get_field('actor_filter','option');
+                                $this->generateCheckboxes($filter, 'actors');
+                            ?>
+
+                        </div>
+                    </div>
+
+
+
+                    <div class="grp actors">
+
+                        <div class="title">
+                            FATALITIES <span class="dashicons dashicons-arrow-down-alt2"></span>
+                        </div>
+                        <div class="content">
+                            <?php 
+                                $filter = get_field('fatalities_filter','option');
+                                $this->generateCheckboxes($filter, 'fat');
                             ?>
 
                         </div>
