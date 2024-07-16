@@ -240,3 +240,10 @@
 		width: 310px;
 	}
 }
+
+
+
+.not_all {
+  background-color: red;
+  border-color: red;
+}

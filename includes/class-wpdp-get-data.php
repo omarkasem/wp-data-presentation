@@ -21,7 +21,7 @@ class WPDP_Db_Table {
      */
     public function __construct($table_name,$file_path) {
         global $wpdb;
-        $this->table_name    =  $wpdb->prefix . $table_name;
+        $this->table_name    =  $table_name;
         $this->csv_file_path = $file_path;
         $this->delimiter     = ';';
     }

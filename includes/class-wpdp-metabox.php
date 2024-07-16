@@ -354,6 +354,7 @@ final class WPDP_Metabox {
 
 
     public function save_presentation($post_id){
+        global $wpdb;
         if(get_post_type($post_id) !== 'wp-data-presentation'){
             return;
         }

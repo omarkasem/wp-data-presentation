@@ -430,7 +430,7 @@
             "rows_per_page": 20,
             "sub_fields": [
                 {
-                    "key": "field_669223c4fd328",
+                    "key": "field_66957a9209257",
                     "label": "Filter",
                     "name": "filter",
                     "aria-label": "",
@@ -443,11 +443,12 @@
                         "class": "",
                         "id": ""
                     },
-                    "layout": "row",
+                    "layout": "table",
+                    "pagination": 0,
                     "min": 0,
                     "max": 0,
                     "collapsed": "",
-                    "button_label": "Add Selector",
+                    "button_label": "Add Row",
                     "rows_per_page": 20,
                     "sub_fields": [
                         {
@@ -469,7 +470,7 @@
                             "placeholder": "",
                             "prepend": "",
                             "append": "",
-                            "parent_repeater": "field_669223c4fd328"
+                            "parent_repeater": "field_66957a9209257"
                         },
                         {
                             "key": "field_669223c4fd32b",
@@ -498,7 +499,7 @@
                             "ui": 0,
                             "ajax": 0,
                             "placeholder": "",
-                            "parent_repeater": "field_669223c4fd328"
+                            "parent_repeater": "field_66957a9209257"
                         },
                         {
                             "key": "field_669223c4fd32c",
@@ -527,7 +528,7 @@
                             "ui": 1,
                             "ajax": 0,
                             "placeholder": "",
-                            "parent_repeater": "field_669223c4fd328"
+                            "parent_repeater": "field_66957a9209257"
                         },
                         {
                             "key": "field_669223c4fd32d",
@@ -558,7 +559,7 @@
                             "ui": 1,
                             "ajax": 0,
                             "placeholder": "",
-                            "parent_repeater": "field_669223c4fd328"
+                            "parent_repeater": "field_66957a9209257"
                         },
                         {
                             "key": "field_669223c4fd32e",
@@ -608,7 +609,7 @@
                             "ui": 1,
                             "ajax": 0,
                             "placeholder": "",
-                            "parent_repeater": "field_669223c4fd328"
+                            "parent_repeater": "field_66957a9209257"
                         }
                     ],
                     "parent_repeater": "field_669223c4fd327"
@@ -860,5 +861,5 @@
     "active": true,
     "description": "",
     "show_in_rest": 0,
-    "modified": 1720879052
+    "modified": 1721072302
 }

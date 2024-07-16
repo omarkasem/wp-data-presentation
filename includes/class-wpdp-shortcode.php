@@ -305,8 +305,6 @@ final class WPDP_Shortcode {
         echo '<ul>';
         $class = 'wpdp_incident_type';
         foreach ($filters as $filter) {
-            $type = $filter['type'];
-            $value = $filter[$type];
             if ($actors) {
                 $value = [];
                 $types = ['disorder_type', 'event_type', 'sub_event_type'];
@@ -319,7 +317,10 @@ final class WPDP_Shortcode {
                 if($actors === 'fat'){
                     $class = 'wpdp_fat';
                 }
-            }
+            }else{
+				$type = $filter['type'] ?? '';
+				$value = $filter[$type];
+			}
             if ($filter['hierarchial'] === $hierarchy) {
                 echo '<li class="expandable">';
                 echo '<input class="'.$class.'" type="checkbox" value="' . implode('+', $value) . '">';
