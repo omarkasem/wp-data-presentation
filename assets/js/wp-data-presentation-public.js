@@ -18,17 +18,40 @@
       self.showMapDetails();
       self.graphCountSelector();
       self.datePicker();
-      // self.actors();
+      self.actors();
       self.checkbox();
     },
 
-    self.checkbox = function(){
+    self.checkfForIndeterminate = function(){
+      setTimeout(() => {
+        $('ul.first_one > li.expandable').each(function() {
+          var $parentCheckbox = $(this).children('input[type="checkbox"]');
+          var $childCheckboxes = $(this).find('ul input[type="checkbox"]');
+          
+          var allChecked = $childCheckboxes.length > 0 && $childCheckboxes.filter(':checked').length === $childCheckboxes.length;
+          var someChecked = $childCheckboxes.filter(':checked').length > 0;
+  
+          if (allChecked) {
+              $parentCheckbox.prop('indeterminate', false);
+              $parentCheckbox.prop('checked', true);
+          } else if (someChecked) {
+              $parentCheckbox.prop('indeterminate', true);
+          } else {
+              $parentCheckbox.prop('indeterminate', false);
+              $parentCheckbox.prop('checked', false);
+          }
+      });
+  
+      }, 500);
+    }
 
+
+    self.checkbox = function(){
       $('.filter_data li input[type="checkbox"]').on('change', function() {
         $(this).parent().find('li input[type="checkbox"]').prop('checked', this.checked).change();
-      });
-          
 
+        self.checkfForIndeterminate();
+      });
     };
 
     self.actors = function(){
@@ -46,6 +69,7 @@
       $('.wpdp_actors, .wpdp_fat').change(function() {
           var isChecked = $(this).is(':checked');
           updateIncidentTypes(this, isChecked);
+          self.checkfForIndeterminate();
       });
     };
 

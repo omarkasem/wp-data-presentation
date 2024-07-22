@@ -213,7 +213,7 @@ final class WPDP_Shortcode {
                     $input_val = $parent_key . ' + '.$key;
                 }
                 echo '<li class="expandable">';
-                echo '<input type="checkbox" class="wpdp_location" value="' . $input_val . '">';
+                echo '<input type="checkbox" class="wpdp_filter_checkbox wpdp_location" value="' . $input_val . '">';
                 echo '<div class="exp_click"><span for="' . $key . '">' . $key_val[0] . '</span>';
                 echo '<span class="dashicons dashicons-arrow-up-alt2 arrow"></span></div>';
                 $this->printArrayAsList($value, $level + 1, $input_val);
@@ -302,7 +302,7 @@ final class WPDP_Shortcode {
     }
 
     private function renderFilters($filters, $hierarchy = 'Level 1', $actors = false) {
-        echo '<ul>';
+        echo '<ul class="'.($hierarchy === 'Level 1' ? 'first_one' : '').'">';
         $class = 'wpdp_incident_type';
         foreach ($filters as $filter) {
             if ($actors) {
@@ -323,7 +323,7 @@ final class WPDP_Shortcode {
 			}
             if ($filter['hierarchial'] === $hierarchy) {
                 echo '<li class="expandable">';
-                echo '<input class="'.$class.'" type="checkbox" value="' . implode('+', $value) . '">';
+                echo '<input class="wpdp_filter_checkbox '.$class.'" type="checkbox" value="' . implode('+', $value) . '">';
                 echo '<div class="exp_click">';
                 echo '<span>' . htmlspecialchars($filter['text']) . '</span>';
                 echo '<span class="dashicons arrow dashicons-arrow-down-alt2"></span>';
