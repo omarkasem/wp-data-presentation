@@ -41,6 +41,46 @@
             "append": ""
         },
         {
+            "key": "field_66a2cde3a2ef3",
+            "label": "Acled Email address",
+            "name": "acled_email_address",
+            "aria-label": "",
+            "type": "text",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "maxlength": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": ""
+        },
+        {
+            "key": "field_66a2ce0fa2ef4",
+            "label": "Acled API Key",
+            "name": "acled_api_key",
+            "aria-label": "",
+            "type": "text",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "maxlength": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": ""
+        },
+        {
             "key": "field_66747fe50e940",
             "label": "Countries",
             "name": "",
@@ -861,5 +901,5 @@
     "active": true,
     "description": "",
     "show_in_rest": 0,
-    "modified": 1721072302
+    "modified": 1721945634
 }

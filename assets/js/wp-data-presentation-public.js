@@ -33,16 +33,14 @@
   
           if (allChecked) {
               $parentCheckbox.prop('indeterminate', false);
-              $parentCheckbox.prop('checked', true);
           } else if (someChecked) {
               $parentCheckbox.prop('indeterminate', true);
           } else {
               $parentCheckbox.prop('indeterminate', false);
-              $parentCheckbox.prop('checked', false);
           }
       });
   
-      }, 500);
+      }, 100);
     }
 
 
@@ -52,6 +50,13 @@
 
         self.checkfForIndeterminate();
       });
+
+      $('#filter_form').on('reset', function() {
+        $(this).find('input[type="checkbox"]').prop('indeterminate', false);
+      });
+
+
+
     };
 
     self.actors = function(){

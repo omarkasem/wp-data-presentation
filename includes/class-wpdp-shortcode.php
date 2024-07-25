@@ -447,7 +447,7 @@ final class WPDP_Shortcode {
 
                     <input type="submit" value="Apply Filters">
                     <img id="filter_loader" src="<?php echo admin_url('images/loading.gif'); ?>" alt="">
-
+                    <div class="wpdp_clear"><input type="reset" value="Clear Filters"></div>
                 </form>
             </div>
         </div>
