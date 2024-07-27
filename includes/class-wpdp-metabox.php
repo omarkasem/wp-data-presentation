@@ -66,9 +66,6 @@ final class WPDP_Metabox {
 
         add_filter('acf/load_field/key=field_667ed6bc35cf2', array($this,'empty_mapping_categories'));
 
-        if(isset($_GET['test'])){
-            var_dump(get_option('test661'));exit;
-        }
 
     }
 
@@ -367,11 +364,22 @@ final class WPDP_Metabox {
         if(get_field('override_csv_file') === true){
             if(get_field('import_file') === 'Upload'){
                 $file_path = get_attached_file(get_field('upload_excel_file'));
+            }else{
+                $url = get_field('acled_url');
+                $file_path = download_url($url);
+                if (is_wp_error($file_path)) {
+                    $error_message = $file_path->get_error_message();
+                    wp_die("Error downloading file: $error_message");
+                }
             }
 
             $import =  new WPDP_Db_Table($table_name,$file_path);
             if (!$import->import_csv()) {
                 var_dump('Error in importing');exit;
+            }
+
+            if(get_field('import_file') !== 'Upload'){
+                unlink($file_path);
             }
 
             delete_post_meta($post_id,'wpdp_countries_updated');

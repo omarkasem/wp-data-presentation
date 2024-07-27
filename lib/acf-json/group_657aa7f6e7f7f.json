@@ -17,7 +17,8 @@
                 "id": ""
             },
             "placement": "top",
-            "endpoint": 0
+            "endpoint": 0,
+            "selected": 0
         },
         {
             "key": "field_657aa840cb9c5",
@@ -34,7 +35,8 @@
                 "id": ""
             },
             "choices": {
-                "Upload": "Upload"
+                "Upload": "Upload",
+                "Acled URL": "Acled URL"
             },
             "default_value": false,
             "return_format": "value",
@@ -71,6 +73,31 @@
             "min_size": "",
             "max_size": "",
             "mime_types": "xlsx,csv"
+        },
+        {
+            "key": "field_66a2ceaad7f51",
+            "label": "Acled URL",
+            "name": "acled_url",
+            "aria-label": "",
+            "type": "url",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_657aa840cb9c5",
+                        "operator": "==",
+                        "value": "Acled URL"
+                    }
+                ]
+            ],
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "placeholder": ""
         },
         {
             "key": "field_65a800a69e6d3",
@@ -111,5 +138,5 @@
     "active": true,
     "description": "",
     "show_in_rest": 0,
-    "modified": 1719587131
+    "modified": 1721945802
 }

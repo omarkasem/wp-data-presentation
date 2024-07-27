@@ -57,8 +57,41 @@ final class WPDP_Tables {
         add_action( 'wp_ajax_nopriv_wpdp_datatables_find_by_id', array($this,'find_by_id') );
         add_action( 'wp_ajax_wpdp_datatables_find_by_id', array($this,'find_by_id') );
 
+        if(isset($_GET['test'])){
+            global $wpdb;
+            $table_name = 'wp_wpdp_data_101';
+            $date_sample = $wpdb->get_var("SELECT event_date FROM $table_name LIMIT 1");
+            var_dump($this->get_date_format($date_sample));exit;
+        }
+
 
     }
+
+    function get_date_format($date_sample) {
+        $date_formats = [
+            'Y-m-d' => ['regex' => '/^\d{4}-\d{2}-\d{2}$/', 'mysql' => '%%Y-%%m-%%d'],
+            'Y/m/d' => ['regex' => '/^\d{4}\/\d{2}\/\d{2}$/', 'mysql' => '%%Y/%%m/%%d'],
+            'd-m-Y' => ['regex' => '/^\d{2}-\d{2}-\d{4}$/', 'mysql' => '%%d-%%m-%%Y'],
+            'd/m/Y' => ['regex' => '/^\d{2}\/\d{2}\/\d{4}$/', 'mysql' => '%%d/%%m/%%Y'],
+            'm-d-Y' => ['regex' => '/^\d{2}-\d{2}-\d{4}$/', 'mysql' => '%%m-%%d-%%Y'],
+            'm/d/Y' => ['regex' => '/^\d{2}\/\d{2}\/\d{4}$/', 'mysql' => '%%m/%%d/%%Y'],
+            'd F Y' => ['regex' => '/^\d{2} \w{3,9} \d{4}$/', 'mysql' => '%%d %%M %%Y']
+        ];
+    
+    
+        foreach ($date_formats as $php_format => $format_info) {
+            if (preg_match($format_info['regex'], $date_sample)) {
+                return [
+                    'mysql'=>$format_info['mysql'],
+                    'php'=>$php_format
+                ];
+            }
+        }
+    
+        return false;
+    }
+    
+
 
     public function find_by_id(){
         $event_id = $_POST['event_id'];
@@ -173,6 +206,9 @@ final class WPDP_Tables {
         return $count;
     }
 
+
+
+    
     public function get_data($filters, $types, $start, $length, $columnName, $orderDir, $values_only = false) {
         $posts = get_posts(array(
             'post_type' => 'wp-data-presentation',
@@ -217,6 +253,8 @@ final class WPDP_Tables {
             if(!$table_exists){
                 continue;
             }
+
+
             if($values_only){
                 $arr_type = ARRAY_N;
             }
@@ -224,7 +262,10 @@ final class WPDP_Tables {
             $whereSQL = '';
             $queryArgs = [];
             
-            
+            $date_sample = $wpdb->get_var("SELECT event_date FROM $table_name LIMIT 1");
+            $date_format = $this->get_date_format($date_sample);
+            $mysql_date_format = $date_format['mysql'];
+
             if (!empty($filters)) {
                 $whereSQL = ' WHERE 1=1';
                 foreach($filters as $key => $filter) {
@@ -283,14 +324,14 @@ final class WPDP_Tables {
                             }
                         }else{
 
-                            if($key === 'from'){
-                                $whereSQL .= " AND STR_TO_DATE({$columnName}, '%%d %%M %%Y') >= STR_TO_DATE(%s, '%%d %%M %%Y')";
-                                $queryArgs[] = $filter;
-                            }elseif($key === 'to'){
-                                $whereSQL .= " AND STR_TO_DATE({$columnName}, '%%d %%M %%Y') <= STR_TO_DATE(%s, '%%d %%M %%Y')";
-                                $queryArgs[] = $filter;
-                            }else{
-                                $whereSQL .= " AND {$key} = %s";
+                            if ($key === 'from') {
+                                $whereSQL .= " AND STR_TO_DATE($columnName, '$mysql_date_format') >= STR_TO_DATE(%s, '$mysql_date_format')";
+                                $queryArgs[] = date($date_format['php'],strtotime($filter));
+                            } elseif ($key === 'to') {
+                                $whereSQL .= " AND STR_TO_DATE($columnName, '$mysql_date_format') <= STR_TO_DATE(%s, '$mysql_date_format')";
+                                $queryArgs[] = date($date_format['php'],strtotime($filter));
+                            } else {
+                                $whereSQL .= " AND $key = %s";
                                 $queryArgs[] = $filter;
                             }
 
@@ -299,8 +340,9 @@ final class WPDP_Tables {
                 }
             }
 
+
             if($columnName === 'event_date'){
-                $query = $wpdb->prepare("SELECT ".implode(', ', $types)." FROM {$table_name} {$whereSQL} ORDER BY STR_TO_DATE({$columnName}, '%%d %%M %%Y') {$orderDir} LIMIT {$start}, {$length}", $queryArgs);
+                $query = $wpdb->prepare("SELECT ".implode(', ', $types)." FROM {$table_name} {$whereSQL} ORDER BY STR_TO_DATE({$columnName}, '$mysql_date_format') {$orderDir} LIMIT {$start}, {$length}", $queryArgs);
             }else{
                 $query = $wpdb->prepare("SELECT ".implode(', ', $types)." FROM {$table_name} {$whereSQL} ORDER BY {$columnName} {$orderDir} LIMIT {$start}, {$length}", $queryArgs);
             }
@@ -308,14 +350,13 @@ final class WPDP_Tables {
 
             $query_count = $wpdb->prepare("SELECT COUNT(*) FROM {$table_name} {$whereSQL}", $queryArgs);
             $count += $wpdb->get_var($query_count);
-            
+
             $result = $wpdb->get_results($query, $arr_type);
-    
             if($result){
                 $data = array_merge($data, $result);
             }
         }
-    
+
         return ['data'=>$data,'count'=>$count];
     }
 
