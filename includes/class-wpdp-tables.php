@@ -58,6 +58,7 @@ final class WPDP_Tables {
         add_action( 'wp_ajax_wpdp_datatables_find_by_id', array($this,'find_by_id') );
 
         if(isset($_GET['test'])){
+            var_dump(get_option('test2'));exit;
             global $wpdb;
             $table_name = 'wp_wpdp_data_101';
             $date_sample = $wpdb->get_var("SELECT event_date FROM $table_name LIMIT 1");
@@ -210,17 +211,20 @@ final class WPDP_Tables {
 
     
     public function get_data($filters, $types, $start, $length, $columnName, $orderDir, $values_only = false) {
+        global $wpdb;
+    
         $posts = get_posts(array(
             'post_type' => 'wp-data-presentation',
             'posts_per_page' => -1,
             'fields' => 'ids'
         ));
     
-        if(empty($posts)){
+        if (empty($posts)) {
             return 'No data';
         }
     
         $all_types = [
+            'event_id_cnty',
             'event_date',
             'disorder_type',
             'event_type',
@@ -239,128 +243,122 @@ final class WPDP_Tables {
             'timestamp',
         ];
     
-        if($types == ''){
+        if ($types == '') {
             $types = $all_types;
         }
-
-        $arr_type = ARRAY_A;
-        global $wpdb;
-        $data = [];
-        $count = 0;
-        foreach($posts as $id){
-            $table_name = $wpdb->prefix. 'wpdp_data_'.$id;
-            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
-            if(!$table_exists){
+    
+        // Ensure event_id_cnty is always in the types array
+        if (!in_array('event_id_cnty', $types)) {
+            $types[] = 'event_id_cnty';
+        }
+    
+        $arr_type = $values_only ? ARRAY_N : ARRAY_A;
+    
+        $union_queries = [];
+        $queryArgs = [];
+    
+        foreach ($posts as $id) {
+            $table_name = $wpdb->prefix . 'wpdp_data_' . $id;
+            if ($wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") !== $table_name) {
                 continue;
             }
-
-
-            if($values_only){
-                $arr_type = ARRAY_N;
-            }
-    
-            $whereSQL = '';
-            $queryArgs = [];
-            
             $date_sample = $wpdb->get_var("SELECT event_date FROM $table_name LIMIT 1");
-            $date_format = $this->get_date_format($date_sample);
-            $mysql_date_format = $date_format['mysql'];
 
-            if (!empty($filters)) {
-                $whereSQL = ' WHERE 1=1';
-                foreach($filters as $key => $filter) {
-                    if(!empty($filter)){
-                        if(is_array($filter)){
-                            if($key == "locations"){
-                                $whereSQL .= ' AND ';
-                                $loci = 0;
-                                foreach($filter as $value){ $loci++;
-                                    $conditions = array();
-                                    if(strpos($value,'+') !== false){
-                                        $value = explode(' + ',$value);
-                                        foreach($value as $v){
-                                            $real_v = explode('__',$v);
-                                            $column = $real_v[1];
-                                            $conditions[] = "$column = %s";
-                                            $queryArgs[] = $real_v[0];
-                                        }
-                                    }else{
-                                        $real_v = explode('__',$value);
-                                        $column = $real_v[1];
-                                        $conditions[] = "$column = %s";
-                                        $queryArgs[] = $real_v[0];
-                                    }
-                                    $whereSQL .= " (".implode(' AND ', $conditions).")";
-                                    if($loci !== count($filter)){
-                                        $whereSQL.= ' OR ';
-                                    }
+            $whereSQL = $this->build_where_clause($filters, $queryArgs,$date_sample);
+    
+            $union_queries[] = "SELECT " . implode(', ', $types) . " FROM {$table_name} {$whereSQL}";
+        }
+    
+        if (empty($union_queries)) {
+            return ['data' => [], 'count' => 0];
+        }
+    
+        $union_query = implode(' UNION ALL ', $union_queries);
+        
+        $date_sample = $wpdb->get_var("SELECT event_date FROM {$wpdb->prefix}wpdp_data_{$posts[0]} LIMIT 1");
+        $date_format = $this->get_date_format($date_sample);
+        $mysql_date_format = $date_format['mysql'];
+    
+        $order_by = $columnName === 'event_date' 
+            ? "STR_TO_DATE({$columnName}, '$mysql_date_format')" 
+            : $columnName;
+    
+        $final_query = "
+            SELECT DISTINCT t.*
+            FROM ({$union_query}) AS t
+            ORDER BY {$order_by} {$orderDir}
+            LIMIT {$start}, {$length}
+        ";
+    
+        $count_query = "
+            SELECT COUNT(DISTINCT event_id_cnty)
+            FROM ({$union_query}) AS t
+        ";
+    
+        $data = $wpdb->get_results($wpdb->prepare($final_query, $queryArgs), $arr_type);
+        $count = $wpdb->get_var($wpdb->prepare($count_query, $queryArgs));
+    
+        return ['data' => $data, 'count' => $count];
+    }
+    
+    private function build_where_clause($filters, &$queryArgs, $date_sample) {
+        $whereSQL = '';
+        if (!empty($filters)) {
+            $whereSQL = ' WHERE 1=1';
+            foreach ($filters as $key => $filter) {
+                if (!empty($filter)) {
+                    if (is_array($filter)) {
+                        if ($key == "locations") {
+                            $whereSQL .= ' AND (';
+                            $conditions = [];
+                            foreach ($filter as $value) {
+                                $sub_conditions = [];
+                                $value_parts = explode(' + ', $value);
+                                foreach ($value_parts as $part) {
+                                    list($val, $col) = explode('__', $part);
+                                    $sub_conditions[] = "$col = %s";
+                                    $queryArgs[] = $val;
                                 }
-
-                            }else{
-                                $conditions2 = array();
-   
-                                foreach($filter as $inc_v){
-
-                                    if(strpos($inc_v,'+') !== false){
-                                        $inc_v = explode('+',$inc_v);
-                                        $i=0;
-                                        foreach($inc_v as $inc_v2){$i++;
-                                            $inc_v2 = explode('__',$inc_v2);
-                                            $inc_type[$inc_v2[1]][] = $inc_v2[0];
-                                        }
-                                    }else{
-                                        $inc_v = explode('__',$inc_v);
-                                        $inc_type[$inc_v[1]][] = $inc_v[0];
-                                    }
-
-                                }
-               
-                                foreach($inc_type as $inc_type_k => $inc_type_v){$i++;
-                                    $placeholders = array_fill(0, count($inc_type_v), '%s');
-                                    $conditions2[] = "{$inc_type_k} IN (".implode(', ', $placeholders).")";
-                                    $queryArgs = array_merge($queryArgs, $inc_type_v);
-                                }
-                                $whereSQL .= " AND (".implode(' OR ', $conditions2).")";
+                                $conditions[] = '(' . implode(' AND ', $sub_conditions) . ')';
                             }
-                        }else{
-
-                            if ($key === 'from') {
-                                $whereSQL .= " AND STR_TO_DATE($columnName, '$mysql_date_format') >= STR_TO_DATE(%s, '$mysql_date_format')";
-                                $queryArgs[] = date($date_format['php'],strtotime($filter));
-                            } elseif ($key === 'to') {
-                                $whereSQL .= " AND STR_TO_DATE($columnName, '$mysql_date_format') <= STR_TO_DATE(%s, '$mysql_date_format')";
-                                $queryArgs[] = date($date_format['php'],strtotime($filter));
-                            } else {
-                                $whereSQL .= " AND $key = %s";
-                                $queryArgs[] = $filter;
+                            $whereSQL .= implode(' OR ', $conditions) . ')';
+                        } else {
+                            $conditions = [];
+                            foreach ($filter as $value) {
+                                $value_parts = explode('+', $value);
+                                $sub_conditions = [];
+                                foreach ($value_parts as $part) {
+                                    list($val, $col) = explode('__', $part);
+                                    $sub_conditions[] = "$col = %s";
+                                    $queryArgs[] = $val;
+                                }
+                                $conditions[] = '(' . implode(' AND ', $sub_conditions) . ')';
                             }
-
+                            $whereSQL .= " AND (" . implode(' OR ', $conditions) . ")";
+                        }
+                    } else {
+                        
+                        $date_format = $this->get_date_format($date_sample);
+                        $mysql_date_format = $date_format['mysql'];
+    
+                        if ($key === 'from') {
+                            $whereSQL .= " AND STR_TO_DATE(event_date, '$mysql_date_format') >= STR_TO_DATE(%s, '$mysql_date_format')";
+                            $queryArgs[] = date($date_format['php'], strtotime($filter));
+                        } elseif ($key === 'to') {
+                            $whereSQL .= " AND STR_TO_DATE(event_date, '$mysql_date_format') <= STR_TO_DATE(%s, '$mysql_date_format')";
+                            $queryArgs[] = date($date_format['php'], strtotime($filter));
+                        } else {
+                            $whereSQL .= " AND $key = %s";
+                            $queryArgs[] = $filter;
                         }
                     }
                 }
             }
-
-
-            if($columnName === 'event_date'){
-                $query = $wpdb->prepare("SELECT ".implode(', ', $types)." FROM {$table_name} {$whereSQL} ORDER BY STR_TO_DATE({$columnName}, '$mysql_date_format') {$orderDir} LIMIT {$start}, {$length}", $queryArgs);
-            }else{
-                $query = $wpdb->prepare("SELECT ".implode(', ', $types)." FROM {$table_name} {$whereSQL} ORDER BY {$columnName} {$orderDir} LIMIT {$start}, {$length}", $queryArgs);
-            }
-            
-
-            $query_count = $wpdb->prepare("SELECT COUNT(*) FROM {$table_name} {$whereSQL}", $queryArgs);
-            $count += $wpdb->get_var($query_count);
-
-            $result = $wpdb->get_results($query, $arr_type);
-            if($result){
-                $data = array_merge($data, $result);
-            }
         }
-
-        return ['data'=>$data,'count'=>$count];
+        return $whereSQL;
     }
-
-
+    
+    
 
     public static function shortcode_output($atts = []){
 
