@@ -187,7 +187,39 @@ class WPDP_Db_Table {
     public function get_column_definitions(array $column_names) {
         $column_definitions = array();
         foreach ($column_names as $name) {
-            $column_definitions[] = "`$name` VARCHAR(255)";
+            switch ($name) {
+                case 'event_id_cnty':
+                case 'iso':
+                    $column_definitions[] = "`$name` VARCHAR(10)";
+                    break;
+                case 'event_date':
+                    $column_definitions[] = "`$name` VARCHAR(25)";
+                    break;
+                case 'year':
+                    $column_definitions[] = "`$name` YEAR(4)";
+                    break;
+                case 'time_precision':
+                case 'inter1':
+                case 'inter2':
+                case 'interaction':
+                case 'geo_precision':
+                case 'fatalities':
+                    $column_definitions[] = "`$name` INT";
+                    break;
+                case 'latitude':
+                case 'longitude':
+                    $column_definitions[] = "`$name` DECIMAL(10,7)";
+                    break;
+                case 'notes':
+                    $column_definitions[] = "`$name` TEXT";
+                    break;
+                case 'timestamp':
+                    $column_definitions[] = "`$name` BIGINT";
+                    break;
+                default:
+                    $column_definitions[] = "`$name` VARCHAR(100)";
+                    break;
+            }
         }
         return $column_definitions;
     }
