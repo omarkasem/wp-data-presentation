@@ -156,6 +156,7 @@ class WPDP_Db_Table {
             " . implode(",\n", $definitions) . ',
             INDEX `disorder_type` (`disorder_type`),
             INDEX `region` (`region`),
+            INDEX `event_id_cnty` (`event_id_cnty`),
             INDEX `country` (`country`),
             INDEX `admin1` (`admin1`),
             INDEX `admin2` (`admin2`),

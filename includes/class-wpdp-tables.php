@@ -223,30 +223,6 @@ final class WPDP_Tables {
             return 'No data';
         }
     
-        $all_types = [
-            'event_id_cnty',
-            'event_date',
-            'disorder_type',
-            'event_type',
-            'sub_event_type',
-            'region',
-            'country',
-            'admin1',
-            'admin2',
-            'admin3',
-            'location',
-            'latitude',
-            'longitude',
-            'source',
-            'notes',
-            'fatalities',
-            'timestamp',
-        ];
-    
-        if ($types == '') {
-            $types = $all_types;
-        }
-    
         // Ensure event_id_cnty is always in the types array
         if (!in_array('event_id_cnty', $types)) {
             $types[] = 'event_id_cnty';
@@ -263,45 +239,46 @@ final class WPDP_Tables {
                 continue;
             }
             $date_sample = $wpdb->get_var("SELECT event_date FROM $table_name LIMIT 1");
-
-            $whereSQL = $this->build_where_clause($filters, $queryArgs,$date_sample);
-    
-            $union_queries[] = "SELECT " . implode(', ', $types) . " FROM {$table_name} {$whereSQL}";
+            $date_format = $this->get_date_format($date_sample);
+            $mysql_date_format = $date_format['mysql'];
+            $whereSQL = $this->build_where_clause($filters, $queryArgs,$date_format);
+            $query = "SELECT " . implode(', ', $types) . " FROM {$table_name}";
+            $query = str_replace('event_date',"STR_TO_DATE(event_date, '".$mysql_date_format."') AS date_column_standard",$query);
+            $query.= " {$whereSQL}";
+            $union_queries[] = $query;
         }
-    
+
         if (empty($union_queries)) {
             return ['data' => [], 'count' => 0];
         }
     
         $union_query = implode(' UNION ALL ', $union_queries);
-        
-        $date_sample = $wpdb->get_var("SELECT event_date FROM {$wpdb->prefix}wpdp_data_{$posts[0]} LIMIT 1");
-        $date_format = $this->get_date_format($date_sample);
-        $mysql_date_format = $date_format['mysql'];
     
-        $order_by = $columnName === 'event_date' 
-            ? "STR_TO_DATE({$columnName}, '$mysql_date_format')" 
-            : $columnName;
+        $order_by = $columnName === 'event_date' ? 'date_column_standard' : $columnName;
     
         $final_query = "
-            SELECT DISTINCT t.*
-            FROM ({$union_query}) AS t
-            ORDER BY {$order_by} {$orderDir}
-            LIMIT {$start}, {$length}
+        SELECT DISTINCT t.*
+        FROM ({$union_query}) AS t
+        ORDER BY {$order_by} {$orderDir}
+        LIMIT {$start}, {$length}
         ";
-    
+
+        
         $count_query = "
-            SELECT COUNT(DISTINCT event_id_cnty)
-            FROM ({$union_query}) AS t
+        SELECT COUNT(DISTINCT event_id_cnty)
+        FROM (
+            SELECT event_id_cnty
+            FROM ({$union_query}) AS sub
+            GROUP BY event_id_cnty
+        ) AS t
         ";
     
         $data = $wpdb->get_results($wpdb->prepare($final_query, $queryArgs), $arr_type);
         $count = $wpdb->get_var($wpdb->prepare($count_query, $queryArgs));
-    
         return ['data' => $data, 'count' => $count];
     }
     
-    private function build_where_clause($filters, &$queryArgs, $date_sample) {
+    private function build_where_clause($filters, &$queryArgs, $date_format) {
         $whereSQL = '';
         if (!empty($filters)) {
             $whereSQL = ' WHERE 1=1';
@@ -338,7 +315,6 @@ final class WPDP_Tables {
                         }
                     } else {
                         
-                        $date_format = $this->get_date_format($date_sample);
                         $mysql_date_format = $date_format['mysql'];
     
                         if ($key === 'from') {
