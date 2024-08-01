@@ -63,6 +63,10 @@ final class WPDP_Maps {
                 return $tag;
             return str_replace(' src', ' async="async" src', $tag);
         }, 10, 2);
+
+        if(isset($_GET['test'])){
+            var_dump(get_option('test'));exit;
+        }
         
 
     }
@@ -127,18 +131,12 @@ final class WPDP_Maps {
         }
 
         $filters = $this->format_dates_to_one_year($filters);
-
+        update_option('test',$filters);
         global $wpdb;
         $data = [];
 
-        $whereSQL = ' WHERE 1=1';
-        if($filters['from'] != ''){
-            $whereSQL .= " AND STR_TO_DATE(event_date, '%d %M %Y') >= STR_TO_DATE('{$filters['from']}', '%d %M %Y')";
-        }
+        
 
-        if($filters['to'] != ''){
-            $whereSQL .= " AND STR_TO_DATE(event_date, '%d %M %Y') <= STR_TO_DATE('{$filters['to']}', '%d %M %Y')";
-        }
 
         $columns = array('region', 'country', 'admin1', 'admin2', 'admin3', 'location');
         if (!empty($filters)) {
@@ -200,6 +198,8 @@ final class WPDP_Maps {
             }
         }
 
+        $union_queries = [];
+
         foreach($posts as $id){
             $table_name = $wpdb->prefix. 'wpdp_data_'.$id;
             $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
@@ -207,23 +207,52 @@ final class WPDP_Maps {
                 continue;
             }
 
-            $result = $wpdb->get_results("SELECT 
+
+            $date_sample = $wpdb->get_var("SELECT event_date FROM $table_name LIMIT 1");
+            $date_format = WPDP_Shortcode::get_date_format($date_sample);
+            $mysql_date_format = $date_format['mysql'];
+            $filter_format_from = date($date_format['php'],strtotime($filters['from']));
+            $filter_format_to = date($date_format['php'],strtotime($filters['to']));
+
+            $whereSQL = ' WHERE 1=1';
+            if($filters['from'] != ''){
+                $whereSQL .= " AND STR_TO_DATE(event_date, '$mysql_date_format') >= STR_TO_DATE('{$filter_format_from}', '$mysql_date_format')";
+            }
+    
+            if($filters['to'] != ''){
+                $whereSQL .= " AND STR_TO_DATE(event_date, '$mysql_date_format') <= STR_TO_DATE('{$filter_format_to}', '$mysql_date_format')";
+            }
+
+            $whereSQL = str_replace('%%','%',$whereSQL);
+
+            $query = "SELECT 
             ".implode(', ', $types)." 
-             FROM {$table_name} {$whereSQL} LIMIT 500");
-            $data = array_merge($data,$result);
+             FROM {$table_name} {$whereSQL}";
+
+            $union_queries[] = $query;
+
         }
 
+        $union_query = implode(' UNION ALL ', $union_queries);
 
-        return $data;
+        $final_query = "
+        SELECT DISTINCT t.*
+        FROM ({$union_query}) AS t
+        LIMIT 500
+        ";
+
+        $result = $wpdb->get_results($final_query);
+
+        return $result;
 
     }
 
     public function get_map_data(){
         $filters = [
-            'disorder_type'=>$_REQUEST['type_val'],
-            'locations'=>$_REQUEST['locations_val'],
-            'from'=>$_REQUEST['from_val'],
-            'to'=>$_REQUEST['to_val']
+            'disorder_type' => isset($_REQUEST['type_val']) ? $_REQUEST['type_val'] : [],
+            'locations' => isset($_REQUEST['locations_val']) ? $_REQUEST['locations_val'] : [],
+            'from' => isset($_REQUEST['from_val']) ? $_REQUEST['from_val'] : '',
+            'to' => isset($_REQUEST['to_val']) ? $_REQUEST['to_val'] : ''
         ];
 
         $types = [

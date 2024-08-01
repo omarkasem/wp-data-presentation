@@ -266,8 +266,8 @@
     },
 
     self.mapInit = function(mapData){
-
-      if(!mapData.length){
+      if (!mapData || !Array.isArray(mapData) || mapData.length === 0) {
+        console.log('No valid map data available');
         return;
       }
 
@@ -859,9 +859,7 @@
       });
 
 
-      if (typeof Chart !== 'undefined') {
-        self.graphChange(self.selectedIncidents, self.selectedLocations,fromYear,toYear);
-      }
+      self.graphChange(self.selectedIncidents, self.selectedLocations,fromYear,toYear);
 
       if (typeof google === 'object' && typeof google.maps === 'object') {
         for(let i=0; i<global_markers.length; i++){
@@ -878,6 +876,11 @@
     },
       
     self.graphChange = function(selectedIncidents=[], selectedLocations, fromYear,toYear){
+
+      if (typeof Chart === 'undefined') {
+        return;
+      }
+
       if(selectedIncidents.length <= 0){
         // Select only parent checkboxes.
         $('ul > ul > li > input[type="checkbox"].wpdp_incident_type').each(function() {

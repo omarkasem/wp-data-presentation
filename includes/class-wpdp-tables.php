@@ -109,12 +109,11 @@ final class WPDP_Tables {
 
 
         $filters = [
-            'disorder_type'=>$_REQUEST['type_val'],
-            'locations'=>$_REQUEST['locations_val'],
-            'from'=>$_REQUEST['from_val'],
-            'to'=>$_REQUEST['to_val']
+            'disorder_type' => isset($_REQUEST['type_val']) ? $_REQUEST['type_val'] : null,
+            'locations' => isset($_REQUEST['locations_val']) ? $_REQUEST['locations_val'] : null,
+            'from' => isset($_REQUEST['from_val']) ? $_REQUEST['from_val'] : null,
+            'to' => isset($_REQUEST['to_val']) ? $_REQUEST['to_val'] : null
         ];
-
 
 
         $start = $_REQUEST['start']; // Starting row
