@@ -66,6 +66,13 @@ final class WPDP_Metabox {
 
         add_filter('acf/load_field/key=field_667ed6bc35cf2', array($this,'empty_mapping_categories'));
 
+        // Add the cron job hook
+        add_action('wpdp_daily_acled_update', array($this, 'update_acled_presentations'));
+
+        // Schedule the cron job if it's not already scheduled
+        if (!wp_next_scheduled('wpdp_daily_acled_update')) {
+            wp_schedule_event(time(), 'daily', 'wpdp_daily_acled_update');
+        }
 
     }
 
@@ -348,7 +355,33 @@ final class WPDP_Metabox {
         return $field;
     }
     
+    public function create_data_table($post_id){
+        global $wpdb;
+        $table_name = $wpdb->prefix. 'wpdp_data_'.$post_id;
+        if(get_field('import_file',$post_id) === 'Upload'){
+            $file_path = get_attached_file(get_field('upload_excel_file',$post_id));
+        }else{
+            $url = get_field('acled_url',$post_id);
+            $file_path = download_url($url);
+            if (is_wp_error($file_path)) {
+                $error_message = $file_path->get_error_message();
+                error_log($error_message);
+                wp_die("Error downloading file: $error_message");
+            }
+        }
 
+        $import =  new WPDP_Db_Table($table_name,$file_path);
+        if (!$import->import_csv()) {
+            error_log('Error in importing');
+            var_dump('Error in importing');exit;
+        }
+
+        if(get_field('import_file',$post_id) !== 'Upload'){
+            unlink($file_path);
+        }
+
+        delete_post_meta($post_id,'wpdp_countries_updated');
+    }
 
     public function save_presentation($post_id){
         global $wpdb;
@@ -360,30 +393,9 @@ final class WPDP_Metabox {
             return;
         }
         
-        $table_name = $wpdb->prefix. 'wpdp_data_'.$post_id;
+        
         if(get_field('override_csv_file') === true){
-            if(get_field('import_file') === 'Upload'){
-                $file_path = get_attached_file(get_field('upload_excel_file'));
-            }else{
-                $url = get_field('acled_url');
-                $file_path = download_url($url);
-                if (is_wp_error($file_path)) {
-                    $error_message = $file_path->get_error_message();
-                    wp_die("Error downloading file: $error_message");
-                }
-            }
-
-            $import =  new WPDP_Db_Table($table_name,$file_path);
-            if (!$import->import_csv()) {
-                var_dump('Error in importing');exit;
-            }
-
-            if(get_field('import_file') !== 'Upload'){
-                unlink($file_path);
-            }
-
-            delete_post_meta($post_id,'wpdp_countries_updated');
-
+            $this->create_data_table($post_id);
         }
 
         // Auto select mapping.
@@ -473,7 +485,35 @@ final class WPDP_Metabox {
         return WP_DATA_PRESENTATION_ACF_SHOW;
     }
 
-    
+
+    public function update_acled_presentations() {
+        $args = array(
+            'post_type' => 'wp-data-presentation',
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'meta_query' => array(
+                array(
+                    'key' => 'import_file',
+                    'value' => 'Acled URL',
+                    'compare' => '='
+                ),
+                array(
+                    'key' => 'acled_url',
+                    'compare' => 'EXISTS'
+                )
+            )
+        );
+
+        $post_ids = get_posts($args);
+
+        if(empty($post_ids)){
+            return;
+        }
+        foreach ($post_ids as $post_id) {
+            $this->create_data_table($post_id);
+            error_log("Updated ACLED presentation: " . $post_id);
+        }
+    }
 
 }
 
