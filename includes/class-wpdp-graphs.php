@@ -65,12 +65,11 @@ final class WPDP_Graphs {
             'fatalities',
         ];
 
-
         $filters = [
-            'disorder_type'=>$_REQUEST['type_val'],
-            'locations'=>$_REQUEST['locations_val'],
-            'from'=>$_REQUEST['from_val'],
-            'to'=>$_REQUEST['to_val']
+            'disorder_type' => isset($_REQUEST['type_val']) ? $_REQUEST['type_val'] : '',
+            'locations' => isset($_REQUEST['locations_val']) ? $_REQUEST['locations_val'] : '',
+            'from' => isset($_REQUEST['from_val']) ? $_REQUEST['from_val'] : '',
+            'to' => isset($_REQUEST['to_val']) ? $_REQUEST['to_val'] : ''
         ];
 
 
@@ -102,20 +101,12 @@ final class WPDP_Graphs {
 
         global $wpdb;
         $sql_parts = [];
-        $whereSQL = ' WHERE 1=1';
+        
         $sql_type = 'YEAR';
         $sql_type2 = 'YEAR';
         $chart_sql = 'year';
         $all_filters = WPDP_Shortcode::get_filters();
 
-
-        if($filters['from'] != ''){
-            $whereSQL .= " AND STR_TO_DATE(event_date, '%%d %%M %%Y') >= STR_TO_DATE('{$filters['from']}', '%%d %%M %%Y')";
-        }
-
-        if($filters['to'] != ''){
-            $whereSQL .= " AND STR_TO_DATE(event_date, '%%d %%M %%Y') <= STR_TO_DATE('{$filters['to']}', '%%d %%M %%Y')";
-        }
 
         if($filters['from'] != '' || $filters['to'] != ''){
             $all_dates = $all_filters['years'];
@@ -148,14 +139,30 @@ final class WPDP_Graphs {
             if(!$table_exists){
                 continue;
             }
+            $whereSQL = ' WHERE 1=1';
+
+            $date_sample = $wpdb->get_var("SELECT event_date FROM $table_name LIMIT 1");
+            $date_format = WPDP_Shortcode::get_date_format($date_sample);
+            $mysql_date_format = $date_format['mysql'];
+            $filter_format_from = date($date_format['php'],strtotime($filters['from']));
+            $filter_format_to = date($date_format['php'],strtotime($filters['to']));
+
+            if($filters['from'] != ''){
+                $whereSQL .= " AND STR_TO_DATE(event_date, '$mysql_date_format') >= STR_TO_DATE('{$filter_format_from}', '$mysql_date_format')";
+            }
+    
+            if($filters['to'] != ''){
+                $whereSQL .= " AND STR_TO_DATE(event_date, '$mysql_date_format') <= STR_TO_DATE('{$filter_format_to}', '$mysql_date_format')";
+            }
+
 
             $sql_parts[] = "SELECT 
                 SUM(fatalities) as fatalities_count,
                 COUNT(*) as events_count,
-                {$sql_type2}(STR_TO_DATE(event_date, '%%d %%M %%Y')) as year_week,
-                MIN(STR_TO_DATE(event_date, '%%d %%M %%Y')) as week_start,
+                {$sql_type2}(STR_TO_DATE(event_date, '$mysql_date_format')) as year_week,
+                MIN(STR_TO_DATE(event_date, '$mysql_date_format')) as week_start,
                 disorder_type,event_type,sub_event_type
-            FROM {$table_name}
+            FROM {$table_name} {$whereSQL}
             ";
 
         }
@@ -170,7 +177,7 @@ final class WPDP_Graphs {
         foreach($filters['disorder_type'] as $type){
             $new_sql = [];
             $conditions2 = [];
-            $new_where = $whereSQL;
+            $new_where = '';
 
             if(strpos($type,'+') !== false){
                 $type = explode('+',$type);
@@ -224,9 +231,14 @@ final class WPDP_Graphs {
             foreach($sql_parts as $k => $sql){
                 $new_sql[]= $sql.' '.$new_where;
             }
-            
+        
+
+
             $query = $wpdb->prepare("
-            " . implode(' UNION ALL ', $new_sql) . "
+            SELECT DISTINCT t.*
+            FROM (
+                " . implode(' UNION ALL ', $new_sql) . "
+            ) AS t
             GROUP BY year_week, disorder_type  
             ORDER BY week_start ASC
             ");
@@ -234,7 +246,6 @@ final class WPDP_Graphs {
             $data[$text] = $wpdb->get_results($query);
             
         }
-
 
         return [
             'data'=>$data,

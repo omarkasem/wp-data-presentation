@@ -80,6 +80,32 @@ final class WPDP_Shortcode {
 
     }
 
+    public static function get_date_format($date_sample) {
+        $date_formats = [
+            'Y-m-d' => ['regex' => '/^\d{4}-\d{2}-\d{2}$/', 'mysql' => '%%Y-%%m-%%d'],
+            'Y/m/d' => ['regex' => '/^\d{4}\/\d{2}\/\d{2}$/', 'mysql' => '%%Y/%%m/%%d'],
+            'd-m-Y' => ['regex' => '/^\d{2}-\d{2}-\d{4}$/', 'mysql' => '%%d-%%m-%%Y'],
+            'd/m/Y' => ['regex' => '/^\d{2}\/\d{2}\/\d{4}$/', 'mysql' => '%%d/%%m/%%Y'],
+            'm-d-Y' => ['regex' => '/^\d{2}-\d{2}-\d{4}$/', 'mysql' => '%%m-%%d-%%Y'],
+            'm/d/Y' => ['regex' => '/^\d{2}\/\d{2}\/\d{4}$/', 'mysql' => '%%m/%%d/%%Y'],
+            'd F Y' => ['regex' => '/^\d{2} \w{3,9} \d{4}$/', 'mysql' => '%%d %%M %%Y']
+        ];
+    
+    
+        foreach ($date_formats as $php_format => $format_info) {
+            if (preg_match($format_info['regex'], $date_sample)) {
+                return [
+                    'mysql'=>$format_info['mysql'],
+                    'php'=>$php_format
+                ];
+            }
+        }
+    
+        return false;
+    }
+    
+
+
     public static function get_filters() {
         $atts = self::get_instance()->shortcode_atts;
 
@@ -304,35 +330,37 @@ final class WPDP_Shortcode {
     private function renderFilters($filters, $hierarchy = 'Level 1', $actors = false) {
         echo '<ul class="'.($hierarchy === 'Level 1' ? 'first_one' : '').'">';
         $class = 'wpdp_incident_type';
-        foreach ($filters as $filter) {
-            if ($actors) {
-                $value = [];
-                $types = ['disorder_type', 'event_type', 'sub_event_type'];
-                foreach ($types as $one_type) {
-                    if (!empty($filter[$one_type])) {
-                        $value = array_merge($value, $filter[$one_type]);
+        if(!empty($filters)){
+            foreach ($filters as $filter) {
+                if ($actors) {
+                    $value = [];
+                    $types = ['disorder_type', 'event_type', 'sub_event_type'];
+                    foreach ($types as $one_type) {
+                        if (!empty($filter[$one_type])) {
+                            $value = array_merge($value, $filter[$one_type]);
+                        }
                     }
+                    $class = 'wpdp_actors';
+                    if($actors === 'fat'){
+                        $class = 'wpdp_fat';
+                    }
+                }else{
+                    $type = $filter['type'] ?? '';
+                    $value = $filter[$type];
                 }
-                $class = 'wpdp_actors';
-                if($actors === 'fat'){
-                    $class = 'wpdp_fat';
+                if ($filter['hierarchial'] === $hierarchy) {
+                    echo '<li class="expandable">';
+                    echo '<input class="wpdp_filter_checkbox '.$class.'" type="checkbox" value="' . implode('+', $value) . '">';
+                    echo '<div class="exp_click">';
+                    echo '<span>' . htmlspecialchars($filter['text']) . '</span>';
+                    echo '<span class="dashicons arrow dashicons-arrow-down-alt2"></span>';
+                    echo '</div>';
+                    if ($hierarchy !== 'Level 4') {
+                        $nextHierarchy = 'Level ' . (intval(substr($hierarchy, -1)) + 1);
+                        $this->renderFilters($filters, $nextHierarchy, $actors);
+                    }
+                    echo '</li>';
                 }
-            }else{
-				$type = $filter['type'] ?? '';
-				$value = $filter[$type];
-			}
-            if ($filter['hierarchial'] === $hierarchy) {
-                echo '<li class="expandable">';
-                echo '<input class="wpdp_filter_checkbox '.$class.'" type="checkbox" value="' . implode('+', $value) . '">';
-                echo '<div class="exp_click">';
-                echo '<span>' . htmlspecialchars($filter['text']) . '</span>';
-                echo '<span class="dashicons arrow dashicons-arrow-down-alt2"></span>';
-                echo '</div>';
-                if ($hierarchy !== 'Level 4') {
-                    $nextHierarchy = 'Level ' . (intval(substr($hierarchy, -1)) + 1);
-                    $this->renderFilters($filters, $nextHierarchy, $actors);
-                }
-                echo '</li>';
             }
         }
         echo '</ul>';

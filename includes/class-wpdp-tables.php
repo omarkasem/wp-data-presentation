@@ -57,41 +57,8 @@ final class WPDP_Tables {
         add_action( 'wp_ajax_nopriv_wpdp_datatables_find_by_id', array($this,'find_by_id') );
         add_action( 'wp_ajax_wpdp_datatables_find_by_id', array($this,'find_by_id') );
 
-        if(isset($_GET['test'])){
-            var_dump(get_option('test2'));exit;
-            global $wpdb;
-            $table_name = 'wp_wpdp_data_101';
-            $date_sample = $wpdb->get_var("SELECT event_date FROM $table_name LIMIT 1");
-            var_dump($this->get_date_format($date_sample));exit;
-        }
-
 
     }
-
-    function get_date_format($date_sample) {
-        $date_formats = [
-            'Y-m-d' => ['regex' => '/^\d{4}-\d{2}-\d{2}$/', 'mysql' => '%%Y-%%m-%%d'],
-            'Y/m/d' => ['regex' => '/^\d{4}\/\d{2}\/\d{2}$/', 'mysql' => '%%Y/%%m/%%d'],
-            'd-m-Y' => ['regex' => '/^\d{2}-\d{2}-\d{4}$/', 'mysql' => '%%d-%%m-%%Y'],
-            'd/m/Y' => ['regex' => '/^\d{2}\/\d{2}\/\d{4}$/', 'mysql' => '%%d/%%m/%%Y'],
-            'm-d-Y' => ['regex' => '/^\d{2}-\d{2}-\d{4}$/', 'mysql' => '%%m-%%d-%%Y'],
-            'm/d/Y' => ['regex' => '/^\d{2}\/\d{2}\/\d{4}$/', 'mysql' => '%%m/%%d/%%Y'],
-            'd F Y' => ['regex' => '/^\d{2} \w{3,9} \d{4}$/', 'mysql' => '%%d %%M %%Y']
-        ];
-    
-    
-        foreach ($date_formats as $php_format => $format_info) {
-            if (preg_match($format_info['regex'], $date_sample)) {
-                return [
-                    'mysql'=>$format_info['mysql'],
-                    'php'=>$php_format
-                ];
-            }
-        }
-    
-        return false;
-    }
-    
 
 
     public function find_by_id(){
@@ -239,7 +206,7 @@ final class WPDP_Tables {
                 continue;
             }
             $date_sample = $wpdb->get_var("SELECT event_date FROM $table_name LIMIT 1");
-            $date_format = $this->get_date_format($date_sample);
+            $date_format = WPDP_Shortcode::get_date_format($date_sample);
             $mysql_date_format = $date_format['mysql'];
             $whereSQL = $this->build_where_clause($filters, $queryArgs,$date_format);
             $query = "SELECT " . implode(', ', $types) . " FROM {$table_name}";
