@@ -49,6 +49,7 @@ final class WPDP_Metabox {
         add_filter('acf/settings/url', array($this,'my_acf_settings_url'));
         add_filter('acf/settings/show_admin', array($this,'show_admin'));
         add_filter('acf/render_field/key=field_657e4ec5e8971', array($this,'shortcode_box'), 20, 1);
+        add_filter('acf/render_field/key=field_66ad383f1d6af', array($this,'last_updated_field'), 20, 1);
         add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
 
         add_action('save_post',array($this,'save_presentation'));
@@ -73,6 +74,10 @@ final class WPDP_Metabox {
         if (!wp_next_scheduled('wpdp_daily_acled_update')) {
             wp_schedule_event(time(), 'daily', 'wpdp_daily_acled_update');
         }
+
+        // Add new hook for file upload
+        add_filter('upload_mimes', array($this, 'add_custom_mime_types'));
+        add_filter('wp_handle_upload_prefilter', array($this, 'custom_upload_filter'));
 
     }
 
@@ -377,11 +382,71 @@ final class WPDP_Metabox {
         }
 
         if(get_field('import_file',$post_id) !== 'Upload'){
-            unlink($file_path);
+            $attachment_id = get_post_meta($post_id, 'wpdp_last_file_attach_id', true);
+            if ($attachment_id) {
+                $old_file_path = get_attached_file($attachment_id);
+                if ($old_file_path && file_exists($old_file_path)) {
+                    unlink($old_file_path);
+                }
+                wp_delete_attachment($attachment_id, true);
+            }
+            
+            // Upload file to media library
+            $attach_id = $this->download_and_upload_csv($file_path, $post_id);
+
+            update_post_meta($post_id,'wpdp_last_file_attach_id',$attach_id);
         }
 
         delete_post_meta($post_id,'wpdp_countries_updated');
+        update_post_meta($post_id,'wpdp_last_updated_date',time());
+        
     }
+
+    public function download_and_upload_csv($temp_file, $post_id) {
+    
+        // Prepare file data for upload
+        $post_title = get_the_title($post_id);
+        $file_name = sanitize_file_name($post_title . '.csv');
+        $file_array = array(
+            'name'     => $file_name,
+            'tmp_name' => $temp_file
+        );
+    
+        // Set upload overrides
+        $overrides = array(
+            'test_form' => false,
+            'test_size' => true,
+        );
+    
+        // Upload the file to the media library
+        $time = current_time('mysql');
+        $file = wp_handle_sideload($file_array, $overrides, $time);
+    
+        if (isset($file['error'])) {
+            @unlink($temp_file);
+            return false;
+        }
+    
+        // Prepare attachment data
+        $attachment = array(
+            'post_mime_type' => $file['type'],
+            'post_title'     => preg_replace('/\.[^.]+$/', '', $file_name),
+            'post_content'   => '',
+            'post_status'    => 'inherit'
+        );
+    
+        // Insert attachment into the media library
+        $attach_id = wp_insert_attachment($attachment, $file['file']);
+    
+        // Generate metadata for the attachment
+        $attach_data = wp_generate_attachment_metadata($attach_id, $file['file']);
+        wp_update_attachment_metadata($attach_id, $attach_data);
+
+        update_post_meta($post_id,'wpdp_last_file_url',$file['url']);
+        return $attach_id;
+    }
+    
+
 
     public function save_presentation($post_id){
         global $wpdb;
@@ -458,6 +523,21 @@ final class WPDP_Metabox {
     }
     
 
+    public function last_updated_field($field){
+        $post_id = get_the_ID();
+        if(empty(get_post_meta($post_id,'wpdp_last_updated_date',true))){
+            return;
+        }
+        echo '
+            <div class="wpdp_last_updated">
+                <h3>'.date('d-m-Y H:i:s',get_post_meta($post_id,'wpdp_last_updated_date',true)).'</h3>
+                <a href="'.get_post_meta($post_id,'wpdp_last_file_url',true).'" target="_blank" class="button button-primary">Local Server Copy</a>
+                <a href="'.get_field('acled_url',$post_id).'" target="_blank" class="button button-secondary">ACLED Copy</a>
+            </div>
+        ';
+    }
+
+
     public function shortcode_box($field){
         echo '<div class="wpdp_shortcode">
         <input type="text" disabled value=" [WP_DATA_PRESENTATION]"> 
@@ -513,6 +593,28 @@ final class WPDP_Metabox {
             $this->create_data_table($post_id);
             error_log("Updated ACLED presentation: " . $post_id);
         }
+    }
+
+    public function add_custom_mime_types($mimes) {
+        // Add CSV mime type
+        $mimes['csv'] = 'text/csv';
+        
+        // Add Excel mime types
+        $mimes['xlsx'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        $mimes['xls'] = 'application/vnd.ms-excel';
+        
+        return $mimes;
+    }
+
+    public function custom_upload_filter($file) {
+        $allowed_extensions = array('csv', 'xlsx', 'xls');
+        $file_extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+
+        if (!in_array(strtolower($file_extension), $allowed_extensions)) {
+            $file['error'] = 'File type not allowed. Please upload a CSV or Excel file.';
+        }
+
+        return $file;
     }
 
 }

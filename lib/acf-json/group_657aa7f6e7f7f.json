@@ -118,6 +118,24 @@
             "ui_on_text": "",
             "ui_off_text": "",
             "ui": 0
+        },
+        {
+            "key": "field_66ad383f1d6af",
+            "label": "Last Updated",
+            "name": "",
+            "aria-label": "",
+            "type": "message",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "message": "",
+            "new_lines": "wpautop",
+            "esc_html": 0
         }
     ],
     "location": [
@@ -138,5 +156,5 @@
     "active": true,
     "description": "",
     "show_in_rest": 0,
-    "modified": 1721945802
+    "modified": 1722628181
 }
