@@ -79,6 +79,13 @@ final class WPDP_Metabox {
         add_filter('upload_mimes', array($this, 'add_custom_mime_types'));
         add_filter('wp_handle_upload_prefilter', array($this, 'custom_upload_filter'));
 
+        if(isset($_GET['test'])){
+
+
+
+            var_dump(get_field('countries_to_show','option'));exit;
+        }
+
     }
 
     function de_acf_free(){
@@ -374,8 +381,8 @@ final class WPDP_Metabox {
                 wp_die("Error downloading file: $error_message");
             }
         }
-
-        $import =  new WPDP_Db_Table($table_name,$file_path);
+        $action = get_field('csv_file_action',$post_id);
+        $import =  new WPDP_Db_Table($table_name,$file_path,$action);
         if (!$import->import_csv()) {
             error_log('Error in importing');
             var_dump('Error in importing');exit;
@@ -459,7 +466,7 @@ final class WPDP_Metabox {
         }
         
         
-        if(get_field('override_csv_file') === true){
+        if(get_field('csv_file_action') !== 'Nothing'){
             $this->create_data_table($post_id);
         }
 
@@ -525,7 +532,7 @@ final class WPDP_Metabox {
 
     public function last_updated_field($field){
         $post_id = get_the_ID();
-        if(empty(get_post_meta($post_id,'wpdp_last_updated_date',true))){
+        if(get_field('import_file',$post_id) == '' || get_field('import_file',$post_id) === 'Upload'){
             return;
         }
         echo '

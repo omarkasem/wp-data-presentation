@@ -100,11 +100,11 @@
             "placeholder": ""
         },
         {
-            "key": "field_65a800a69e6d3",
-            "label": "Override csv file",
-            "name": "override_csv_file",
+            "key": "field_66af58a963952",
+            "label": "CSV File Action",
+            "name": "csv_file_action",
             "aria-label": "",
-            "type": "true_false",
+            "type": "button_group",
             "instructions": "",
             "required": 0,
             "conditional_logic": 0,
@@ -113,11 +113,15 @@
                 "class": "",
                 "id": ""
             },
-            "message": "",
-            "default_value": 0,
-            "ui_on_text": "",
-            "ui_off_text": "",
-            "ui": 0
+            "choices": {
+                "Nothing": "Nothing",
+                "Overwrite": "Overwrite",
+                "Merge": "Merge"
+            },
+            "default_value": "",
+            "return_format": "value",
+            "allow_null": 0,
+            "layout": "horizontal"
         },
         {
             "key": "field_66ad383f1d6af",
@@ -156,5 +160,5 @@
     "active": true,
     "description": "",
     "show_in_rest": 0,
-    "modified": 1722628181
+    "modified": 1722767701
 }

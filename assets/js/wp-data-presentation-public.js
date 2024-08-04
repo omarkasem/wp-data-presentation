@@ -827,12 +827,18 @@
         e.preventDefault();
         $('.wpdp #filter_loader').show();
         self.filterAction();
+        setTimeout(() => {
+          $('.wpdp .con').css('left','-152%').removeClass('active');
+        $('.wpdp .filter span').attr('class','fas fa-sliders-h');
+        }, 500);
+
       });
     },
 
     self.filterAction = function(){
       let fromYear = $("#wpdp_from").val();
       let toYear = $("#wpdp_to").val();
+      let timeframe = ($("#wpdp_date_timeframe").val() ? $("#wpdp_date_timeframe").val() : 'yearly');
 
 
       if(fromYear == '' && JSON.parse(wpdp_shortcode_atts).from != ''){
@@ -859,7 +865,7 @@
       });
 
 
-      self.graphChange(self.selectedIncidents, self.selectedLocations,fromYear,toYear);
+      self.graphChange(self.selectedIncidents, self.selectedLocations,fromYear,toYear,timeframe);
 
       if (typeof google === 'object' && typeof google.maps === 'object') {
         for(let i=0; i<global_markers.length; i++){
@@ -875,7 +881,7 @@
       }
     },
       
-    self.graphChange = function(selectedIncidents=[], selectedLocations, fromYear,toYear){
+    self.graphChange = function(selectedIncidents=[], selectedLocations, fromYear,toYear,timeframe){
 
       if (typeof Chart === 'undefined') {
         return;
@@ -895,11 +901,12 @@
           type_val: selectedIncidents,
           locations_val: selectedLocations,
           from_val: fromYear,
-          to_val: toYear
+          to_val: toYear,
+          timeframe: timeframe
         },
         type: 'POST',
         success: function(response) {
-          self.chartInit(response.data,selectedIncidents,selectedLocations);
+          self.chartInit(response.data,selectedIncidents,selectedLocations,timeframe);
           $('.wpdp #filter_loader').hide();
           $('#graph_loader').hide();
         },
@@ -909,7 +916,7 @@
       });
     }
 
-    self.chartInit = function(data,typeValue,selectedLocations){
+    self.chartInit = function(data,typeValue,selectedLocations,timeframe){
       var datasets = [];
       const colors = [
         "#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4", "#46f0f0", "#f032e6",

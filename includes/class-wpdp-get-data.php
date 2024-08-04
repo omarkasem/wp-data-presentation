@@ -11,6 +11,7 @@ class WPDP_Db_Table {
     private $csv_file_path;
     private $delimiter;
     private $logger;
+    private $action;
 
     /**
      * Constructor
@@ -19,11 +20,12 @@ class WPDP_Db_Table {
      *
      * @since 1.0.0
      */
-    public function __construct($table_name,$file_path) {
+    public function __construct($table_name,$file_path,$action) {
         global $wpdb;
         $this->table_name    =  $table_name;
         $this->csv_file_path = $file_path;
         $this->delimiter     = ';';
+        $this->action        = $action;
     }
 
 
@@ -76,11 +78,17 @@ class WPDP_Db_Table {
         }
 
         $this->delimiter = $this->detect_delimiter($this->csv_file_path);
+        $table_name = $this->table_name;
+        if($this->action === 'Merge'){
+            // Create a temporary table for the new data
+            $table_name = $this->table_name . '_temp';
+            $this->create_temp_table($table_name);
+        }
 
         // Live server only
         $query = $wpdb->prepare(
             "LOAD DATA LOCAL INFILE %s
-                     INTO TABLE {$this->table_name}
+                     INTO TABLE {$table_name}
                      FIELDS TERMINATED BY %s
                      ENCLOSED BY '\"'
                      LINES TERMINATED BY '\\n'
@@ -89,6 +97,7 @@ class WPDP_Db_Table {
             $this->delimiter
         );
         $result = $conn->query($query);
+
 
         // Local host only.
         // $query = $wpdb->prepare(
@@ -104,12 +113,36 @@ class WPDP_Db_Table {
         
         // $result = $wpdb->query($query);
 
+
         if (false === $result) {
-            var_dump('Error importing CSV data - ' . $conn->error);exit;
+            var_dump('Error importing CSV data - ' . $conn->error);
+            exit;
+        }
+
+        if($this->action === 'Merge'){
+            // Merge data from temporary table to main table, removing duplicates
+            $this->merge_tables($table_name);
+            // Drop the temporary table
+            $wpdb->query("DROP TABLE IF EXISTS {$table_name}");
         }
 
         return true;
+    }
 
+    private function create_temp_table($temp_table_name) {
+        global $wpdb;
+        $wpdb->query("CREATE TABLE {$temp_table_name} LIKE {$this->table_name}");
+    }
+
+    private function merge_tables($temp_table_name) {
+        global $wpdb;
+        $wpdb->query("
+            INSERT INTO {$this->table_name}
+            SELECT t.*
+            FROM {$temp_table_name} t
+            LEFT JOIN {$this->table_name} m ON t.event_id_cnty = m.event_id_cnty
+            WHERE m.event_id_cnty IS NULL
+        ");
     }
 
     /**
@@ -134,11 +167,13 @@ class WPDP_Db_Table {
      */
     public function create_table() {
         global $wpdb;
-        $charset_collate = $wpdb->get_charset_collate();
-
         $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$this->table_name}'") === $this->table_name;
 
-        if ($table_exists) {
+        if($table_exists && $this->action === 'Merge'){
+            return true;
+        }
+
+        if ($table_exists && $this->action === 'Overwrite') {
             $wpdb->query("DROP TABLE IF EXISTS {$this->table_name}");
         }
 

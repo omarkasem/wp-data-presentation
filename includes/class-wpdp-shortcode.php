@@ -380,7 +380,6 @@ final class WPDP_Shortcode {
         <div class="filter_data" style="display:none;">
             <a class="filter" href=""><span class="fas fa-sliders-h"></span></a>
             <div class="con">
-<!--                 <span class="filter_back dashicons dashicons-arrow-left-alt"></span> -->
                 <form id="filter_form" action="" style="margin-top:15px;">
 
 
@@ -452,6 +451,17 @@ final class WPDP_Shortcode {
                                 <label style="margin-right: 23px;" for="wpdp_to">TO</label>
                                 <input value="<?php $this->get_to_date_value($filters, $atts);?>" type="text" name="wpdp_to" id="wpdp_to">
                             </div>
+                            <?php if ('graph' === $atts['type'] || '' == $atts['type']) {?>
+                            <div class="dates">
+                                <label for="wpdp_date_timeframe">Timeframe</label>
+                                <select name="wpdp_date_timeframe" id="wpdp_date_timeframe">
+                                    <option value="yearly">Yearly</option>
+                                    <option value="monthly">Monthly</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="daily">Daily</option>
+                                </select>
+                            </div>
+                            <?php } ?>
                         </div>
 
                     </div>
