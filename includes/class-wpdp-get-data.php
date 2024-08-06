@@ -11,7 +11,6 @@ class WPDP_Db_Table {
     private $csv_file_path;
     private $delimiter;
     private $logger;
-    private $action;
 
     /**
      * Constructor
@@ -20,12 +19,11 @@ class WPDP_Db_Table {
      *
      * @since 1.0.0
      */
-    public function __construct($table_name,$file_path,$action) {
+    public function __construct($table_name,$file_path) {
         global $wpdb;
         $this->table_name    =  $table_name;
         $this->csv_file_path = $file_path;
         $this->delimiter     = ';';
-        $this->action        = $action;
     }
 
 
@@ -76,10 +74,14 @@ class WPDP_Db_Table {
         if ($conn->connect_error) {
             die("Connection failed: " . $conn->connect_error);
         }
-
         $this->delimiter = $this->detect_delimiter($this->csv_file_path);
+
+        // Check if the table has any data
         $table_name = $this->table_name;
-        if($this->action === 'Merge'){
+        $check_query = $wpdb->prepare("SELECT COUNT(*) FROM {$table_name}");
+        $table_has_data = $wpdb->get_var($check_query);
+
+        if ($table_has_data > 0) {
             // Create a temporary table for the new data
             $table_name = $this->table_name . '_temp';
             $this->create_temp_table($table_name);
@@ -119,7 +121,7 @@ class WPDP_Db_Table {
             exit;
         }
 
-        if($this->action === 'Merge'){
+        if($table_has_data > 0){
             // Merge data from temporary table to main table, removing duplicates
             $this->merge_tables($table_name);
             // Drop the temporary table
@@ -168,13 +170,8 @@ class WPDP_Db_Table {
     public function create_table() {
         global $wpdb;
         $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$this->table_name}'") === $this->table_name;
-
-        if($table_exists && $this->action === 'Merge'){
+        if($table_exists){
             return true;
-        }
-
-        if ($table_exists && $this->action === 'Overwrite') {
-            $wpdb->query("DROP TABLE IF EXISTS {$this->table_name}");
         }
 
         // Get the column names from the CSV file

@@ -455,6 +455,7 @@ final class WPDP_Shortcode {
                             <div class="dates">
                                 <label for="wpdp_date_timeframe">Timeframe</label>
                                 <select name="wpdp_date_timeframe" id="wpdp_date_timeframe">
+                                    <option value="">Choose Timeframe</option>
                                     <option value="yearly">Yearly</option>
                                     <option value="monthly">Monthly</option>
                                     <option value="weekly">Weekly</option>

@@ -256,6 +256,8 @@
         success: function(response) {
           self.mapInit(response.data);
           $('.wpdp #filter_loader').hide();
+          $('.wpdp .con').css('left','-152%').removeClass('active');
+          $('.wpdp .filter span').attr('class','fas fa-sliders-h');
         },
         error: function(errorThrown){
             alert('No data found');
@@ -573,6 +575,8 @@
             },
             drawCallback: function(settings, json) {
               $('.wpdp #filter_loader').hide();
+              $('.wpdp .con').css('left','-152%').removeClass('active');
+              $('.wpdp .filter span').attr('class','fas fa-sliders-h');
             },
 
             processing: true,
@@ -827,10 +831,6 @@
         e.preventDefault();
         $('.wpdp #filter_loader').show();
         self.filterAction();
-        setTimeout(() => {
-          $('.wpdp .con').css('left','-152%').removeClass('active');
-        $('.wpdp .filter span').attr('class','fas fa-sliders-h');
-        }, 500);
 
       });
     },
@@ -909,6 +909,8 @@
           self.chartInit(response.data,selectedIncidents,selectedLocations,timeframe);
           $('.wpdp #filter_loader').hide();
           $('#graph_loader').hide();
+          $('.wpdp .con').css('left','-152%').removeClass('active');
+          $('.wpdp .filter span').attr('class','fas fa-sliders-h');
         },
         error: function(errorThrown){
             alert('No data found');

@@ -52,7 +52,7 @@ final class WPDP_Metabox {
         add_filter('acf/render_field/key=field_66ad383f1d6af', array($this,'last_updated_field'), 20, 1);
         add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
 
-        add_action('save_post',array($this,'save_presentation'));
+        add_action('save_post',array($this,'save_presentation'),1);
 
         add_filter('acf/load_field/name=countries_to_show', array($this,'countries_field'));
         add_action('acf/save_post', array($this,'save_option_page'), 20);
@@ -367,13 +367,24 @@ final class WPDP_Metabox {
         return $field;
     }
     
-    public function create_data_table($post_id){
+    public function create_data_table($post_id, $use_posted_data = true){
         global $wpdb;
         $table_name = $wpdb->prefix. 'wpdp_data_'.$post_id;
-        if(get_field('import_file',$post_id) === 'Upload'){
-            $file_path = get_attached_file(get_field('upload_excel_file',$post_id));
+
+        if($use_posted_data){
+            $import_file = $_POST['acf']['field_657aa840cb9c5'];
+            $acled_url = $_POST['acf']['field_66a2ceaad7f51'];
+            $excel_file = $_POST['acf']['field_657aa818cb9c4'];
         }else{
-            $url = get_field('acled_url',$post_id);
+            $import_file = get_field('import_file',$post_id);
+            $acled_url = get_field('acled_url',$post_id);
+            $excel_file = get_field('upload_excel_file',$post_id);
+        }
+
+        if($import_file === 'Upload'){
+            $file_path = get_attached_file($excel_file);
+        }else{
+            $url = $acled_url;
             $file_path = download_url($url);
             if (is_wp_error($file_path)) {
                 $error_message = $file_path->get_error_message();
@@ -381,14 +392,14 @@ final class WPDP_Metabox {
                 wp_die("Error downloading file: $error_message");
             }
         }
-        $action = get_field('csv_file_action',$post_id);
-        $import =  new WPDP_Db_Table($table_name,$file_path,$action);
+
+        $import =  new WPDP_Db_Table($table_name,$file_path);
         if (!$import->import_csv()) {
             error_log('Error in importing');
             var_dump('Error in importing');exit;
         }
 
-        if(get_field('import_file',$post_id) !== 'Upload'){
+        if($import_file !== 'Upload'){
             $attachment_id = get_post_meta($post_id, 'wpdp_last_file_attach_id', true);
             if ($attachment_id) {
                 $old_file_path = get_attached_file($attachment_id);
@@ -466,10 +477,25 @@ final class WPDP_Metabox {
         }
         
         
-        if(get_field('csv_file_action') !== 'Nothing'){
-            $this->create_data_table($post_id);
+        if($_POST['acf']['field_657aa840cb9c5'] === 'Acled URL'){
+            $old_value = get_field('acled_url');
+            $new_value = $_POST['acf']['field_66a2ceaad7f51'];
+        }else{
+            $old_value = (int)get_field('upload_excel_file');
+            $new_value = (int)$_POST['acf']['field_657aa818cb9c4'];
+        } 
+
+        if($old_value === $new_value){
+            return;
         }
 
+        $this->create_data_table($post_id);
+
+        $this->auto_select_mapping();
+
+    }
+
+    function auto_select_mapping(){
         // Auto select mapping.
         $mapping = get_field('incident_type_filter','option');
         if(empty($mapping)){
@@ -509,7 +535,6 @@ final class WPDP_Metabox {
         if($changed === true){
             update_field('incident_type_filter',$mapping,'option');
         }
-
     }
 
     function find_type($cat_value) {
@@ -585,19 +610,20 @@ final class WPDP_Metabox {
                     'compare' => '='
                 ),
                 array(
-                    'key' => 'acled_url',
-                    'compare' => 'EXISTS'
+                    'key' => 'include_in_cron_job_updates',
+                    'value' => '1',
+                    'compare' => '='
                 )
             )
         );
 
         $post_ids = get_posts($args);
-
+        var_dump($post_ids);exit;
         if(empty($post_ids)){
             return;
         }
         foreach ($post_ids as $post_id) {
-            $this->create_data_table($post_id);
+            $this->create_data_table($post_id, false);
             error_log("Updated ACLED presentation: " . $post_id);
         }
     }

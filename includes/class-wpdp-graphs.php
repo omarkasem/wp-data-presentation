@@ -69,7 +69,8 @@ final class WPDP_Graphs {
             'disorder_type' => isset($_REQUEST['type_val']) ? $_REQUEST['type_val'] : '',
             'locations' => isset($_REQUEST['locations_val']) ? $_REQUEST['locations_val'] : '',
             'from' => isset($_REQUEST['from_val']) ? $_REQUEST['from_val'] : '',
-            'to' => isset($_REQUEST['to_val']) ? $_REQUEST['to_val'] : ''
+            'to' => isset($_REQUEST['to_val']) ? $_REQUEST['to_val'] : '',
+            'timeframe' => isset($_REQUEST['timeframe']) ? $_REQUEST['timeframe'] : ''
         ];
 
 
@@ -107,7 +108,6 @@ final class WPDP_Graphs {
         $chart_sql = 'year';
         $all_filters = WPDP_Shortcode::get_filters();
 
-
         if($filters['from'] != '' || $filters['to'] != ''){
             $all_dates = $all_filters['years'];
             $filters['from'] = ($filters['from'] ? $filters['from'] : $all_dates[0]);
@@ -117,19 +117,31 @@ final class WPDP_Graphs {
             $date2 = date_create($filters['to']);
             $diff = date_diff($date1, $date2);
             $days = intval($diff->format('%a'));
-            if($days < 40){
-                $sql_type = 'WEEK';
-                $sql_type2 = 'YEARWEEK';
-                $chart_sql = 'week';
-            }elseif($days >= 40 && $days < 365){
-                $sql_type = 'MONTH';
-                $sql_type2 = 'MONTH';
-                $chart_sql = 'month';
-            }elseif($days >= 365 && $days < 700){
-                $sql_type = 'MONTH';
-                $sql_type2 = 'MONTH';
-                $chart_sql = 'quarter';
+
+            if($filters['timeframe'] != ''){
+                if($filters['timeframe'] == 'monthly'){
+                    $sql_type = 'MONTH';
+                    $chart_sql = 'month';
+                }elseif($filters['timeframe'] == 'weekly'){
+                    $sql_type = 'YEARWEEK';
+                    $chart_sql = 'week';
+                }elseif($filters['timeframe'] == 'daily'){
+                    $sql_type = 'DAY';
+                    $chart_sql = 'day';
+                }
+            }else{
+                if($days < 40){
+                    $sql_type = 'YEARWEEK';
+                    $chart_sql = 'week';
+                }elseif($days >= 40 && $days < 365){
+                    $sql_type = 'MONTH';
+                    $chart_sql = 'month';
+                }elseif($days >= 365 && $days < 700){
+                    $sql_type = 'MONTH';
+                    $chart_sql = 'quarter';
+                }
             }
+
         }
 
    
@@ -159,7 +171,7 @@ final class WPDP_Graphs {
             $sql_parts[] = "SELECT 
                 SUM(fatalities) as fatalities_count,
                 COUNT(*) as events_count,
-                {$sql_type2}(STR_TO_DATE(event_date, '$mysql_date_format')) as year_week,
+                {$sql_type}(STR_TO_DATE(event_date, '$mysql_date_format')) as year_week,
                 MIN(STR_TO_DATE(event_date, '$mysql_date_format')) as week_start,
                 disorder_type,event_type,sub_event_type
             FROM {$table_name} {$whereSQL}

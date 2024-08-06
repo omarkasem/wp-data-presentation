@@ -100,11 +100,11 @@
             "placeholder": ""
         },
         {
-            "key": "field_66af58a963952",
-            "label": "CSV File Action",
-            "name": "csv_file_action",
+            "key": "field_66b1a9bdef0a0",
+            "label": "Include in Cron Job Updates",
+            "name": "include_in_cron_job_updates",
             "aria-label": "",
-            "type": "button_group",
+            "type": "true_false",
             "instructions": "",
             "required": 0,
             "conditional_logic": 0,
@@ -113,15 +113,11 @@
                 "class": "",
                 "id": ""
             },
-            "choices": {
-                "Nothing": "Nothing",
-                "Overwrite": "Overwrite",
-                "Merge": "Merge"
-            },
-            "default_value": "",
-            "return_format": "value",
-            "allow_null": 0,
-            "layout": "horizontal"
+            "message": "",
+            "default_value": 0,
+            "ui": 0,
+            "ui_on_text": "",
+            "ui_off_text": ""
         },
         {
             "key": "field_66ad383f1d6af",
@@ -160,5 +156,5 @@
     "active": true,
     "description": "",
     "show_in_rest": 0,
-    "modified": 1722767701
+    "modified": 1722919373
 }
