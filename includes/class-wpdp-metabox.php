@@ -77,14 +77,7 @@ final class WPDP_Metabox {
 
         // Add new hook for file upload
         add_filter('upload_mimes', array($this, 'add_custom_mime_types'));
-        add_filter('wp_handle_upload_prefilter', array($this, 'custom_upload_filter'));
-
-        if(isset($_GET['test'])){
-
-
-
-            var_dump(get_field('countries_to_show','option'));exit;
-        }
+        // add_filter('wp_handle_upload_prefilter', array($this, 'custom_upload_filter'));
 
     }
 

@@ -55,11 +55,6 @@ final class WPDP_Shortcode {
         add_shortcode('WP_DATA_PRESENTATION', array($this, 'show_shortcode'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
 
-        if (isset($_GET['t'])) {
-            var_dump(get_option('test5'));exit;
-            // var_dump($this->get_filters());exit;
-        }
-
     }
 
     public function enqueue_scripts() {
