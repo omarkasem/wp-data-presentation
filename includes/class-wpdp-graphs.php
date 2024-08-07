@@ -54,10 +54,6 @@ final class WPDP_Graphs {
         add_action( 'wp_ajax_nopriv_wpdp_graph_request', array($this,'get_graph_data') );
         add_action( 'wp_ajax_wpdp_graph_request', array($this,'get_graph_data') );
 
-        if(isset($_REQUEST['test'])){
-            var_dump(get_option('test5'));exit;
-        }
-
 
     }
 
@@ -177,7 +173,7 @@ final class WPDP_Graphs {
                 {$sql_type}(STR_TO_DATE(event_date, '$mysql_date_format')) as year_week,
                 MIN(STR_TO_DATE(event_date, '$mysql_date_format')) as week_start,
                 disorder_type,event_type,sub_event_type
-            FROM {$table_name} {$whereSQL}
+            FROM {$table_name} {$whereSQL} 
             ";
 
         }
@@ -186,7 +182,6 @@ final class WPDP_Graphs {
             return [];
         }
 
-        $columns = array('region', 'country', 'admin1', 'admin2', 'admin3', 'location');
 
         $data = [];
         foreach($filters['disorder_type'] as $type){
@@ -243,19 +238,16 @@ final class WPDP_Graphs {
       
             }
 
-            foreach($sql_parts as $k => $sql){
-                $new_sql[]= $sql.' '.$new_where;
+            foreach($sql_parts as $sql){
+                $new_sql[]= $sql.' '.$new_where  . ' GROUP BY year_week, disorder_type ';
             }
-        
 
 
             $query = $wpdb->prepare("
-            SELECT DISTINCT t.*
+            SELECT *
             FROM (
-                " . implode(' UNION ALL ', $new_sql) . "
-            ) AS t
-            GROUP BY year_week, disorder_type  
-            ORDER BY week_start ASC
+                " . implode(' UNION ', $new_sql) . "
+            ) AS t ORDER BY week_start ASC
             ");
             
             $data[$text] = $wpdb->get_results($query);

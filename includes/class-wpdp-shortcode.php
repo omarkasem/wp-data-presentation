@@ -319,7 +319,7 @@ final class WPDP_Shortcode {
             echo $this->shortcode_atts['from'];
         } else {
             // if ('map' === $atts['type']) {
-                echo date('d F Y', strtotime('-1 year'));
+                echo date('d F Y', strtotime(end($filters['years']) . ' -1 year'));
             // } else {
             //     echo date('d F Y', strtotime($filters['years'][0]));
             // }
