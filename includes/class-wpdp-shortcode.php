@@ -54,6 +54,8 @@ final class WPDP_Shortcode {
     private function _add_hooks() {
         add_shortcode('WP_DATA_PRESENTATION', array($this, 'show_shortcode'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
+        add_action('wp_head', array($this, 'add_loader_html'));
+
 
     }
 
@@ -74,6 +76,20 @@ final class WPDP_Shortcode {
         ]);
 
     }
+
+    public function add_loader_html() {
+        ?>
+        <!-- Loader HTML -->
+        <div id="wpdp-loader" class="wpdp-loader">
+            <div class="loader">
+                <div class="inner"></div>
+            </div>
+            <h1>Loading...</h1>
+        </div>
+
+    <?php }
+
+
 
     public static function get_date_format($date_sample) {
         $date_formats = [
@@ -480,7 +496,6 @@ final class WPDP_Shortcode {
 
 
                     <input type="submit" value="Apply Filters">
-                    <img id="filter_loader" src="<?php echo admin_url('images/loading.gif'); ?>" alt="">
                     <div class="wpdp_clear"><input type="reset" value="Clear Filters"></div>
                 </form>
             </div>

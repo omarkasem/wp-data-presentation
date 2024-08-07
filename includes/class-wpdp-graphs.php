@@ -54,6 +54,10 @@ final class WPDP_Graphs {
         add_action( 'wp_ajax_nopriv_wpdp_graph_request', array($this,'get_graph_data') );
         add_action( 'wp_ajax_wpdp_graph_request', array($this,'get_graph_data') );
 
+        if(isset($_REQUEST['test'])){
+            var_dump(get_option('test5'));exit;
+        }
+
 
     }
 
@@ -259,6 +263,8 @@ final class WPDP_Graphs {
             
         }
 
+        update_option('test5', $data);
+
         return [
             'data'=>$data,
             'chart_sql'=>$chart_sql
@@ -271,7 +277,6 @@ final class WPDP_Graphs {
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'chartjs-moment');
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'chartjs-adapter');
     ?>
-        <img style="width: 25px;" id="graph_loader" src="<?php echo admin_url('images/loading.gif'); ?>" alt="">
         <canvas id="wpdp_chart" width="800" ></canvas>
     <?php }
 

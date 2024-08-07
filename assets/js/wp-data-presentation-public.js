@@ -255,7 +255,7 @@
         type: 'POST',
         success: function(response) {
           self.mapInit(response.data);
-          $('.wpdp #filter_loader').hide();
+          $('#wpdp-loader').hide();
           $('.wpdp .con').css('left','-152%').removeClass('active');
           $('.wpdp .filter span').attr('class','fas fa-sliders-h');
         },
@@ -574,7 +574,7 @@
               }
             },
             drawCallback: function(settings, json) {
-              $('.wpdp #filter_loader').hide();
+              $('#wpdp-loader').hide();
               $('.wpdp .con').css('left','-152%').removeClass('active');
               $('.wpdp .filter span').attr('class','fas fa-sliders-h');
             },
@@ -829,7 +829,7 @@
     self.filtersChange = function() {
       $('.wpdp #filter_form').on('submit',function(e){
         e.preventDefault();
-        $('.wpdp #filter_loader').show();
+        $('#wpdp-loader').css('display','flex');
         self.filterAction();
 
       });
@@ -894,6 +894,8 @@
         });
       }
 
+      $('#wpdp-loader').css('display','flex');
+
       $.ajax({
         url: wpdp_obj.ajax_url,
         data: {
@@ -907,8 +909,7 @@
         type: 'POST',
         success: function(response) {
           self.chartInit(response.data,selectedIncidents,selectedLocations,timeframe);
-          $('.wpdp #filter_loader').hide();
-          $('#graph_loader').hide();
+          $('#wpdp-loader').hide();
           $('.wpdp .con').css('left','-152%').removeClass('active');
           $('.wpdp .filter span').attr('class','fas fa-sliders-h');
         },
