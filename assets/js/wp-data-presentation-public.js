@@ -217,6 +217,8 @@
 
     self.maps = function(){
 
+      $('#wpdp-loader').css('display','flex');
+
       let fromYear = $("#wpdp_from").val();
       let toYear = $("#wpdp_to").val();
 
@@ -256,6 +258,7 @@
         success: function(response) {
           self.mapInit(response.data);
           $('#wpdp-loader').hide();
+
           $('.wpdp .con').css('left','-152%').removeClass('active');
           $('.wpdp .filter span').attr('class','fas fa-sliders-h');
         },
@@ -549,7 +552,7 @@
 
     self.dataTables = function(){
       if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
-
+        $('#wpdp-loader').css('display','flex');
 
         self.table = $('#wpdp_datatable').DataTable({
             ajax: {
@@ -574,7 +577,9 @@
               }
             },
             drawCallback: function(settings, json) {
-              $('#wpdp-loader').hide();
+              if($('#wpdp_chart').length <= 0){
+                $('#wpdp-loader').hide();
+              }
               $('.wpdp .con').css('left','-152%').removeClass('active');
               $('.wpdp .filter span').attr('class','fas fa-sliders-h');
             },
@@ -840,7 +845,6 @@
       let toYear = $("#wpdp_to").val();
       let timeframe = ($("#wpdp_date_timeframe").val() ? $("#wpdp_date_timeframe").val() : 'yearly');
 
-
       if(fromYear == '' && JSON.parse(wpdp_shortcode_atts).from != ''){
         fromYear = JSON.parse(wpdp_shortcode_atts).from;
       }
@@ -865,7 +869,7 @@
       });
 
 
-      self.graphChange(self.selectedIncidents, self.selectedLocations,fromYear,toYear,timeframe);
+      self.graphChange(self.selectedIncidents, self.selectedLocations,timeframe);
 
       if (typeof google === 'object' && typeof google.maps === 'object') {
         for(let i=0; i<global_markers.length; i++){
@@ -881,11 +885,13 @@
       }
     },
       
-    self.graphChange = function(selectedIncidents=[], selectedLocations, fromYear,toYear,timeframe){
-
+    self.graphChange = function(selectedIncidents=[], selectedLocations, timeframe){
+      
       if (typeof Chart === 'undefined') {
         return;
       }
+
+      $('#wpdp-loader').css('display','flex');
 
       if(selectedIncidents.length <= 0){
         // Select only parent checkboxes.
@@ -894,7 +900,19 @@
         });
       }
 
-      $('#wpdp-loader').css('display','flex');
+
+      let fromYear = $("#wpdp_from").val();
+      let toYear = $("#wpdp_to").val();
+
+      if(fromYear == '' && JSON.parse(wpdp_shortcode_atts).from != ''){
+        fromYear = JSON.parse(wpdp_shortcode_atts).from;
+      }
+
+      if(toYear == '' && JSON.parse(wpdp_shortcode_atts).to != ''){
+        toYear = JSON.parse(wpdp_shortcode_atts).to;
+      }
+
+
 
       $.ajax({
         url: wpdp_obj.ajax_url,

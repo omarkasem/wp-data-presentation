@@ -80,7 +80,7 @@ final class WPDP_Shortcode {
     public function add_loader_html() {
         ?>
         <!-- Loader HTML -->
-        <div id="wpdp-loader" class="wpdp-loader">
+        <div id="wpdp-loader" class="wpdp-loader" style="display:none;">
             <div class="loader">
                 <div class="inner"></div>
             </div>
@@ -318,11 +318,11 @@ final class WPDP_Shortcode {
         if (isset($this->shortcode_atts['from']) && '' != $this->shortcode_atts['from']) {
             echo $this->shortcode_atts['from'];
         } else {
-            if ('map' === $atts['type']) {
+            // if ('map' === $atts['type']) {
                 echo date('d F Y', strtotime('-1 year'));
-            } else {
-                echo date('d F Y', strtotime($filters['years'][0]));
-            }
+            // } else {
+            //     echo date('d F Y', strtotime($filters['years'][0]));
+            // }
         }
     }
 
@@ -330,11 +330,11 @@ final class WPDP_Shortcode {
         if (isset($this->shortcode_atts['from']) && '' != $this->shortcode_atts['from']) {
             echo $this->shortcode_atts['from'];
         } else {
-            if ('map' === $atts['type']) {
-                echo date('d F Y');
-            } else {
+            // if ('map' === $atts['type']) {
+            //     echo date('d F Y');
+            // } else {
                 echo date('d F Y', strtotime(end($filters['years'])));
-            }
+            // }
         }
     }
 

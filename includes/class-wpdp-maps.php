@@ -64,10 +64,6 @@ final class WPDP_Maps {
             return str_replace(' src', ' async="async" src', $tag);
         }, 10, 2);
 
-        if(isset($_GET['test'])){
-            var_dump(get_option('test'));exit;
-        }
-        
 
     }
 

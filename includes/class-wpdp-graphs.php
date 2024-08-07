@@ -77,7 +77,6 @@ final class WPDP_Graphs {
             'timeframe' => isset($_REQUEST['timeframe']) ? $_REQUEST['timeframe'] : ''
         ];
 
-
         $data = $this->get_data($filters,$types);
 
         wp_send_json_success($data);
@@ -262,8 +261,6 @@ final class WPDP_Graphs {
             $data[$text] = $wpdb->get_results($query);
             
         }
-
-        update_option('test5', $data);
 
         return [
             'data'=>$data,
