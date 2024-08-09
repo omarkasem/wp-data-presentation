@@ -512,19 +512,38 @@ final class WPDP_Shortcode {
     <?php
 
     }
+
+    function get_value_from_incident_type($array){
+        if(empty($array)){
+            return [];
+        }
+        $value = [];
+        $incidents = get_field('incident_type_filter','option');
+        foreach($incidents as $incident){
+            foreach($incident['filter'] as $filter){
+                $type = $filter['type'];
+                $type_value = $filter[$type];
+
+                foreach($array as $ar_value){
+                    if($ar_value === $filter['text']){
+                        $value = array_merge($value,$type_value);
+                    }
+                }
+            }
+
+        }
+
+        return $value;
+    }
+
     function generateHierarchy($array, $not_incident = false, $first = 1) {
         $html = '<ul '.($first == 1 ? 'class="first_one"' : '').'>';
         $class = 'wpdp_incident_type';
         foreach ($array as $item) { 
 
             if ($not_incident) {
-                $value = [];
-                $types = ['disorder_type', 'event_type', 'sub_event_type'];
-                foreach ($types as $one_type) {
-                    if (!empty($item[$one_type])) {
-                        $value = array_merge($value, $item[$one_type]);
-                    }
-                }
+                $value = $this->get_value_from_incident_type($item['mapping_to_incident']);
+
                 $class = 'wpdp_actors';
                 if($not_incident === 'fat'){
                     $class = 'wpdp_fat';

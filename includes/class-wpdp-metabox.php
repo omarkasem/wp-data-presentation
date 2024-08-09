@@ -60,6 +60,7 @@ final class WPDP_Metabox {
         add_action( 'ok_wpdp_remove_countries_records', array($this,'remove_countries_records'), 10, 3 );
         
         // Mapping
+        add_filter('acf/load_field/name=actor_filter', array($this,'load_actor_choices'));
         add_filter('acf/load_field/name=incident_type_filter', array($this,'load_incidents_choices'));
 
         add_filter('acf/load_value/name=incident_type_filter', array($this,'set_default_repeater_values'), 10, 3);
@@ -77,7 +78,20 @@ final class WPDP_Metabox {
 
         // Add new hook for file upload
         add_filter('upload_mimes', array($this, 'add_custom_mime_types'));
-        // add_filter('wp_handle_upload_prefilter', array($this, 'custom_upload_filter'));
+      
+
+        if(isset($_GET['test'])){
+            $sub_field['choices'] = array();
+        
+            $incidents = get_field('incident_type_filter','option');
+            foreach($incidents as $incident){
+                foreach($incident['filter'] as $filter){
+                    $sub_field['choices'][$filter['text']] = $filter['text'];
+                }
+            }
+
+            var_dump($sub_field);exit;
+        }
 
     }
 
@@ -237,6 +251,31 @@ final class WPDP_Metabox {
         return $column;
     }
 
+    function load_incident_to_actors($column,$sub_field) {
+        
+        // Initialize choices array
+        $sub_field['choices'] = array();
+        
+        $incidents = get_field('incident_type_filter','option');
+        foreach($incidents as $incident){
+            foreach($incident['filter'] as $filter){
+                if(strpos($filter['hierarchial'],'1') !== false){
+                    $field = '[1]';
+                }elseif(strpos($filter['hierarchial'],'2') !== false){
+                    $field = '[2]';
+                }elseif(strpos($filter['hierarchial'],'3') !== false){
+                    $field = '[3]';
+                }else{
+                    $field = '[4]';
+                }
+                $sub_field['choices'][$filter['text']] = $filter['text'].' - '.$field;
+            }
+        }
+        
+        return $sub_field;
+    }
+
+
     function load_choices($column,$sub_field) {
         $types= $this->get_db_column($column);
         
@@ -252,6 +291,27 @@ final class WPDP_Metabox {
         }
         
         return $sub_field;
+    }
+
+    function load_actor_choices($field) {
+        if (!empty($field['sub_fields'])) {
+            // Iterate through each sub-field in the main repeater
+            foreach ($field['sub_fields'] as &$sub_field) {
+                // If the sub-field is a repeater itself, iterate its sub-fields
+                if (isset($sub_field['sub_fields']) && is_array($sub_field['sub_fields'])) {
+                    
+                    foreach ($sub_field['sub_fields'] as &$inner_sub_field) {
+                        // Check each inner sub-field type and load choices accordingly
+                        if (isset($inner_sub_field['name']) && $inner_sub_field['name'] == 'mapping_to_incident') {
+                            $inner_sub_field = $this->load_incident_to_actors('mapping_to_incident',$inner_sub_field);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Return the field
+        return $field;
     }
 
     function load_incidents_choices($field) {
