@@ -477,8 +477,7 @@
                         "class": "",
                         "id": ""
                     },
-                    "layout": "table",
-                    "pagination": 0,
+                    "layout": "row",
                     "min": 0,
                     "max": 0,
                     "collapsed": "",
@@ -704,7 +703,7 @@
                         "class": "",
                         "id": ""
                     },
-                    "layout": "table",
+                    "layout": "row",
                     "min": 0,
                     "max": 0,
                     "collapsed": "",
@@ -895,5 +894,5 @@
     "active": true,
     "description": "",
     "show_in_rest": 0,
-    "modified": 1723162759
+    "modified": 1723200302
 }
