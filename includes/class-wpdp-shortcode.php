@@ -338,12 +338,12 @@ final class WPDP_Shortcode {
         }
     }
 
-    private function renderFilters($filters, $hierarchy = 'Level 1', $actors = false) {
+    private function renderFilters($filters, $hierarchy = 'Level 1', $not_incident = false) {
         echo '<ul class="'.($hierarchy === 'Level 1' ? 'first_one' : '').'">';
         $class = 'wpdp_incident_type';
         if(!empty($filters)){
             foreach ($filters as $filter) {
-                if ($actors) {
+                if ($not_incident) {
                     $value = [];
                     $types = ['disorder_type', 'event_type', 'sub_event_type'];
                     foreach ($types as $one_type) {
@@ -352,7 +352,7 @@ final class WPDP_Shortcode {
                         }
                     }
                     $class = 'wpdp_actors';
-                    if($actors === 'fat'){
+                    if($not_incident === 'fat'){
                         $class = 'wpdp_fat';
                     }
                 }else{
@@ -363,12 +363,12 @@ final class WPDP_Shortcode {
                     echo '<li class="expandable">';
                     echo '<input class="wpdp_filter_checkbox '.$class.'" type="checkbox" value="' . implode('+', $value) . '">';
                     echo '<div class="exp_click">';
-                    echo '<span>' . htmlspecialchars($filter['text']) . '</span>';
+                    echo '<span>' . htmlspecialchars($filter['hierarchial']) . '</span>';
                     echo '<span class="dashicons arrow dashicons-arrow-down-alt2"></span>';
                     echo '</div>';
                     if ($hierarchy !== 'Level 4') {
                         $nextHierarchy = 'Level ' . (intval(substr($hierarchy, -1)) + 1);
-                        $this->renderFilters($filters, $nextHierarchy, $actors);
+                        $this->renderFilters($filters, $nextHierarchy, $not_incident);
                     }
                     echo '</li>';
                 }
@@ -402,7 +402,10 @@ final class WPDP_Shortcode {
                         <div class="content">
                             <?php 
                                 $filter = get_field('incident_type_filter','option');
-                                $this->generateCheckboxes($filter);
+                                foreach($filter as $filt){
+                                    $hierarchy = $this->buildHierarchy($filt['filter']);
+                                    echo $this->generateHierarchy($hierarchy);
+                                }
                             ?>
 
                         </div>
@@ -417,7 +420,10 @@ final class WPDP_Shortcode {
                         <div class="content">
                             <?php 
                                 $filter = get_field('actor_filter','option');
-                                $this->generateCheckboxes($filter, 'actors');
+                                foreach($filter as $filt){
+                                    $hierarchy = $this->buildHierarchy($filt['filter']);
+                                    echo $this->generateHierarchy($hierarchy,'actors');
+                                }
                             ?>
 
                         </div>
@@ -433,7 +439,10 @@ final class WPDP_Shortcode {
                         <div class="content">
                             <?php 
                                 $filter = get_field('fatalities_filter','option');
-                                $this->generateCheckboxes($filter, 'fat');
+                                foreach($filter as $filt){
+                                    $hierarchy = $this->buildHierarchy($filt['filter']);
+                                    echo $this->generateHierarchy($hierarchy,'fat');
+                                }
                             ?>
 
                         </div>
@@ -502,6 +511,61 @@ final class WPDP_Shortcode {
         </div>
     <?php
 
+    }
+    function generateHierarchy($array, $not_incident = false, $first = 1) {
+        $html = '<ul '.($first == 1 ? 'class="first_one"' : '').'>';
+        $class = 'wpdp_incident_type';
+        foreach ($array as $item) { 
+
+            if ($not_incident) {
+                $value = [];
+                $types = ['disorder_type', 'event_type', 'sub_event_type'];
+                foreach ($types as $one_type) {
+                    if (!empty($item[$one_type])) {
+                        $value = array_merge($value, $item[$one_type]);
+                    }
+                }
+                $class = 'wpdp_actors';
+                if($not_incident === 'fat'){
+                    $class = 'wpdp_fat';
+                }
+            }else{
+                $type = $item['type'] ?? '';
+                $value = $item[$type];
+            }
+
+            $html .= '<li class="expandable">';
+            $html .= '<input class="wpdp_filter_checkbox '.$class.'" type="checkbox" value="' . implode('+', $value) . '">';
+            $html .= '<div class="exp_click"><span>' . $item['text'] . '</span><span class="dashicons arrow dashicons-arrow-down-alt2"></span></div>';
+            
+            if (isset($item['children']) && !empty($item['children'])) {
+                $html .= $this->generateHierarchy($item['children'],$not_incident,0);
+            }
+            
+            $html .= '</li>';
+        }
+        $html .= '</ul>';
+        return $html;
+    }
+    
+    function buildHierarchy($flatArray) {
+        $hierarchy = [];
+        $levels = [];
+    
+        foreach ($flatArray as $item) {
+            $level = substr($item['hierarchial'], -1);
+            $item['children'] = [];
+    
+            if ($level == 1) {
+                $hierarchy[] = $item;
+                $levels[1] = &$hierarchy[count($hierarchy) - 1];
+            } else {
+                $levels[$level - 1]['children'][] = $item;
+                $levels[$level] = &$levels[$level - 1]['children'][count($levels[$level - 1]['children']) - 1];
+            }
+        }
+    
+        return $hierarchy;
     }
 
 }
