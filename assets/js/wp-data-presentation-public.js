@@ -60,6 +60,10 @@
       $('.filter_data li input[type="checkbox"]').on('change', function() {
         $('.filter_data .no_data').hide();
       });
+
+      $('.wpdp_clear').on('click', function() {
+        $('.filter_data .no_data').hide();
+      });
       
 
     };
