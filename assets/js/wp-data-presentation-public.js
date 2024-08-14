@@ -24,7 +24,7 @@
 
     self.checkfForIndeterminate = function(){
       setTimeout(() => {
-        $('ul.first_one > li.expandable').each(function() {
+        $('ul.first_one li.expandable:has(ul li)').each(function() {
           var $parentCheckbox = $(this).children('input[type="checkbox"]');
           var $childCheckboxes = $(this).find('ul input[type="checkbox"]');
           
@@ -33,6 +33,7 @@
   
           if (allChecked) {
               $parentCheckbox.prop('indeterminate', false);
+              $parentCheckbox.prop('checked', true);
           } else if (someChecked) {
               $parentCheckbox.prop('indeterminate', true);
           } else {
@@ -81,7 +82,7 @@
     self.datePicker = function(){
 
       var minDate = new Date(wpdp_filter_dates[0]); 
-      var maxDate = new Date(wpdp_filter_dates[wpdp_filter_dates.length - 1]);
+      var maxDate = new Date();
 
       $('#wpdp_from').datepicker({
         minDate: minDate,
@@ -616,21 +617,21 @@
                     columns: [0,1,2,3]
                 },
 				
-				customize: function (doc) {
-					// Get the chart as a base64 image
-					var canvas = document.getElementById('wpdp_chart');
-					var chartImage = canvas.toDataURL('image/png');
-					
-					doc.content.push({
-						text: ' ',
-						margin: [0, 10] // Adjust margin as needed for spacing
-					});
-					// Add the image to the PDF after the table
-					doc.content.push({
-						image: chartImage,
-						width: 500 // Adjust the width as needed
-					});
-				}
+            customize: function (doc) {
+              // Get the chart as a base64 image
+              var canvas = document.getElementById('wpdp_chart');
+              var chartImage = canvas.toDataURL('image/png');
+              
+              doc.content.push({
+                text: ' ',
+                margin: [0, 10] // Adjust margin as needed for spacing
+              });
+              // Add the image to the PDF after the table
+              doc.content.push({
+                image: chartImage,
+                width: 500 // Adjust the width as needed
+              });
+            }
 
 			
             },
@@ -641,23 +642,20 @@
               },
 				
 				
-				customize: function (win) {
-					// Get the chart as a base64 image
-					var canvas = document.getElementById('wpdp_chart');
-					var chartImage = canvas.toDataURL('image/png');
+              customize: function (win) {
+                // Get the chart as a base64 image
+                var canvas = document.getElementById('wpdp_chart');
+                var chartImage = canvas.toDataURL('image/png');
 
-					// Create an image element for the chart
-					var img = $('<img>').attr('src', chartImage).css({
-						width: '500px', // Adjust the width as needed
-						marginTop: '10px' // Add some space before the chart image
-					});
+                // Create an image element for the chart
+                var img = $('<img>').attr('src', chartImage).css({
+                  width: '500px', // Adjust the width as needed
+                  marginTop: '10px' // Add some space before the chart image
+                });
 
-					// Append the chart image after the table
-					$(win.document.body).find('table').after(img);
-				}
-
-				
-				
+                // Append the chart image after the table
+                $(win.document.body).find('table').after(img);
+              }
             },
             {
               text: 'Filter',
@@ -688,8 +686,6 @@
             "createdRow": function(row, data, dataIndex) {
               $('td:eq(4)', row).html('<span event_id="'+data[4]+'" style="cursor:pointer;color:#cd0202;font-size:26px;" class="more-info dashicons dashicons-info"></span>');
             },
-
-
 
         });
 

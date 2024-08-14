@@ -60,6 +60,7 @@ final class WPDP_Metabox {
         add_action( 'ok_wpdp_remove_countries_records', array($this,'remove_countries_records'), 10, 3 );
         
         // Mapping
+        add_filter('acf/load_field/name=fatalities_filter', array($this,'load_fat_choices'));
         add_filter('acf/load_field/name=actor_filter', array($this,'load_actor_choices'));
         add_filter('acf/load_field/name=incident_type_filter', array($this,'load_incidents_choices'));
 
@@ -293,6 +294,27 @@ final class WPDP_Metabox {
         return $sub_field;
     }
 
+    function load_fat_choices($field) {
+        if (!empty($field['sub_fields'])) {
+            // Iterate through each sub-field in the main repeater
+            foreach ($field['sub_fields'] as &$sub_field) {
+                // If the sub-field is a repeater itself, iterate its sub-fields
+                if (isset($sub_field['sub_fields']) && is_array($sub_field['sub_fields'])) {
+                    
+                    foreach ($sub_field['sub_fields'] as &$inner_sub_field) {
+                        // Check each inner sub-field type and load choices accordingly
+                        if (isset($inner_sub_field['name']) && $inner_sub_field['name'] == 'mapping_to_incident') {
+                            $inner_sub_field = $this->load_incident_to_actors('mapping_to_incident',$inner_sub_field);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Return the field
+        return $field;
+    }
+    
     function load_actor_choices($field) {
         if (!empty($field['sub_fields'])) {
             // Iterate through each sub-field in the main repeater
@@ -671,7 +693,6 @@ final class WPDP_Metabox {
         );
 
         $post_ids = get_posts($args);
-        var_dump($post_ids);exit;
         if(empty($post_ids)){
             return;
         }

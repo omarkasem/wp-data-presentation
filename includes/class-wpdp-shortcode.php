@@ -503,7 +503,7 @@ final class WPDP_Shortcode {
                     </div>
                     <?php }?>
 
-
+                    <div class="no_data" style="display:none;">No data found, please adjust filters</div>
                     <input type="submit" value="Apply Filters">
                     <div class="wpdp_clear"><input type="reset" value="Clear Filters"></div>
                 </form>
