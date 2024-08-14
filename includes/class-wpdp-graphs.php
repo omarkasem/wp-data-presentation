@@ -153,6 +153,9 @@ final class WPDP_Graphs {
             $whereSQL = ' WHERE 1=1';
 
             $date_sample = $wpdb->get_var("SELECT event_date FROM $table_name LIMIT 1");
+            if($date_sample == ''){
+                continue;
+            }
             $date_format = WPDP_Shortcode::get_date_format($date_sample);
             $mysql_date_format = $date_format['mysql'];
             $filter_format_from = date($date_format['php'],strtotime($filters['from']));
@@ -177,12 +180,12 @@ final class WPDP_Graphs {
             ";
 
         }
-        
+
         if(empty($sql_parts)){
             return [];
         }
 
-
+        $count = 0;
         $data = [];
         foreach($filters['disorder_type'] as $type){
             $new_sql = [];
@@ -249,14 +252,17 @@ final class WPDP_Graphs {
                 " . implode(' UNION ', $new_sql) . "
             ) AS t ORDER BY week_start ASC
             ");
-            
-            $data[$text] = $wpdb->get_results($query);
-            
+            $res = $wpdb->get_results($query);
+            $data[$text] = $res;
+            $count += count($res);
         }
+
+
 
         return [
             'data'=>$data,
-            'chart_sql'=>$chart_sql
+            'chart_sql'=>$chart_sql,
+            'count'=>$count
         ];
     }
 

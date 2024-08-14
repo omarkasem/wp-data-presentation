@@ -236,10 +236,10 @@ final class WPDP_Maps {
         FROM ({$union_query}) AS t
         LIMIT 500
         ";
-
+        
         $result = $wpdb->get_results($final_query);
-
-        return $result;
+        $count = count($result);
+        return ['data'=>$result,'count'=>$count];
 
     }
 

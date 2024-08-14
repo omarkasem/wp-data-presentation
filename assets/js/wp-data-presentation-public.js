@@ -56,7 +56,11 @@
         $(this).find('input[type="checkbox"]').prop('indeterminate', false);
       });
 
-
+      // Show/hide no data found in filter
+      $('.filter_data li input[type="checkbox"]').on('change', function() {
+        $('.filter_data .no_data').hide();
+      });
+      
 
     };
 
@@ -105,6 +109,7 @@
               $('#wpdp_to').datepicker('setDate', endDate);
             }
           }
+          $('.filter_data .no_data').hide();
         },
         beforeShow: function (input, inst) {
           setTimeout(function () {
@@ -140,7 +145,7 @@
               $('#wpdp_from').datepicker('setDate', startDate);
             }
           }
-
+          $('.filter_data .no_data').hide();
         },
         beforeShow: function (input, inst) {
           setTimeout(function () {
@@ -257,11 +262,14 @@
         },
         type: 'POST',
         success: function(response) {
-          self.mapInit(response.data);
+          self.mapInit(response.data.data);
           $('#wpdp-loader').hide();
 
           $('.wpdp .con').css('left','-152%').removeClass('active');
           $('.wpdp .filter span').attr('class','fas fa-sliders-h');
+          if(response.data.count == 0){
+            $('.filter_data .no_data').show();
+          }
         },
         error: function(errorThrown){
             alert('No data found');
@@ -575,6 +583,14 @@
                 d.from_val = wpdp_from;
                 d.to_val = wpdp_to;
                 d.locations_val = self.selectedLocations;
+              },
+              "dataSrc": function(json) {
+                if (json.data.length === 0) {
+                  $('.filter_data .no_data').show();
+                  $('#wpdp-loader').hide();
+                  return [];
+                }
+                return json.data;
               }
             },
             drawCallback: function(settings, json) {
@@ -839,7 +855,7 @@
     self.filterAction = function(){
       let fromYear = $("#wpdp_from").val();
       let toYear = $("#wpdp_to").val();
-      let timeframe = ($("#wpdp_date_timeframe").val() ? $("#wpdp_date_timeframe").val() : 'yearly');
+      let timeframe = $("#wpdp_date_timeframe").val();
 
       if(fromYear == '' && JSON.parse(wpdp_shortcode_atts).from != ''){
         fromYear = JSON.parse(wpdp_shortcode_atts).from;
@@ -891,11 +907,10 @@
 
       if(selectedIncidents.length <= 0){
         // Select only parent checkboxes.
-        $('ul > ul > li > input[type="checkbox"].wpdp_incident_type').each(function() {
+        $('ul.first_one > li > input[type="checkbox"].wpdp_incident_type').each(function() {
           selectedIncidents.push($(this).val());
         });
       }
-
 
       let fromYear = $("#wpdp_from").val();
       let toYear = $("#wpdp_to").val();
@@ -926,6 +941,9 @@
           $('#wpdp-loader').hide();
           $('.wpdp .con').css('left','-152%').removeClass('active');
           $('.wpdp .filter span').attr('class','fas fa-sliders-h');
+          if(response.data.count == 0){
+            $('.filter_data .no_data').show();
+          }
         },
         error: function(errorThrown){
             alert('No data found');

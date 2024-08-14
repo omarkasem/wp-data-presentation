@@ -570,17 +570,18 @@ final class WPDP_Shortcode {
     function buildHierarchy($flatArray) {
         $hierarchy = [];
         $levels = [];
-    
-        foreach ($flatArray as $item) {
-            $level = substr($item['hierarchial'], -1);
-            $item['children'] = [];
-    
-            if ($level == 1) {
-                $hierarchy[] = $item;
-                $levels[1] = &$hierarchy[count($hierarchy) - 1];
-            } else {
-                $levels[$level - 1]['children'][] = $item;
-                $levels[$level] = &$levels[$level - 1]['children'][count($levels[$level - 1]['children']) - 1];
+        if(is_array($flatArray) && !empty($flatArray)){
+            foreach ($flatArray as $item) {
+                $level = substr($item['hierarchial'], -1);
+                $item['children'] = [];
+        
+                if ($level == 1) {
+                    $hierarchy[] = $item;
+                    $levels[1] = &$hierarchy[count($hierarchy) - 1];
+                } else {
+                    $levels[$level - 1]['children'][] = $item;
+                    $levels[$level] = &$levels[$level - 1]['children'][count($levels[$level - 1]['children']) - 1];
+                }
             }
         }
     
