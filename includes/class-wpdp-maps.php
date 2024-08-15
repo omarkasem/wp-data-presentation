@@ -81,6 +81,7 @@ final class WPDP_Maps {
     }
 
     public function format_dates_to_one_year($filters){
+
         if(isset($filters['from']) && $filters['from'] != '' && isset($filters['to']) && $filters['to'] != ''){
             $date1 = date_create($filters['from']);
             $date2 = date_create($filters['to']);
@@ -127,11 +128,8 @@ final class WPDP_Maps {
         }
 
         $filters = $this->format_dates_to_one_year($filters);
-        update_option('test',$filters);
         global $wpdb;
         $data = [];
-
-        
 
 
         $columns = array('region', 'country', 'admin1', 'admin2', 'admin3', 'location');

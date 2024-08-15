@@ -44,6 +44,11 @@ final class WPDP_Shortcode {
      */
     private function __construct() {
         $this->_add_hooks();
+        // Start the session if it hasn't been started yet
+        if (session_status() == PHP_SESSION_NONE) {
+            session_start();
+        }
+
     }
 
     /**
@@ -55,8 +60,10 @@ final class WPDP_Shortcode {
         add_shortcode('WP_DATA_PRESENTATION', array($this, 'show_shortcode'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
         add_action('wp_head', array($this, 'add_loader_html'));
-
-
+        add_action('wp_ajax_save_filter_choices', array($this, 'save_filter_choices'));
+        add_action('wp_ajax_nopriv_save_filter_choices', array($this, 'save_filter_choices'));
+        add_action('wp_ajax_clear_filter_choices', array($this, 'clear_filter_choices'));
+        add_action('wp_ajax_nopriv_clear_filter_choices', array($this, 'clear_filter_choices'));
     }
 
     public function enqueue_scripts() {
@@ -232,38 +239,43 @@ final class WPDP_Shortcode {
     }
 
     function printArrayAsList($locations, $level = 0, $parent_key = false) {
-
         echo '<ul>';
         foreach ($locations as $key => $value) {
             if (!is_array($value) && intval($value) === 0) {
                 continue;
             }
-
+    
             if (is_array($value) && empty($value)) {
                 continue;
             }
-
+    
             if (is_array($value)) {
-                $key_val = explode('__',$key);
+                $key_val = explode('__', $key);
                 $input_val = $key;
-                if($parent_key !== false){
-                    $input_val = $parent_key . ' + '.$key;
+                if ($parent_key !== false) {
+                    $input_val = $parent_key . ' + ' . $key;
                 }
+                $checkbox_name = sanitize_title($key_val[0]);
+                $is_checked = $this->get_session_value($checkbox_name) === $input_val ? 'checked' : '';
+    
                 echo '<li class="expandable">';
-                echo '<input type="checkbox" class="wpdp_filter_checkbox wpdp_location" value="' . $input_val . '">';
+                echo '<input type="checkbox" class="wpdp_filter_checkbox wpdp_location" name="' . $checkbox_name . '" value="' . $input_val . '" ' . $is_checked . '>';
                 echo '<div class="exp_click"><span for="' . $key . '">' . $key_val[0] . '</span>';
                 echo '<span class="dashicons dashicons-arrow-up-alt2 arrow"></span></div>';
                 $this->printArrayAsList($value, $level + 1, $input_val);
             } else {
+                $checkbox_name = sanitize_title($value);
+                $is_checked = $this->get_session_value($checkbox_name) === $value ? 'checked' : '';
                 echo '<li>';
+                echo '<input type="checkbox" class="wpdp_filter_checkbox wpdp_location" name="' . $checkbox_name . '" value="' . $value . '" ' . $is_checked . '>';
                 echo $value;
             }
-
+    
             echo '</li>';
         }
-
         echo '</ul>';
     }
+    
 
     public function show_shortcode($atts) {
         $atts = shortcode_atts(array(
@@ -316,10 +328,10 @@ final class WPDP_Shortcode {
 
     function get_from_date_value($filters, $atts) {
         if (isset($this->shortcode_atts['from']) && '' != $this->shortcode_atts['from']) {
-            echo $this->shortcode_atts['from'];
+            return $this->shortcode_atts['from'];
         } else {
             // if ('map' === $atts['type']) {
-                echo date('d F Y', strtotime(end($filters['years']) . ' -1 year'));
+                return date('d F Y', strtotime(end($filters['years']) . ' -1 year'));
             // } else {
             //     echo date('d F Y', strtotime($filters['years'][0]));
             // }
@@ -328,12 +340,12 @@ final class WPDP_Shortcode {
 
     function get_to_date_value($filters, $atts) {
         if (isset($this->shortcode_atts['from']) && '' != $this->shortcode_atts['from']) {
-            echo $this->shortcode_atts['from'];
+            return $this->shortcode_atts['from'];
         } else {
             // if ('map' === $atts['type']) {
             //     echo date('d F Y');
             // } else {
-                echo date('d F Y', strtotime(end($filters['years'])));
+                return date('d F Y', strtotime(end($filters['years'])));
             // }
         }
     }
@@ -465,21 +477,21 @@ final class WPDP_Shortcode {
                         <div class="content <?php echo (isset($atts['type']) && 'map' === $atts['type'] ? 'filter_maps' : ''); ?>">
                             <div class="dates">
                                 <label for="wpdp_from">FROM</label>
-                                <input value="<?php $this->get_from_date_value($filters, $atts);?>" type="text" name="wpdp_from" id="wpdp_from">
+                                <input value="<?php echo $this->get_session_value('wpdp_from', $this->get_from_date_value($filters, $atts)); ?>" type="text" name="wpdp_from" id="wpdp_from">
                             </div>
                             <div class="dates">
                                 <label style="margin-right: 23px;" for="wpdp_to">TO</label>
-                                <input value="<?php $this->get_to_date_value($filters, $atts);?>" type="text" name="wpdp_to" id="wpdp_to">
+                                <input value="<?php echo $this->get_session_value('wpdp_to', $this->get_to_date_value($filters, $atts)); ?>" type="text" name="wpdp_to" id="wpdp_to">
                             </div>
                             <?php if ('graph' === $atts['type'] || '' == $atts['type']) {?>
                             <div class="dates">
                                 <label for="wpdp_date_timeframe">Timeframe</label>
                                 <select name="wpdp_date_timeframe" id="wpdp_date_timeframe">
                                     <option value="">Choose Timeframe</option>
-                                    <option value="yearly">Yearly</option>
-                                    <option value="monthly">Monthly</option>
-                                    <option value="weekly">Weekly</option>
-                                    <option value="daily">Daily</option>
+                                    <option value="yearly" <?php selected($this->get_session_value('wpdp_date_timeframe'), 'yearly'); ?>>Yearly</option>
+                                    <option value="monthly" <?php selected($this->get_session_value('wpdp_date_timeframe'), 'monthly'); ?>>Monthly</option>
+                                    <option value="weekly" <?php selected($this->get_session_value('wpdp_date_timeframe'), 'weekly'); ?>>Weekly</option>
+                                    <option value="daily" <?php selected($this->get_session_value('wpdp_date_timeframe'), 'daily'); ?>>Daily</option>
                                 </select>
                             </div>
                             <?php } ?>
@@ -496,8 +508,8 @@ final class WPDP_Shortcode {
                         </div>
                         <div class="content">
                             <select name="wpdp_type_selector" id="wpdp_type_selector">
-                                <option value="fatalities">Fatalities</option>
-                                <option value="incident_count">Incident Count</option>
+                                <option value="fatalities" <?php selected($this->get_session_value('wpdp_type_selector'), 'fatalities'); ?>>Fatalities</option>
+                                <option value="incident_count" <?php selected($this->get_session_value('wpdp_type_selector'), 'incident_count'); ?>>Incident Count</option>
                             </select>
                         </div>
                     </div>
@@ -540,25 +552,27 @@ final class WPDP_Shortcode {
         $html = '<ul '.($first == 1 ? 'class="first_one"' : '').'>';
         $class = 'wpdp_incident_type';
         foreach ($array as $item) { 
-
             if ($not_incident) {
                 $value = $this->get_value_from_incident_type($item['mapping_to_incident']);
-
                 $class = 'wpdp_actors';
                 if($not_incident === 'fat'){
                     $class = 'wpdp_fat';
                 }
-            }else{
+            } else {
                 $type = $item['type'] ?? '';
                 $value = $item[$type];
             }
-
+    
+            $checkbox_name = sanitize_title($item['text']);
+            $checkbox_value = implode('+', $value);
+            $is_checked = $this->get_session_value($checkbox_name) === $checkbox_value ? 'checked' : '';
+    
             $html .= '<li class="expandable">';
-            $html .= '<input class="wpdp_filter_checkbox '.$class.'" type="checkbox" value="' . implode('+', $value) . '">';
+            $html .= '<input class="wpdp_filter_checkbox '.$class.'" type="checkbox" name="'.$checkbox_name.'" value="'.$checkbox_value.'" '.$is_checked.'>';
             $html .= '<div class="exp_click"><span>' . $item['text'] . '</span><span class="dashicons arrow dashicons-arrow-down-alt2"></span></div>';
             
             if (isset($item['children']) && !empty($item['children'])) {
-                $html .= $this->generateHierarchy($item['children'],$not_incident,0);
+                $html .= $this->generateHierarchy($item['children'], $not_incident, 0);
             }
             
             $html .= '</li>';
@@ -566,6 +580,7 @@ final class WPDP_Shortcode {
         $html .= '</ul>';
         return $html;
     }
+    
     
     function buildHierarchy($flatArray) {
         $hierarchy = [];
@@ -586,6 +601,23 @@ final class WPDP_Shortcode {
         }
     
         return $hierarchy;
+    }
+
+    private function get_session_value($key, $default = '') {
+        return isset($_SESSION[$key]) ? $_SESSION[$key] : $default;
+    }
+
+    public function save_filter_choices() {
+        if (!isset($_POST['filter_data'])) {
+            wp_send_json_error('No filter data received');
+        }
+
+        $filter_data = $_POST['filter_data'];
+        foreach ($filter_data as $key => $value) {
+            $_SESSION[$key] = $value;
+        }
+
+        wp_send_json_success('Filter choices saved');
     }
 
 }

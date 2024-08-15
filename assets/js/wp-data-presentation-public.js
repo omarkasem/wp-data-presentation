@@ -20,6 +20,7 @@
       self.datePicker();
       self.actors();
       self.checkbox();
+      self.checkfForIndeterminate();
     },
 
     self.checkfForIndeterminate = function(){
@@ -61,10 +62,27 @@
         $('.filter_data .no_data').hide();
       });
 
-      $('.wpdp_clear').on('click', function() {
+
+      $('#filter_form input[type="reset"]').on('click', function() {
         $('.filter_data .no_data').hide();
-      });
-      
+        $.ajax({
+            url: wpdp_obj.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'clear_filter_choices'
+            },
+            success: function(response) {
+                if (response.success) {
+                    console.log('Filter choices cleared');
+                    // Reload the page to reflect the cleared filters
+                    location.reload();
+                } else {
+                    console.error('Failed to clear filter choices');
+                }
+            }
+        });
+    });
+
 
     };
 
@@ -254,7 +272,7 @@
         self.selectedIncidents.push($(this).val());
       });
 
-
+      console.log(self.selectedIncidents);
       $.ajax({
         url: wpdp_obj.ajax_url,
         data: {
@@ -566,7 +584,15 @@
     self.dataTables = function(){
       if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
         $('#wpdp-loader').css('display','flex');
-
+        
+        if(!self.selectedIncidents ||self.selectedIncidents.length <= 0){
+          if($('input[type="checkbox"].wpdp_incident_type:checked').length > 0){
+            self.selectedIncidents = $('input[type="checkbox"].wpdp_incident_type:checked').map(function() {
+              return $(this).val();
+            }).get();
+          }
+        }
+        
         self.table = $('#wpdp_datatable').DataTable({
             ajax: {
               "url": wpdp_obj.ajax_url,
@@ -853,6 +879,34 @@
         $('#wpdp-loader').css('display','flex');
         self.filterAction();
 
+        var filterData = {};
+        $(this).find('input, select').each(function() {
+            var $this = $(this);
+            if ($this.is(':checkbox')) {
+                // For checkboxes, always include the name in filterData
+                // Set the value to either the checkbox value (if checked) or an empty string (if unchecked)
+                filterData[$this.attr('name')] = $this.is(':checked') ? $this.val() : '';
+            } else {
+                filterData[$this.attr('name')] = $this.val();
+            }
+        });
+
+        $.ajax({
+            url: wpdp_obj.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'save_filter_choices',
+                filter_data: filterData
+            },
+            success: function(response) {
+                if (response.success) {
+                    console.log('Filter choices saved');
+                    // Proceed with your existing filter application logic
+                } else {
+                    console.error('Failed to save filter choices');
+                }
+            }
+        });
       });
     },
 
@@ -911,9 +965,15 @@
 
       if(selectedIncidents.length <= 0){
         // Select only parent checkboxes.
-        $('ul.first_one > li > input[type="checkbox"].wpdp_incident_type').each(function() {
-          selectedIncidents.push($(this).val());
-        });
+        if ($('input[type="checkbox"].wpdp_incident_type:checked').length === 0) {
+          $('ul.first_one > li > input[type="checkbox"].wpdp_incident_type').each(function() {
+            selectedIncidents.push($(this).val());
+          });
+        }else{
+          selectedIncidents = $('input[type="checkbox"].wpdp_incident_type:checked').map(function() {
+            return $(this).val();
+          }).get();
+        }
       }
 
       let fromYear = $("#wpdp_from").val();
