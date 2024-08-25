@@ -81,18 +81,7 @@ final class WPDP_Metabox {
         add_filter('upload_mimes', array($this, 'add_custom_mime_types'));
       
 
-        if(isset($_GET['test'])){
-            $sub_field['choices'] = array();
-        
-            $incidents = get_field('incident_type_filter','option');
-            foreach($incidents as $incident){
-                foreach($incident['filter'] as $filter){
-                    $sub_field['choices'][$filter['text']] = $filter['text'];
-                }
-            }
 
-            var_dump($sub_field);exit;
-        }
 
     }
 

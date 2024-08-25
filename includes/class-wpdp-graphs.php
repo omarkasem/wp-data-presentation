@@ -132,10 +132,10 @@ final class WPDP_Graphs {
                 if($days < 40){
                     $sql_type = 'YEARWEEK';
                     $chart_sql = 'week';
-                }elseif($days >= 40 && $days < 365){
+                }elseif($days >= 40 && $days < 369){
                     $sql_type = 'MONTH';
                     $chart_sql = 'month';
-                }elseif($days >= 365 && $days < 700){
+                }elseif($days >= 370 && $days < 700){
                     $sql_type = 'MONTH';
                     $chart_sql = 'quarter';
                 }

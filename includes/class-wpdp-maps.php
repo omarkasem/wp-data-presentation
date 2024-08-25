@@ -132,7 +132,6 @@ final class WPDP_Maps {
         $data = [];
 
 
-        $columns = array('region', 'country', 'admin1', 'admin2', 'admin3', 'location');
         if (!empty($filters)) {
             foreach($filters as $key => $filter) {
                 if(!empty($filter)){

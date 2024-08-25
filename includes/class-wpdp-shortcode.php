@@ -163,24 +163,18 @@ final class WPDP_Shortcode {
                 $years = array_merge($years, $db_years);
             }
 
-            $db_locations = $wpdb->get_results("SELECT DISTINCT region,country,admin1,admin2,admin3,location FROM {$table_name}", ARRAY_A);
+            $db_locations = $wpdb->get_results("SELECT DISTINCT country,admin1,admin2,admin3,location FROM {$table_name}", ARRAY_A);
 
             foreach ($db_locations as $location) {
-                $region   = $location['region'].'__region';
                 $country  = $location['country'].'__country';
                 $admin1   = $location['admin1'].'__admin1';
                 $admin2   = $location['admin2'].'__admin2';
                 $admin3   = $location['admin3'].'__admin3';
                 $location = $location['location'].'__location';
 
-                if (!empty($region)) {
-                    $locations[$region] = $locations[$region] ?? [];
-                    $currentLevel       = &$locations[$region];
-
-                    if (!empty($country) && $region != $country) {
-                        $currentLevel[$country] = $currentLevel[$country] ?? [];
-                        $currentLevel           = &$currentLevel[$country];
-                    }
+                if (!empty($country)) {
+                    $locations[$country] = $locations[$country] ?? [];
+                    $currentLevel       = &$locations[$country];
 
                     if (!empty($admin1) && $country != $admin1) {
                         $currentLevel[$admin1] = $currentLevel[$admin1] ?? [];
@@ -462,7 +456,7 @@ final class WPDP_Shortcode {
 
                     <div class="grp ">
                         <div class="title">
-                            LOCATION/REGION <span class="dashicons dashicons-arrow-down-alt2"></span>
+                            LOCATION <span class="dashicons dashicons-arrow-down-alt2"></span>
                         </div>
                         <div class="content">
                             <?php $this->printArrayAsList($filters['locations']);?>
