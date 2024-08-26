@@ -51,9 +51,7 @@ final class WPDP_Shortcode {
         // Remove all saved session values
 
         // session_destroy();
-        if(isset($_GET['test'])){
-            var_dump($_SESSION);exit;
-        }
+
 
     }
 
@@ -559,7 +557,7 @@ final class WPDP_Shortcode {
                                 </select>
                             </div>
 
-                            <br><hr><br>
+                          <br>
                             <?php $this->printArrayAsList($filters['locations']);?>
                         </div>
                     </div>
