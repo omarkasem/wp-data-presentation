@@ -21,6 +21,39 @@
       self.actors();
       self.checkbox();
       self.checkfForIndeterminate();
+      self.locationSearch();
+    },
+
+    self.locationSearch = function(){
+      $('#wpdp_search_location').select2({
+        multiple: true,
+        ajax: {
+          url: wpdp_obj.ajax_url,
+          dataType: 'json',
+          delay: 250,
+          data: function (params) {
+            return {
+              search: params.term,
+              action: 'search_location'
+            };
+          },
+          processResults: function (data) {
+            return {
+              results: $.map(data, function(item) {
+                return {
+                  id: item.id,
+                  text: item.location + ' (' + item.country + ')'
+                };
+              })
+            };
+          },
+          cache: true
+        },
+        minimumInputLength: 3,
+        placeholder: 'Search location',
+        width: 'element',
+        dropdownParent: $('#wpdp_search_location').parent()
+      });
     },
 
     self.checkfForIndeterminate = function(){
@@ -834,20 +867,20 @@
 
 
 
-      $(document).click(function(e) {
-        if ($('#wpdp_from').datepicker('widget').is(':visible')) {
-            // Don't do anything if datepicker is visible
-            return;
-        }
-        if (!$(e.target).closest('.wpdp .con').length && 
-            !$(e.target).hasClass('hasDatepicker') && 
-            !$(e.target).closest('.ui-datepicker').length && 
-            !$(e.target).hasClass('select2-selection__choice__remove') &&
-            !$(e.target).hasClass('ui-datepicker-trigger')) {
-            $('.wpdp .con').css('left','-152%').removeClass('active');
-			      $('.wpdp .filter span').attr('class','fas fa-sliders-h');
-        }
-      });
+      // $(document).click(function(e) {
+      //   if ($('#wpdp_from').datepicker('widget').is(':visible')) {
+      //       // Don't do anything if datepicker is visible
+      //       return;
+      //   }
+      //   if (!$(e.target).closest('.wpdp .con').length && 
+      //       !$(e.target).hasClass('hasDatepicker') && 
+      //       !$(e.target).closest('.ui-datepicker').length && 
+      //       !$(e.target).hasClass('select2-selection__choice__remove') &&
+      //       !$(e.target).hasClass('ui-datepicker-trigger')) {
+      //       $('.wpdp .con').css('left','-152%').removeClass('active');
+			//       $('.wpdp .filter span').attr('class','fas fa-sliders-h');
+      //   }
+      // });
     
 
     

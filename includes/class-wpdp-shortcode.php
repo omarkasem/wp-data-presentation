@@ -64,6 +64,77 @@ final class WPDP_Shortcode {
         add_action('wp_ajax_nopriv_save_filter_choices', array($this, 'save_filter_choices'));
         add_action('wp_ajax_clear_filter_choices', array($this, 'clear_filter_choices'));
         add_action('wp_ajax_nopriv_clear_filter_choices', array($this, 'clear_filter_choices'));
+
+
+        add_action('wp_ajax_search_location', array($this, 'search_location'));
+        add_action('wp_ajax_nopriv_search_location', array($this, 'search_location'));
+    }
+
+    public function search_location(){
+        $search = $_REQUEST['search'];
+        $locations = $this->get_locations($search);
+        echo json_encode($locations);
+        die();
+    }
+
+    public function get_locations($search){
+        global $wpdb;
+
+        $posts = get_posts(array(
+            'post_type'      => 'wp-data-presentation',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+        ));
+
+        if (empty($posts)) {
+            return [];
+        }
+
+        $locations = [];
+        $unique_locations = [];
+        foreach ($posts as $id) {
+            $table_name   = $wpdb->prefix. 'wpdp_data_' . $id;
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
+            if (!$table_exists) {
+                continue;
+            }
+            $query = "SELECT DISTINCT country, admin1, admin2, admin3, location FROM {$table_name} 
+                      WHERE country LIKE '%".$search."%' 
+                      OR admin1 LIKE '%".$search."%' 
+                      OR admin2 LIKE '%".$search."%' 
+                      OR admin3 LIKE '%".$search."%' 
+                      OR location LIKE '%".$search."%'";
+            $results = $wpdb->get_results($query, ARRAY_A);
+            foreach ($results as $result) {
+                $matched = false;
+                foreach (['admin1', 'admin2', 'admin3', 'location'] as $field) {
+                    if (stripos($result[$field], $search) !== false) {
+                        $location_key = $result[$field];
+                        if (!isset($unique_locations[$location_key])) {
+                            $unique_locations[$location_key] = [
+                                'country' => $result['country'],
+                                'location' => $result[$field],
+                                'id'=>$result['country'].'__country'.' + '.$result[$field].'__'.$field,
+                            ];
+                            $matched = true;
+                        }
+                        break;
+                    }
+                }
+                if (!$matched && stripos($result['country'], $search) !== false) {
+                    $location_key = $result['country'];
+                    if (!isset($unique_locations[$location_key])) {
+                        $unique_locations[$location_key] = [
+                            'country' => $result['country'],
+                            'location' => $result['country'],
+                            'id'=>$result['country'].'__country',
+                        ];
+                    }
+                }
+            }
+        }
+        
+        return array_values($unique_locations);
     }
 
     public function enqueue_scripts() {
@@ -459,6 +530,11 @@ final class WPDP_Shortcode {
                             LOCATION <span class="dashicons dashicons-arrow-down-alt2"></span>
                         </div>
                         <div class="content">
+                            <div>
+                                <select name="wpdp_search_location" id="wpdp_search_location"></select>
+                            </div>
+
+                            <br><hr><br>
                             <?php $this->printArrayAsList($filters['locations']);?>
                         </div>
                     </div>

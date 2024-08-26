@@ -100,6 +100,17 @@
   margin-left: 10px;
   margin-top: 10px!important;
 }
+
+.select2-container--default .select2-selection--multiple .select2-search--inline .select2-search__field {
+  position: relative;
+  z-index: 1;
+}
+
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+  position: relative;
+  z-index: 2;
+}
+
 .wpdp .con{
   position: fixed;
   left:-152%;
