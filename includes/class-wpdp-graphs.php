@@ -258,7 +258,6 @@ final class WPDP_Graphs {
         }
 
 
-
         return [
             'data'=>$data,
             'chart_sql'=>$chart_sql,

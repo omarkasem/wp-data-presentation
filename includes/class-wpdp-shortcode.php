@@ -48,6 +48,12 @@ final class WPDP_Shortcode {
         if (session_status() == PHP_SESSION_NONE) {
             session_start();
         }
+        // Remove all saved session values
+
+        // session_destroy();
+        // if(isset($_GET['test'])){
+            // var_dump($_SESSION);exit;
+        // }
 
     }
 
@@ -531,7 +537,25 @@ final class WPDP_Shortcode {
                         </div>
                         <div class="content">
                             <div>
-                                <select name="wpdp_search_location" id="wpdp_search_location"></select>
+                                <select name="wpdp_search_location[]" id="wpdp_search_location" multiple="multiple">
+                                <?php
+                                $selected_locations = $this->get_session_value('wpdp_search_location', []);
+                                if (!empty($selected_locations)) {
+                                    foreach ($selected_locations as $location) {
+                                        if(strpos($location,'+') !== false){
+                                            $text = explode('+',$location);
+                                            $first = explode('__',$text[1]);
+                                            $second = explode('__',$text[0]);
+                                            $final_text = $first[0].' ('.$second[0].')';
+                                        }else{
+                                            $text = explode('__',$location);
+                                            $final_text = $text[0];
+                                        }
+                                        echo '<option value="' . esc_attr($location) . '" selected>' . esc_html($final_text) . '</option>';
+                                    }
+                                }
+                                ?>
+                                </select>
                             </div>
 
                             <br><hr><br>

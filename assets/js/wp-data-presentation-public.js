@@ -29,6 +29,12 @@
     },
 
     self.setDefaultFilters = function(){
+      selectedLocations = [];
+      selectedIncidents = [];
+      fromYear = '';
+      toYear = '';
+      timeframe = '';
+
       fromYear = $("#wpdp_from").val();
       toYear = $("#wpdp_to").val();
 
@@ -50,8 +56,11 @@
         }
       });
 
+      if($('#wpdp_search_location').val() && $('#wpdp_search_location').val().length > 0){
+        selectedLocations = selectedLocations.concat($('#wpdp_search_location').val());
+      }
+      
 
-      selectedIncidents = [];
       $('input[type="checkbox"].wpdp_incident_type:checked').each(function() {
         selectedIncidents.push($(this).val());
       });
@@ -629,14 +638,6 @@
       if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
         $('#wpdp-loader').css('display','flex');
         
-        if(!self.selectedIncidents ||self.selectedIncidents.length <= 0){
-          if($('input[type="checkbox"].wpdp_incident_type:checked').length > 0){
-            self.selectedIncidents = $('input[type="checkbox"].wpdp_incident_type:checked').map(function() {
-              return $(this).val();
-            }).get();
-          }
-        }
-        
         self.table = $('#wpdp_datatable').DataTable({
             ajax: {
               "url": wpdp_obj.ajax_url,
@@ -916,11 +917,13 @@
         $(this).find('input, select').each(function() {
             var $this = $(this);
             if ($this.is(':checkbox')) {
-                // For checkboxes, always include the name in filterData
-                // Set the value to either the checkbox value (if checked) or an empty string (if unchecked)
-                filterData[$this.attr('name')] = $this.is(':checked') ? $this.val() : '';
+                if ($this.is(':checked')) {
+                    filterData[$this.attr('name')] = $this.val();
+                }
             } else {
-                filterData[$this.attr('name')] = $this.val();
+                if ($this.val() !== '') {
+                    filterData[$this.attr('name')] = $this.val();
+                }
             }
         });
 
@@ -943,6 +946,8 @@
     },
 
     self.filterAction = function(){
+      self.setDefaultFilters();
+
       self.graphChange();
 
       if (typeof google === 'object' && typeof google.maps === 'object') {
@@ -1053,7 +1058,7 @@
         "#ffa500", "#7fffd4", "#8a2be2", "#ff69b4", "#ff1493", "#4b0082", "#00ff7f", "#ff6347"
       ];
 
-    
+
       var chart_sql = data.chart_sql;
       data = data.data;
       let i =0;
@@ -1068,27 +1073,43 @@
         };
 
 
-        for(let val of data[label]){
-          if($('#wpdp_type_selector').val() === 'incident_count'){
-            dataset.data.push({x: val.week_start, y: val.events_count});
-          }else{
-            dataset.data.push({x: val.week_start, y: val.fatalities_count});
-          }
-          dataset.fat.push({x: val.week_start, y: val.fatalities_count});
-          dataset.count.push({x: val.week_start, y: val.events_count});
+      for(let val of data[label]){
+        if($('#wpdp_type_selector').val() === 'incident_count'){
+          dataset.data.push({x: val.week_start, y: val.events_count});
+        }else{
+          dataset.data.push({x: val.week_start, y: val.fatalities_count});
         }
-
-        datasets.push(dataset);
+        dataset.fat.push({x: val.week_start, y: val.fatalities_count});
+        dataset.count.push({x: val.week_start, y: val.events_count});
       }
 
+      datasets.push(dataset);
+    }
 
-      if (self.myChart) {
-        self.myChart.destroy();
-      }
-      
-      if(!document.getElementById('wpdp_chart')){
-		    return;  
-	    }
+
+    if (self.myChart) {
+      self.myChart.destroy();
+    }
+    
+    if(!document.getElementById('wpdp_chart')){
+      return;  
+    }
+
+    let title_text = 'Incidents by Type';
+    if(selectedLocations.length > 0){
+      title_text = 'Incidents in ';
+      let countries = new Set();
+      $.each(selectedLocations,function(index,value){
+        value = value.split('+');
+        $.each(value,function(index,value){
+          if(value.indexOf('country') > 0){
+            value = value.split('__');
+            countries.add(value[0]);
+          }
+        });
+      });
+      title_text += Array.from(countries).join(' and ');
+    }
       
 	  let ctx = document.getElementById('wpdp_chart').getContext('2d');
       
@@ -1111,7 +1132,7 @@
             },
               title: {
                   display: true,
-                  text: 'Incidents by Type'
+                  text: title_text
               },
           },
           scales: {
