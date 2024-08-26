@@ -8,8 +8,12 @@
     var markerCluster;
     var selectedLocations = [];
     var selectedIncidents = [];
+    var fromYear = '';
+    var toYear = '';
+    var timeframe = '';
 
     self.init = function(){
+      self.setDefaultFilters();
       self.graphChange();
       self.dataTables();
       self.menuFilters();
@@ -22,6 +26,37 @@
       self.checkbox();
       self.checkfForIndeterminate();
       self.locationSearch();
+    },
+
+    self.setDefaultFilters = function(){
+      fromYear = $("#wpdp_from").val();
+      toYear = $("#wpdp_to").val();
+
+      if(fromYear == '' && JSON.parse(wpdp_shortcode_atts).from != ''){
+        fromYear = JSON.parse(wpdp_shortcode_atts).from;
+      }
+
+      if(toYear == '' && JSON.parse(wpdp_shortcode_atts).to != ''){
+        toYear = JSON.parse(wpdp_shortcode_atts).to;
+      }
+
+      timeframe = $("#wpdp_timeframe").val();
+
+
+      $('input[type="checkbox"].wpdp_location:checked').each(function() {
+        var isChildChecked = $(this).closest('ul').parent().children('input[type="checkbox"].wpdp_location:checked').length > 0;
+        if (!isChildChecked) {
+          selectedLocations.push($(this).val());
+        }
+      });
+
+
+      selectedIncidents = [];
+      $('input[type="checkbox"].wpdp_incident_type:checked').each(function() {
+        selectedIncidents.push($(this).val());
+      });
+
+      
     },
 
     self.locationSearch = function(){
@@ -280,37 +315,14 @@
 
       $('#wpdp-loader').css('display','flex');
 
-      let fromYear = $("#wpdp_from").val();
-      let toYear = $("#wpdp_to").val();
 
-      if(fromYear == '' && JSON.parse(wpdp_shortcode_atts).from != ''){
-        fromYear = JSON.parse(wpdp_shortcode_atts).from;
-      }
-
-      if(toYear == '' && JSON.parse(wpdp_shortcode_atts).to != ''){
-        toYear = JSON.parse(wpdp_shortcode_atts).to;
-      }
-
-      self.selectedLocations = [];
-      $('input[type="checkbox"].wpdp_location:checked').each(function() {
-        var isChildChecked = $(this).closest('ul').parent().children('input[type="checkbox"].wpdp_location:checked').length > 0;
-        if (!isChildChecked) {
-          self.selectedLocations.push($(this).val());
-        }
-      });
-
-
-      self.selectedIncidents = [];
-      $('input[type="checkbox"].wpdp_incident_type:checked').each(function() {
-        self.selectedIncidents.push($(this).val());
-      });
 
       $.ajax({
         url: wpdp_obj.ajax_url,
         data: {
           action:'wpdp_map_request',
-          type_val: self.selectedIncidents,
-          locations_val: self.selectedLocations,
+          type_val: selectedIncidents,
+          locations_val: selectedLocations,
           from_val: fromYear,
           to_val: toYear
         },
@@ -630,21 +642,11 @@
               "url": wpdp_obj.ajax_url,
               "type": "POST",
               "data": function ( d ) {
-                let wpdp_from = $('#wpdp_from').val();
-                if(wpdp_from == '' && JSON.parse(wpdp_shortcode_atts).from != ''){
-                  wpdp_from = JSON.parse(wpdp_shortcode_atts).from;
-                }
-        
-                let wpdp_to = $('#wpdp_to').val();
-                if(wpdp_to == '' && JSON.parse(wpdp_shortcode_atts).to != ''){
-                  wpdp_to = JSON.parse(wpdp_shortcode_atts).to;
-                }
-
                 d.action = 'wpdp_datatables_request';
-                d.type_val = self.selectedIncidents;
-                d.from_val = wpdp_from;
-                d.to_val = wpdp_to;
-                d.locations_val = self.selectedLocations;
+                d.type_val = selectedIncidents;
+                d.from_val = fromYear;
+                d.to_val = toYear;
+                d.locations_val = selectedLocations;
               },
               "dataSrc": function(json) {
                 if (json.data.length === 0) {
@@ -941,35 +943,7 @@
     },
 
     self.filterAction = function(){
-      let fromYear = $("#wpdp_from").val();
-      let toYear = $("#wpdp_to").val();
-      let timeframe = $("#wpdp_date_timeframe").val();
-
-      if(fromYear == '' && JSON.parse(wpdp_shortcode_atts).from != ''){
-        fromYear = JSON.parse(wpdp_shortcode_atts).from;
-      }
-
-      if(toYear == '' && JSON.parse(wpdp_shortcode_atts).to != ''){
-        toYear = JSON.parse(wpdp_shortcode_atts).to;
-      }
-
-      self.selectedLocations = [];
-      
-      $('input[type="checkbox"].wpdp_location:checked').each(function() {
-        var isChildChecked = $(this).closest('ul').parent().children('input[type="checkbox"].wpdp_location:checked').length > 0;
-        if (!isChildChecked) {
-          self.selectedLocations.push($(this).val());
-        }
-      });
-
-      
-      self.selectedIncidents = [];      
-      $('input[type="checkbox"].wpdp_incident_type:checked').each(function() {
-        self.selectedIncidents.push($(this).val());
-      });
-
-
-      self.graphChange(self.selectedIncidents, self.selectedLocations,timeframe);
+      self.graphChange();
 
       if (typeof google === 'object' && typeof google.maps === 'object') {
         for(let i=0; i<global_markers.length; i++){
@@ -985,7 +959,7 @@
       }
     },
       
-    self.graphChange = function(selectedIncidents=[], selectedLocations=[], timeframe){
+    self.graphChange = function(){
       
       if (typeof Chart === 'undefined') {
         return;
@@ -994,40 +968,13 @@
       $('#wpdp-loader').css('display','flex');
 
       if(selectedIncidents.length <= 0){
-        // Select only parent checkboxes.
+        // Select only parent checkboxes if no filtered applied.
         if ($('input[type="checkbox"].wpdp_incident_type:checked').length === 0) {
           $('ul.first_one > li > input[type="checkbox"].wpdp_incident_type').each(function() {
             selectedIncidents.push($(this).val());
           });
-        }else{
-          selectedIncidents = $('input[type="checkbox"].wpdp_incident_type:checked').map(function() {
-            return $(this).val();
-          }).get();
         }
       }
-      
-
-      if(selectedLocations.length <= 0){
-        $('input[type="checkbox"].wpdp_location:checked').each(function() {
-          var isChildChecked = $(this).closest('ul').parent().children('input[type="checkbox"].wpdp_location:checked').length > 0;
-          if (!isChildChecked) {
-            selectedLocations.push($(this).val());
-          }
-        });
-      }
-
-      let fromYear = $("#wpdp_from").val();
-      let toYear = $("#wpdp_to").val();
-
-      if(fromYear == '' && JSON.parse(wpdp_shortcode_atts).from != ''){
-        fromYear = JSON.parse(wpdp_shortcode_atts).from;
-      }
-
-      if(toYear == '' && JSON.parse(wpdp_shortcode_atts).to != ''){
-        toYear = JSON.parse(wpdp_shortcode_atts).to;
-      }
-
-
 
       $.ajax({
         url: wpdp_obj.ajax_url,
@@ -1043,7 +990,7 @@
         success: function(response) {
           let combinedData = self.combineWeekData(response.data.data);
           response.data.data = combinedData;
-          self.chartInit(response.data,selectedIncidents,selectedLocations,timeframe);
+          self.chartInit(response.data);
           $('#wpdp-loader').hide();
           $('.wpdp .con').css('left','-152%').removeClass('active');
           $('.wpdp .filter span').attr('class','fas fa-sliders-h');
@@ -1097,7 +1044,7 @@
         
     }
 
-    self.chartInit = function(data,typeValue,selectedLocations,timeframe){
+    self.chartInit = function(data){
       var datasets = [];
       const colors = [
         "#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4", "#46f0f0", "#f032e6",
@@ -1105,7 +1052,7 @@
         "#808000", "#ffd8b1", "#000075", "#808080", "#ffffff", "#000000", "#ff4500", "#00ff00",
         "#ffa500", "#7fffd4", "#8a2be2", "#ff69b4", "#ff1493", "#4b0082", "#00ff7f", "#ff6347"
       ];
-      console.log(selectedLocations);
+
     
       var chart_sql = data.chart_sql;
       data = data.data;
