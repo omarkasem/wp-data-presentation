@@ -51,9 +51,9 @@ final class WPDP_Shortcode {
         // Remove all saved session values
 
         // session_destroy();
-        // if(isset($_GET['test'])){
-            // var_dump($_SESSION);exit;
-        // }
+        if(isset($_GET['test'])){
+            var_dump($_SESSION);exit;
+        }
 
     }
 
@@ -326,7 +326,7 @@ final class WPDP_Shortcode {
                 if ($parent_key !== false) {
                     $input_val = $parent_key . ' + ' . $key;
                 }
-                $checkbox_name = sanitize_title($key_val[0]);
+                $checkbox_name = 'wpdp_'.sanitize_title($key_val[0]);
                 $is_checked = $this->get_session_value($checkbox_name) === $input_val ? 'checked' : '';
     
                 echo '<li class="expandable">';
@@ -335,7 +335,7 @@ final class WPDP_Shortcode {
                 echo '<span class="dashicons dashicons-arrow-up-alt2 arrow"></span></div>';
                 $this->printArrayAsList($value, $level + 1, $input_val);
             } else {
-                $checkbox_name = sanitize_title($value);
+                $checkbox_name = 'wpdp_'.sanitize_title($value);
                 $is_checked = $this->get_session_value($checkbox_name) === $value ? 'checked' : '';
                 echo '<li>';
                 echo '<input type="checkbox" class="wpdp_filter_checkbox wpdp_location" name="' . $checkbox_name . '" value="' . $value . '" ' . $is_checked . '>';
@@ -537,9 +537,10 @@ final class WPDP_Shortcode {
                         </div>
                         <div class="content">
                             <div>
-                                <select name="wpdp_search_location[]" id="wpdp_search_location" multiple="multiple">
+                                <select name="wpdp_search_location" id="wpdp_search_location" multiple="multiple">
                                 <?php
                                 $selected_locations = $this->get_session_value('wpdp_search_location', []);
+
                                 if (!empty($selected_locations)) {
                                     foreach ($selected_locations as $location) {
                                         if(strpos($location,'+') !== false){
@@ -705,6 +706,13 @@ final class WPDP_Shortcode {
         if (!isset($_POST['filter_data'])) {
             wp_send_json_error('No filter data received');
         }
+
+        foreach ($_SESSION as $key => $value) {
+            if (strpos($key, 'wpdp_') === 0) {
+                unset($_SESSION[$key]);
+            }
+        }
+
 
         $filter_data = $_POST['filter_data'];
         foreach ($filter_data as $key => $value) {

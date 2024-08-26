@@ -215,9 +215,10 @@ final class WPDP_Graphs {
             $new_where .= " AND (".implode(' OR ', $conditions2).")";
 
             if(!empty($filters['locations'])){
-                $new_where .= ' AND ';
+                $new_where .= ' AND (';
                 $loci = 0;
                 foreach($filters['locations'] as $value){ $loci++;
+
                     $conditions = array();
                     if(strpos($value,'+') !== false){
                         $value = explode(' + ',$value);
@@ -238,7 +239,7 @@ final class WPDP_Graphs {
                         $new_where.= ' OR ';
                     }
                 }
-      
+                $new_where .= ')';
             }
 
             foreach($sql_parts as $sql){
