@@ -70,7 +70,7 @@ final class WPDP_Maps {
 
 
     function enqueue_scripts() {
-        wp_register_script(WP_DATA_PRESENTATION_NAME.'google-maps-api', 'https://maps.googleapis.com/maps/api/js?key='.get_field('google_maps_api_key','option').'&callback=wpdp_maps', array(), null, true);
+        wp_register_script(WP_DATA_PRESENTATION_NAME.'google-maps-api', 'https://maps.googleapis.com/maps/api/js?key='.get_field('google_maps_api_key','option').'&callback=wpdp_maps&loading=async&libraries=marker', array(), null, true);
 
         
         wp_register_script(WP_DATA_PRESENTATION_NAME.'google-maps-cluster',WP_DATA_PRESENTATION_URL. 'assets/js/markerclustererplus.js', array(), null, true);
@@ -131,7 +131,7 @@ final class WPDP_Maps {
         global $wpdb;
         $data = [];
 
-
+        $whereSQL = ' WHERE 1=1';
         if (!empty($filters)) {
             foreach($filters as $key => $filter) {
                 if(!empty($filter)){
@@ -207,7 +207,6 @@ final class WPDP_Maps {
             $filter_format_from = date($date_format['php'],strtotime($filters['from']));
             $filter_format_to = date($date_format['php'],strtotime($filters['to']));
 
-            $whereSQL = ' WHERE 1=1';
             if($filters['from'] != ''){
                 $whereSQL .= " AND STR_TO_DATE(event_date, '$mysql_date_format') >= STR_TO_DATE('{$filter_format_from}', '$mysql_date_format')";
             }

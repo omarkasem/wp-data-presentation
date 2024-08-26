@@ -323,8 +323,7 @@
     self.maps = function(){
 
       $('#wpdp-loader').css('display','flex');
-
-
+      console.log(selectedLocations);
 
       $.ajax({
         url: wpdp_obj.ajax_url,
@@ -367,7 +366,7 @@
         self.main_map = new google.maps.Map(
           document.getElementById('wpdp_map'),
           {
-              zoom: 3.3, 
+              zoom: 3.8, 
               center: startLocation,
               styles: [
                 {
