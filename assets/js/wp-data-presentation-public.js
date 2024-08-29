@@ -86,7 +86,7 @@
               results: $.map(data, function(item) {
                 return {
                   id: item.id,
-                  text: item.location + ' (' + item.country + ')'
+                  text: item.location === item.country ? item.location : item.location + ' (' + item.country + ')'
                 };
               })
             };
@@ -125,18 +125,18 @@
 
     self.checkbox = function(){
       $('.filter_data li input[type="checkbox"]').on('change', function() {
-        $(this).parent().find('li input[type="checkbox"]').prop('checked', this.checked).change();
-
+        // $(this).parent().find('li input[type="checkbox"]').prop('checked', this.checked).change();
+        $('.filter_data .no_data').hide();
         self.checkfForIndeterminate();
       });
 
-      $('#filter_form').on('reset', function() {
-        $(this).find('input[type="checkbox"]').prop('indeterminate', false);
+      $('.filter_data li input[type="checkbox"]:not(.wpdp_location)').on('change', function() {
+        $(this).parent().find('li input[type="checkbox"]').prop('checked', this.checked).change();
       });
 
-      // Show/hide no data found in filter
-      $('.filter_data li input[type="checkbox"]').on('change', function() {
-        $('.filter_data .no_data').hide();
+
+      $('#filter_form').on('reset', function() {
+        $(this).find('input[type="checkbox"]').prop('indeterminate', false);
       });
 
 
@@ -353,13 +353,30 @@
 
     },
 
+
+    self.getCenterLocation = function(mapData) {
+      let totalLat = 0;
+      let totalLng = 0;
+      let count = mapData.length;
+    
+      mapData.forEach(function(loc) {
+        totalLat += parseFloat(loc.latitude);
+        totalLng += parseFloat(loc.longitude);
+      });
+    
+      return {
+        lat: totalLat / count,
+        lng: totalLng / count
+      };
+    },
+
     self.mapInit = function(mapData){
       if (!mapData || !Array.isArray(mapData) || mapData.length === 0) {
         console.log('No valid map data available');
         return;
       }
 
-      var startLocation = { lat: parseFloat(mapData[0].latitude), lng: parseFloat(mapData[0].longitude) };
+      var centerLocation = self.getCenterLocation(mapData);
       
       if(!self.main_map){
         
@@ -367,7 +384,7 @@
           document.getElementById('wpdp_map'),
           {
               zoom: 3.8, 
-              center: startLocation,
+              center: centerLocation,
               styles: [
                 {
                     "featureType": "water",
@@ -549,8 +566,8 @@
         );
           
       }else{
-        self.main_map.setCenter(startLocation);
-        self.main_map.setZoom(3);
+        self.main_map.setCenter(centerLocation);
+        self.main_map.setZoom(3.8);
       }
 
       var my_map = self.main_map;
@@ -600,7 +617,7 @@
               <h2 style="margin: 0 0 10px; font-size: 20px; border-bottom: 1px solid #333; padding-bottom: 5px;">
                 ${loc.disorder_type}
               </h2>
-              <p style="margin-bottom:0;"><strong>Number:</strong> ${loc.fatalities}</p>
+              <p style="margin-bottom:0;"><strong>Fatalities:</strong> ${loc.fatalities}</p>
               <p style="margin-bottom:0;"><strong>Date:</strong> ${loc.event_date}</p>
               <div class="map_more_details">
                 <span style="cursor:pointer;color:#cd0202;font-size:25px;margin-top:3px;" class="dashicons dashicons-info"></span>
@@ -1095,7 +1112,7 @@
       return;  
     }
 
-    let title_text = 'Incidents by Type';
+    let title_text = 'Incidents in all ICGLR Member States';
     if(selectedLocations.length > 0){
       title_text = 'Incidents in ';
       let countries = new Set();
@@ -1108,7 +1125,15 @@
           }
         });
       });
-      title_text += Array.from(countries).join(' and ');
+      let countriesArray = Array.from(countries);
+      console.log(countriesArray);
+      if (countriesArray.length > 1 && countriesArray.length < 12) {
+        title_text += countriesArray.slice(0, -1).join(', ') + ' and ' + countriesArray.slice(-1);
+      }else if(countriesArray.length >= 12){
+        title_text += 'Incidents in all ICGLR Member States';
+      } else {
+        title_text += countriesArray[0];
+      }
     }
       
 	  let ctx = document.getElementById('wpdp_chart').getContext('2d');
