@@ -1130,7 +1130,7 @@
       if (countriesArray.length > 1 && countriesArray.length < 12) {
         title_text += countriesArray.slice(0, -1).join(', ') + ' and ' + countriesArray.slice(-1);
       }else if(countriesArray.length >= 12){
-        title_text += 'Incidents in all ICGLR Member States';
+        title_text = 'Incidents in all ICGLR Member States';
       } else {
         title_text += countriesArray[0];
       }
