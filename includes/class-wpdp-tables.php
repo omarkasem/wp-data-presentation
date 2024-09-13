@@ -85,7 +85,7 @@ final class WPDP_Tables {
             if(!$table_exists){
                 continue;
             }
-            $result = $wpdb->get_row("SELECT event_type, sub_event_type, source, notes, region, country, admin1, admin2, admin3, location, event_id_cnty, timestamp FROM {$table_name} WHERE event_id_cnty = '{$event_id}'", ARRAY_A);
+            $result = $wpdb->get_row("SELECT event_type, sub_event_type, source, notes, region, country, admin1, admin2, admin3, location, event_id_cnty, timestamp, fatalities FROM {$table_name} WHERE event_id_cnty = '{$event_id}'", ARRAY_A);
             if(!empty($result)){
                 break;
             }
@@ -104,7 +104,9 @@ final class WPDP_Tables {
             'disorder_type',
             'country',
             'fatalities',
-            'event_id_cnty'
+            'event_id_cnty',
+            'event_type',
+            'sub_event_type'
         ];
 
 
@@ -208,7 +210,15 @@ final class WPDP_Tables {
             $date_format = WPDP_Shortcode::get_date_format($date_sample);
             $mysql_date_format = $date_format['mysql'];
             $whereSQL = $this->build_where_clause($filters, $queryArgs,$date_format);
-            $query = "SELECT " . implode(', ', $types) . " FROM {$table_name}";
+            $query = "SELECT " . implode(', ', array_map(function($type) {
+                if ($type === 'fatalities') {
+                    return "CASE WHEN $type > 0 THEN CONCAT($type, ' from ', event_type) ELSE CAST($type AS CHAR) END AS $type";
+                }
+                if ($type === 'disorder_type') {
+                    return "CONCAT($type, ' / ', event_type, ' / ', sub_event_type)";
+                }
+                return $type;
+            }, $types)) . " FROM {$table_name}";
             $query = str_replace('event_date',"STR_TO_DATE(event_date, '".$mysql_date_format."') AS date_column_standard",$query);
             $query.= " {$whereSQL}";
             $union_queries[] = $query;
@@ -314,9 +324,9 @@ final class WPDP_Tables {
             <thead>
                 <tr>
                     <th>Date</th>
-                    <th>Type</th>
+                    <th>Incident Type</th>
                     <th>Location</th>
-                    <th>No.</th>
+                    <th>Fatalities.</th>
                     <th> </th>
                 </tr>
             </thead>

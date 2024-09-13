@@ -273,6 +273,8 @@ final class WPDP_Graphs {
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'chartjs-adapter');
     ?>
         <canvas id="wpdp_chart" width="800" ></canvas>
+        <hr>
+        <canvas id="wpdp_chart_fat" width="800" ></canvas>
     <?php }
 
 

@@ -131,14 +131,14 @@ final class WPDP_Maps {
         global $wpdb;
         $data = [];
 
-        $whereSQL = ' WHERE 1=1';
+        $where_sql = ' WHERE 1=1';
         if (!empty($filters)) {
             foreach($filters as $key => $filter) {
                 if(!empty($filter)){
                     if(is_array($filter)){
                         if($key == "locations"){
 
-                            $whereSQL .= ' AND ';
+                            $where_sql .= ' AND ';
                             $loci = 0;
                             foreach($filter as $value){ $loci++;
                                 $conditions = array();
@@ -156,9 +156,9 @@ final class WPDP_Maps {
                                     $real_value = $real_v[0];
                                     $conditions[] = "$column = '{$real_value}'";
                                 }
-                                $whereSQL .= " (".implode(' AND ', $conditions).")";
+                                $where_sql .= " (".implode(' AND ', $conditions).")";
                                 if($loci !== count($filters['locations'])){
-                                    $whereSQL.= ' OR ';
+                                    $where_sql.= ' OR ';
                                 }
                             }
                         }elseif($key === 'disorder_type'){
@@ -183,7 +183,7 @@ final class WPDP_Maps {
                                 $conditions2[] = "{$inc_type_k} IN ('" . implode("', '", $inc_type_v) . "')";
                             }
 
-                            $whereSQL .= " AND (".implode(' OR ', $conditions2).")";
+                            $where_sql .= " AND (".implode(' OR ', $conditions2).")";
  
                         }
                     }
@@ -194,6 +194,7 @@ final class WPDP_Maps {
         $union_queries = [];
 
         foreach($posts as $id){
+            $new_where = $where_sql;
             $table_name = $wpdb->prefix. 'wpdp_data_'.$id;
             $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
             if(!$table_exists){
@@ -206,20 +207,20 @@ final class WPDP_Maps {
             $mysql_date_format = $date_format['mysql'];
             $filter_format_from = date($date_format['php'],strtotime($filters['from']));
             $filter_format_to = date($date_format['php'],strtotime($filters['to']));
-
+            
             if($filters['from'] != ''){
-                $whereSQL .= " AND STR_TO_DATE(event_date, '$mysql_date_format') >= STR_TO_DATE('{$filter_format_from}', '$mysql_date_format')";
+                $new_where .= " AND STR_TO_DATE(event_date, '$mysql_date_format') >= STR_TO_DATE('{$filter_format_from}', '$mysql_date_format')";
             }
     
             if($filters['to'] != ''){
-                $whereSQL .= " AND STR_TO_DATE(event_date, '$mysql_date_format') <= STR_TO_DATE('{$filter_format_to}', '$mysql_date_format')";
+                $new_where .= " AND STR_TO_DATE(event_date, '$mysql_date_format') <= STR_TO_DATE('{$filter_format_to}', '$mysql_date_format')";
             }
 
-            $whereSQL = str_replace('%%','%',$whereSQL);
+            $new_where = str_replace('%%','%',$new_where);
 
             $query = "SELECT 
             ".implode(', ', $types)." 
-             FROM {$table_name} {$whereSQL}";
+             FROM {$table_name} {$new_where}";
 
             $union_queries[] = $query;
 
@@ -232,7 +233,7 @@ final class WPDP_Maps {
         FROM ({$union_query}) AS t
         LIMIT 500
         ";
-        
+
         $result = $wpdb->get_results($final_query);
         $count = count($result);
         return ['data'=>$result,'count'=>$count];

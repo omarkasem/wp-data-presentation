@@ -3,6 +3,7 @@
 
     var self = {};
     var myChart;
+    var myChartFat;
     var table;
     var global_markers = [];
     var markerCluster;
@@ -20,7 +21,7 @@
       self.filtersChange();
       self.expandable();
       self.showMapDetails();
-      self.graphCountSelector();
+      // self.graphCountSelector();
       self.datePicker();
       self.actors();
       self.checkbox();
@@ -46,7 +47,7 @@
         toYear = JSON.parse(wpdp_shortcode_atts).to;
       }
 
-      timeframe = $("#wpdp_timeframe").val();
+      timeframe = $("#wpdp_date_timeframe").val();
 
 
       $('input[type="checkbox"].wpdp_location:checked').each(function() {
@@ -82,6 +83,12 @@
             };
           },
           processResults: function (data) {
+            // Sort the results alphabetically by location
+            data.sort(function(a, b) {
+              var textA = a.location.toUpperCase();
+              var textB = b.location.toUpperCase();
+              return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+            });
             return {
               results: $.map(data, function(item) {
                 return {
@@ -336,6 +343,7 @@
         },
         type: 'POST',
         success: function(response) {
+
           self.mapInit(response.data.data);
           $('#wpdp-loader').hide();
 
@@ -617,7 +625,8 @@
               <h2 style="margin: 0 0 10px; font-size: 20px; border-bottom: 1px solid #333; padding-bottom: 5px;">
                 ${loc.disorder_type}
               </h2>
-              <p style="margin-bottom:0;"><strong>Fatalities:</strong> ${loc.fatalities}</p>
+              <p style="margin-bottom:0;"><strong>Fatalities:</strong> ${loc.fatalities}`+(loc.fatalities > 0 ? ' From '+loc.event_type+'' : '')+`</p>
+             
               <p style="margin-bottom:0;"><strong>Date:</strong> ${loc.event_date}</p>
               <div class="map_more_details">
                 <span style="cursor:pointer;color:#cd0202;font-size:25px;margin-top:3px;" class="dashicons dashicons-info"></span>
@@ -836,6 +845,10 @@
                       `+response.data[0].source+`
                     </li>
                     <li>
+                      <b>Fatalities:</b>
+                      `+(response.data[0].fatalities > 0 ? response.data[0].fatalities + ' from ' + response.data[0].event_type : response.data[0].fatalities)+`
+                    </li>
+                    <li>
                       <b>Event Full Location:</b>
                       `+response.data[0].region+`
                       `+response.data[0].country+` 
@@ -971,7 +984,9 @@
         for(let i=0; i<global_markers.length; i++){
           global_markers[i].setMap(null);
         }
-        markerCluster.clearMarkers();
+        if(markerCluster){
+          markerCluster.clearMarkers();
+        }
         global_markers = [];
         self.maps();
       }
@@ -997,6 +1012,7 @@
           });
         }
       }
+      console.log(timeframe);
 
       $.ajax({
         url: wpdp_obj.ajax_url,
@@ -1068,6 +1084,7 @@
 
     self.chartInit = function(data){
       var datasets = [];
+      var datasets_fat = [];
       const colors = [
         "#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4", "#46f0f0", "#f032e6",
         "#bcf60c", "#fabebe", "#008080", "#e6beff", "#9a6324", "#fffac8", "#800000", "#aaffc3",
@@ -1088,57 +1105,76 @@
           count:[],
           fat:[],
         };
+        let dataset_fat = {
+          label:label,
+          borderColor: colors[i],
+          fill: false,
+          data: [],
+          count:[],
+          fat:[],
+        };
 
 
-      for(let val of data[label]){
-        if($('#wpdp_type_selector').val() === 'incident_count'){
+        for(let val of data[label]){
           dataset.data.push({x: val.week_start, y: val.events_count});
-        }else{
-          dataset.data.push({x: val.week_start, y: val.fatalities_count});
+          dataset_fat.data.push({x: val.week_start, y: val.fatalities_count});
+          // dataset.fat.push({x: val.week_start, y: val.fatalities_count});
+          // dataset.count.push({x: val.week_start, y: val.events_count});
         }
-        dataset.fat.push({x: val.week_start, y: val.fatalities_count});
-        dataset.count.push({x: val.week_start, y: val.events_count});
+        datasets_fat.push(dataset_fat);
+        datasets.push(dataset);
       }
 
-      datasets.push(dataset);
-    }
 
+      if (window.myChart) {
+        window.myChart.destroy();
+      }
 
-    if (self.myChart) {
-      self.myChart.destroy();
-    }
-    
-    if(!document.getElementById('wpdp_chart')){
-      return;  
-    }
+      if (window.myChartFat) {
+        window.myChartFat.destroy();
+      }
+      
+      if(!document.getElementById('wpdp_chart')){
+        return;  
+      }
 
-    let title_text = 'Incidents in all ICGLR Member States';
-    if(selectedLocations.length > 0){
-      title_text = 'Incidents in ';
-      let countries = new Set();
-      $.each(selectedLocations,function(index,value){
-        value = value.split('+');
-        $.each(value,function(index,value){
-          if(value.indexOf('country') > 0){
-            value = value.split('__');
-            countries.add(value[0]);
-          }
+      let title_text = 'Incidents in all ICGLR Member States';
+      if(selectedLocations.length > 0){
+        title_text = 'Incidents in ';
+        let countries = new Set();
+        $.each(selectedLocations,function(index,value){
+          value = value.split('+');
+          $.each(value,function(index,value){
+            if(value.indexOf('country') > 0){
+              value = value.split('__');
+              countries.add(value[0]);
+            }
+          });
         });
-      });
-      let countriesArray = Array.from(countries);
-      console.log(countriesArray);
-      if (countriesArray.length > 1 && countriesArray.length < 12) {
-        title_text += countriesArray.slice(0, -1).join(', ') + ' and ' + countriesArray.slice(-1);
-      }else if(countriesArray.length >= 12){
-        title_text = 'Incidents in all ICGLR Member States';
-      } else {
-        title_text += countriesArray[0];
+        let countriesArray = Array.from(countries);
+        if (countriesArray.length > 1 && countriesArray.length < 12) {
+          title_text += countriesArray.slice(0, -1).join(', ') + ' and ' + countriesArray.slice(-1);
+        }else if(countriesArray.length >= 12){
+          title_text = 'Incidents in all ICGLR Member States';
+        } else {
+          title_text += countriesArray[0];
+        }
       }
+        
+      let ctx = document.getElementById('wpdp_chart').getContext('2d');
+      let ctx_fat = document.getElementById('wpdp_chart_fat').getContext('2d');
+      let title_text_fat = title_text + ' (Fatalities)';
+      title_text += ' (Incidents)';
+      self.graphFun(ctx,datasets,title_text,chart_sql);
+      self.graphFun(ctx_fat,datasets_fat,title_text_fat,chart_sql,true);
     }
-      
-	  let ctx = document.getElementById('wpdp_chart').getContext('2d');
-      
-      self.myChart = new Chart(ctx, {
+
+    self.graphFun = function(ctx,datasets,title_text,chart_sql,is_fat){
+      var chartVar = 'myChart';
+      if(is_fat){
+        chartVar = 'myChartFat';
+      }
+      window[chartVar] = new Chart(ctx, {
         type: 'line',
         data: {datasets:datasets},
         options: {
@@ -1177,8 +1213,6 @@
 
         }
       });
-      
-
     }
     
 

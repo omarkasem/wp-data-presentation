@@ -298,6 +298,8 @@ final class WPDP_Shortcode {
             }
         }
 
+        $ordered_locations = self::sort_locations_array($locations);
+
         $filters = array(
             'types'     => $inc_type,
             'years'     => $years,
@@ -305,6 +307,21 @@ final class WPDP_Shortcode {
         );
 
         return $filters;
+    }
+
+
+    private static function sort_locations_array($array) {
+        ksort($array);
+        foreach ($array as &$value) {
+            if (is_array($value)) {
+                if (isset($value[0]) && is_string($value[0])) {
+                    sort($value);
+                } else {
+                    $value = self::sort_locations_array($value);
+                }
+            }
+        }
+        return $array;
     }
 
     function printArrayAsList($locations, $level = 0, $parent_key = false) {
@@ -570,15 +587,27 @@ final class WPDP_Shortcode {
                         <div class="content <?php echo (isset($atts['type']) && 'map' === $atts['type'] ? 'filter_maps' : ''); ?>">
                             <div class="dates">
                                 <label for="wpdp_from">FROM</label>
-                                <input value="<?php echo $this->get_session_value('wpdp_from', $this->get_from_date_value($filters, $atts)); ?>" type="text" name="wpdp_from" id="wpdp_from">
+                                <input value="<?php 
+                                    if ('map' === $atts['type'] && empty($this->get_session_value('wpdp_from'))) {
+                                        echo date('d F Y', strtotime('-30 days'));
+                                    } else {
+                                        echo $this->get_session_value('wpdp_from', $this->get_from_date_value($filters, $atts));
+                                    }
+                                ?>" type="text" name="wpdp_from" id="wpdp_from">
                             </div>
                             <div class="dates">
                                 <label style="margin-right: 23px;" for="wpdp_to">TO</label>
-                                <input value="<?php echo $this->get_session_value('wpdp_to', $this->get_to_date_value($filters, $atts)); ?>" type="text" name="wpdp_to" id="wpdp_to">
+                                <input value="<?php 
+                                    if ('map' === $atts['type'] && empty($this->get_session_value('wpdp_to'))) {
+                                        echo date('d F Y');
+                                    } else {
+                                        echo $this->get_session_value('wpdp_to', $this->get_to_date_value($filters, $atts));
+                                    }
+                                ?>" type="text" name="wpdp_to" id="wpdp_to">
                             </div>
                             <?php if ('graph' === $atts['type'] || '' == $atts['type']) {?>
                             <div class="dates">
-                                <label for="wpdp_date_timeframe">Timeframe</label>
+                                <label for="wpdp_date_timeframe">Timeframe <br>(for graphs)</label>
                                 <select name="wpdp_date_timeframe" id="wpdp_date_timeframe">
                                     <option value="">Choose Timeframe</option>
                                     <option value="yearly" <?php selected($this->get_session_value('wpdp_date_timeframe'), 'yearly'); ?>>Yearly</option>
@@ -594,7 +623,7 @@ final class WPDP_Shortcode {
 
 
                     <?php if ('graph' === $atts['type'] || '' == $atts['type']) {?>
-                    <div class="grp ">
+                    <!-- <div class="grp ">
 
                         <div class="title">
                             COUNT TYPE <span class="dashicons dashicons-arrow-down-alt2"></span>
@@ -605,7 +634,7 @@ final class WPDP_Shortcode {
                                 <option value="incident_count" <?php selected($this->get_session_value('wpdp_type_selector'), 'incident_count'); ?>>Incident Count</option>
                             </select>
                         </div>
-                    </div>
+                    </div> -->
                     <?php }?>
 
                     <div class="no_data" style="display:none;">No data found, please adjust filters</div>
