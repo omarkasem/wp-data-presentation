@@ -185,6 +185,30 @@ final class WPDP_Maps {
 
                             $where_sql .= " AND (".implode(' OR ', $conditions2).")";
  
+                        }elseif($key === 'fatalities'){
+                            $conditions3 = [];
+                            foreach($filter as $inc_v){
+
+                                if(strpos($inc_v,'+') !== false){
+                                    $inc_v = explode('+',$inc_v);
+                                    $i=0;
+                                    foreach($inc_v as $inc_v2){$i++;
+                                        $inc_v2 = explode('__',$inc_v2);
+                                        $inc_type[$inc_v2[1]][] = $inc_v2[0];
+                                    }
+                                }else{
+                                    $inc_v = explode('__',$inc_v);
+                                    $inc_type[$inc_v[1]][] = $inc_v[0];
+                                }
+
+                            }
+                            
+                            foreach($inc_type as $inc_type_k => $inc_type_v){$i++;
+                                $conditions3[] = "{$inc_type_k} IN ('" . implode("', '", $inc_type_v) . "')";
+                            }
+
+                            $where_sql .= " AND (".implode(' OR ', $conditions3).") AND fatalities > 0";
+ 
                         }
                     }
                 }
@@ -244,9 +268,22 @@ final class WPDP_Maps {
         $filters = [
             'disorder_type' => isset($_REQUEST['type_val']) ? $_REQUEST['type_val'] : [],
             'locations' => isset($_REQUEST['locations_val']) ? $_REQUEST['locations_val'] : [],
+            'actors' => isset($_REQUEST['actors_val']) ? $_REQUEST['actors_val'] : [],
+            'fatalities' => isset($_REQUEST['fat_val']) ? $_REQUEST['fat_val'] : [],
             'from' => isset($_REQUEST['from_val']) ? $_REQUEST['from_val'] : '',
             'to' => isset($_REQUEST['to_val']) ? $_REQUEST['to_val'] : ''
         ];
+
+
+        // Merge actors and disorder_type and remove any duplicates
+        $merged_types = array_unique(array_merge($filters['actors'], $filters['disorder_type']));
+        $filters['disorder_type'] = $merged_types;
+
+        foreach ($filters['disorder_type'] as $fatality) {
+            if (($key = array_search($fatality, $filters['fatalities'])) !== false) {
+                unset($filters['fatalities'][$key]);
+            }
+        }
 
         $types = [
             'event_date',

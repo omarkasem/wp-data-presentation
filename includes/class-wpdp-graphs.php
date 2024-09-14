@@ -66,12 +66,24 @@ final class WPDP_Graphs {
         ];
 
         $filters = [
-            'disorder_type' => isset($_REQUEST['type_val']) ? $_REQUEST['type_val'] : '',
-            'locations' => isset($_REQUEST['locations_val']) ? $_REQUEST['locations_val'] : '',
+            'disorder_type' => isset($_REQUEST['type_val']) ? $_REQUEST['type_val'] : [],
+            'locations' => isset($_REQUEST['locations_val']) ? $_REQUEST['locations_val'] : [],
             'from' => isset($_REQUEST['from_val']) ? $_REQUEST['from_val'] : '',
             'to' => isset($_REQUEST['to_val']) ? $_REQUEST['to_val'] : '',
-            'timeframe' => isset($_REQUEST['timeframe']) ? $_REQUEST['timeframe'] : ''
+            'timeframe' => isset($_REQUEST['timeframe']) ? $_REQUEST['timeframe'] : '',
+            'actors' => isset($_REQUEST['actors_val']) ? $_REQUEST['actors_val'] : [],
+            'fatalities' => isset($_REQUEST['fat_val']) ? $_REQUEST['fat_val'] : []
         ];
+
+        $merged_types = array_unique(array_merge($filters['actors'], $filters['disorder_type']));
+        $filters['disorder_type'] = $merged_types;
+
+        foreach ($filters['disorder_type'] as $fatality) {
+            if (($key = array_search($fatality, $filters['fatalities'])) !== false) {
+                unset($filters['fatalities'][$key]);
+            }
+        }
+
 
         $data = $this->get_data($filters,$types);
 

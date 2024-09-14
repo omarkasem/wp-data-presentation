@@ -111,12 +111,23 @@ final class WPDP_Tables {
 
 
         $filters = [
-            'disorder_type' => isset($_REQUEST['type_val']) ? $_REQUEST['type_val'] : null,
-            'locations' => isset($_REQUEST['locations_val']) ? $_REQUEST['locations_val'] : null,
+            'disorder_type' => isset($_REQUEST['type_val']) ? $_REQUEST['type_val'] : [],
+            'locations' => isset($_REQUEST['locations_val']) ? $_REQUEST['locations_val'] : [],
             'from' => isset($_REQUEST['from_val']) ? $_REQUEST['from_val'] : null,
-            'to' => isset($_REQUEST['to_val']) ? $_REQUEST['to_val'] : null
+            'to' => isset($_REQUEST['to_val']) ? $_REQUEST['to_val'] : null,
+            'actors' => isset($_REQUEST['actors_val']) ? $_REQUEST['actors_val'] : [],
+            'fatalities' => isset($_REQUEST['fat_val']) ? $_REQUEST['fat_val'] : []
         ];
 
+
+        $merged_types = array_unique(array_merge($filters['actors'], $filters['disorder_type']));
+        $filters['disorder_type'] = $merged_types;
+
+        foreach ($filters['disorder_type'] as $fatality) {
+            if (($key = array_search($fatality, $filters['fatalities'])) !== false) {
+                unset($filters['fatalities'][$key]);
+            }
+        }
 
         $start = $_REQUEST['start']; // Starting row
         $length = $_REQUEST['length']; // Page length
@@ -275,7 +286,7 @@ final class WPDP_Tables {
                                 $conditions[] = '(' . implode(' AND ', $sub_conditions) . ')';
                             }
                             $whereSQL .= implode(' OR ', $conditions) . ')';
-                        } else {
+                        } elseif ($key == 'disorder_type') {
                             $conditions = [];
                             foreach ($filter as $value) {
                                 $value_parts = explode('+', $value);
@@ -288,6 +299,19 @@ final class WPDP_Tables {
                                 $conditions[] = '(' . implode(' AND ', $sub_conditions) . ')';
                             }
                             $whereSQL .= " AND (" . implode(' OR ', $conditions) . ")";
+                        }elseif ($key == 'fatalities') {
+                            $conditions = [];
+                            foreach ($filter as $value) {
+                                $value_parts = explode('+', $value);
+                                $sub_conditions = [];
+                                foreach ($value_parts as $part) {
+                                    list($val, $col) = explode('__', $part);
+                                    $sub_conditions[] = "$col = %s";
+                                    $queryArgs[] = $val;
+                                }
+                                $conditions[] = '(' . implode(' AND ', $sub_conditions) . ')';
+                            }
+                            $whereSQL .= " AND (" . implode(' OR ', $conditions) . ") AND fatalities > 0";
                         }
                     } else {
                         

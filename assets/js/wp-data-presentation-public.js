@@ -9,6 +9,8 @@
     var markerCluster;
     var selectedLocations = [];
     var selectedIncidents = [];
+    var selectedActors = [];
+    var selectedFat = [];
     var fromYear = '';
     var toYear = '';
     var timeframe = '';
@@ -23,7 +25,7 @@
       self.showMapDetails();
       // self.graphCountSelector();
       self.datePicker();
-      self.actors();
+      // self.actors();
       self.checkbox();
       self.checkfForIndeterminate();
       self.locationSearch();
@@ -32,6 +34,8 @@
     self.setDefaultFilters = function(){
       selectedLocations = [];
       selectedIncidents = [];
+      selectedActors = [];
+      selectedFat = [];
       fromYear = '';
       toYear = '';
       timeframe = '';
@@ -66,7 +70,15 @@
         selectedIncidents.push($(this).val());
       });
 
-      
+      $('input[type="checkbox"].wpdp_actors:checked').each(function() {
+        selectedActors.push($(this).val());
+      });
+
+      $('input[type="checkbox"].wpdp_fat:checked').each(function() {
+        selectedFat.push($(this).val());
+      });
+
+
     },
 
     self.locationSearch = function(){
@@ -330,7 +342,6 @@
     self.maps = function(){
 
       $('#wpdp-loader').css('display','flex');
-      console.log(selectedLocations);
 
       $.ajax({
         url: wpdp_obj.ajax_url,
@@ -338,6 +349,8 @@
           action:'wpdp_map_request',
           type_val: selectedIncidents,
           locations_val: selectedLocations,
+          actors_val: selectedActors,
+          fat_val: selectedFat,
           from_val: fromYear,
           to_val: toYear
         },
@@ -671,6 +684,8 @@
                 d.action = 'wpdp_datatables_request';
                 d.type_val = selectedIncidents;
                 d.from_val = fromYear;
+                d.actors_val = selectedActors;
+                d.fat_val = selectedFat;
                 d.to_val = toYear;
                 d.locations_val = selectedLocations;
               },
@@ -1012,7 +1027,6 @@
           });
         }
       }
-      console.log(timeframe);
 
       $.ajax({
         url: wpdp_obj.ajax_url,
@@ -1020,6 +1034,8 @@
           action:'wpdp_graph_request',
           type_val: selectedIncidents,
           locations_val: selectedLocations,
+          actors_val: selectedActors,
+          fat_val: selectedFat,
           from_val: fromYear,
           to_val: toYear,
           timeframe: timeframe

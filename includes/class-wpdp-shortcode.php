@@ -726,7 +726,7 @@ final class WPDP_Shortcode {
     }
 
     private function get_session_value($key, $default = '') {
-        return isset($_SESSION[$key]) ? $_SESSION[$key] : $default;
+        return isset($_SESSION['wpdp_'.$key]) ? $_SESSION['wpdp_'.$key] : $default;
     }
 
     public function save_filter_choices() {
@@ -743,7 +743,7 @@ final class WPDP_Shortcode {
 
         $filter_data = $_POST['filter_data'];
         foreach ($filter_data as $key => $value) {
-            $_SESSION[$key] = $value;
+            $_SESSION['wpdp_'.$key] = $value;
         }
 
         wp_send_json_success('Filter choices saved');
