@@ -1019,7 +1019,7 @@
 
       $('#wpdp-loader').css('display','flex');
 
-      if(selectedIncidents.length <= 0){
+      if(selectedIncidents.length <= 0 && selectedActors.length <= 0 && selectedFat.length <= 0){
         // Select only parent checkboxes if no filtered applied.
         if ($('input[type="checkbox"].wpdp_incident_type:checked').length === 0) {
           $('ul.first_one > li > input[type="checkbox"].wpdp_incident_type').each(function() {

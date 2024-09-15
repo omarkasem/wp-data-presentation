@@ -75,15 +75,8 @@ final class WPDP_Graphs {
             'fatalities' => isset($_REQUEST['fat_val']) ? $_REQUEST['fat_val'] : []
         ];
 
-        $merged_types = array_unique(array_merge($filters['actors'], $filters['disorder_type']));
+        $merged_types = array_unique(array_merge($filters['actors'], $filters['disorder_type'], $filters['fatalities']));
         $filters['disorder_type'] = $merged_types;
-
-        foreach ($filters['disorder_type'] as $fatality) {
-            if (($key = array_search($fatality, $filters['fatalities'])) !== false) {
-                unset($filters['fatalities'][$key]);
-            }
-        }
-
 
         $data = $this->get_data($filters,$types);
 
