@@ -17,8 +17,8 @@
 
     self.init = function(){
       self.setDefaultFilters();
-      self.graphChange();
       self.dataTables();
+      self.graphChange();
       self.menuFilters();
       self.filtersChange();
       self.expandable();
@@ -156,28 +156,9 @@
 
       $('#filter_form').on('reset', function() {
         $(this).find('input[type="checkbox"]').prop('indeterminate', false);
-      });
-
-
-      $('#filter_form input[type="reset"]').on('click', function() {
         $('.filter_data .no_data').hide();
-        $.ajax({
-            url: wpdp_obj.ajax_url,
-            type: 'POST',
-            data: {
-                action: 'clear_filter_choices'
-            },
-            success: function(response) {
-                if (response.success) {
-                    console.log('Filter choices cleared');
-                    // Reload the page to reflect the cleared filters
-                    location.reload();
-                } else {
-                    console.error('Failed to clear filter choices');
-                }
-            }
-        });
-    });
+        $('#wpdp_search_location').val('').change();
+      });
 
 
     };
@@ -674,6 +655,7 @@
 
     self.dataTables = function(){
       if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
+        console.log(selectedIncidents);
         $('#wpdp-loader').css('display','flex');
         
         self.table = $('#wpdp_datatable').DataTable({
@@ -993,6 +975,11 @@
     self.filterAction = function(){
       self.setDefaultFilters();
 
+
+      if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
+        self.table.draw(false);
+      }
+
       self.graphChange();
 
       if (typeof google === 'object' && typeof google.maps === 'object') {
@@ -1006,9 +993,7 @@
         self.maps();
       }
 
-      if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
-        self.table.draw(false);
-      }
+
     },
       
     self.graphChange = function(){

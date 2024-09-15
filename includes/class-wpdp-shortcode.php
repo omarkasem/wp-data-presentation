@@ -72,6 +72,11 @@ final class WPDP_Shortcode {
 
         add_action('wp_ajax_search_location', array($this, 'search_location'));
         add_action('wp_ajax_nopriv_search_location', array($this, 'search_location'));
+
+        if(isset($_GET['test5555'])){
+            session_start();
+            var_dump($_SESSION);exit;
+        }
     }
 
     public function search_location(){

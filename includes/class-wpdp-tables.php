@@ -199,7 +199,7 @@ final class WPDP_Tables {
         ));
     
         if (empty($posts)) {
-            return 'No data';
+            return ['data' => [], 'count' => 0];
         }
     
         // Ensure event_id_cnty is always in the types array
@@ -220,18 +220,22 @@ final class WPDP_Tables {
             $date_sample = $wpdb->get_var("SELECT event_date FROM $table_name LIMIT 1");
             $date_format = WPDP_Shortcode::get_date_format($date_sample);
             $mysql_date_format = $date_format['mysql'];
-            $whereSQL = $this->build_where_clause($filters, $queryArgs,$date_format);
-            $query = "SELECT " . implode(', ', array_map(function($type) {
+            $whereSQL = $this->build_where_clause($filters, $queryArgs, $date_format);
+            
+            $query = "SELECT " . implode(', ', array_map(function($type) use ($table_name, $mysql_date_format) {
+                if ($type === 'event_date') {
+                    return "CONVERT(STR_TO_DATE(event_date, '$mysql_date_format') USING utf8mb4) AS date_column_standard";
+                }
                 if ($type === 'fatalities') {
-                    return "CASE WHEN $type > 0 THEN CONCAT($type, ' from ', event_type) ELSE CAST($type AS CHAR) END AS $type";
+                    return "CONVERT(CASE WHEN $type > 0 THEN CONCAT($type, ' from ', event_type) ELSE CAST($type AS CHAR) END USING utf8mb4) AS $type";
                 }
                 if ($type === 'disorder_type') {
-                    return "CONCAT($type, ' / ', event_type, ' / ', sub_event_type)";
+                    return "CONVERT(CONCAT($type, ' / ', event_type, ' / ', sub_event_type) USING utf8mb4) AS $type";
                 }
-                return $type;
+                return "CONVERT($type USING utf8mb4) AS $type";
             }, $types)) . " FROM {$table_name}";
-            $query = str_replace('event_date',"STR_TO_DATE(event_date, '".$mysql_date_format."') AS date_column_standard",$query);
-            $query.= " {$whereSQL}";
+            
+            $query .= " {$whereSQL}";
             $union_queries[] = $query;
         }
 
@@ -259,7 +263,7 @@ final class WPDP_Tables {
             GROUP BY event_id_cnty
         ) AS t
         ";
-    
+
         $data = $wpdb->get_results($wpdb->prepare($final_query, $queryArgs), $arr_type);
         $count = $wpdb->get_var($wpdb->prepare($count_query, $queryArgs));
         return ['data' => $data, 'count' => $count];
@@ -318,10 +322,10 @@ final class WPDP_Tables {
                         $mysql_date_format = $date_format['mysql'];
     
                         if ($key === 'from') {
-                            $whereSQL .= " AND STR_TO_DATE(event_date, '$mysql_date_format') >= STR_TO_DATE(%s, '$mysql_date_format')";
+                            $whereSQL .= " AND STR_TO_DATE(event_date, '{$mysql_date_format}') >= STR_TO_DATE(%s, '{$mysql_date_format}')";
                             $queryArgs[] = date($date_format['php'], strtotime($filter));
                         } elseif ($key === 'to') {
-                            $whereSQL .= " AND STR_TO_DATE(event_date, '$mysql_date_format') <= STR_TO_DATE(%s, '$mysql_date_format')";
+                            $whereSQL .= " AND STR_TO_DATE(event_date, '{$mysql_date_format}') <= STR_TO_DATE(%s, '{$mysql_date_format}')";
                             $queryArgs[] = date($date_format['php'], strtotime($filter));
                         } else {
                             $whereSQL .= " AND $key = %s";
