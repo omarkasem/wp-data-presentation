@@ -76,7 +76,7 @@ final class WPDP_Graphs {
         ];
 
         $merged_types = array_unique(array_merge($filters['actors'], $filters['disorder_type'], $filters['fatalities']));
-        $filters['disorder_type'] = $merged_types;
+        $filters['merged_types'] = $merged_types;
 
         $data = $this->get_data($filters,$types);
 
@@ -192,32 +192,16 @@ final class WPDP_Graphs {
 
         $count = 0;
         $data = [];
-        foreach($filters['disorder_type'] as $type){
+        $data_fat = [];
+        foreach($filters['merged_types'] as $type){
             $new_sql = [];
-            $conditions2 = [];
             $new_where = '';
 
-            if(strpos($type,'+') !== false){
-                $type = explode('+',$type);
-                $text = '';
-                $i=0;
-                foreach($type as $type_v){$i++;
-                    $type_v = explode('__',$type_v);
-                    $column = $type_v[1];
-                    $text .= $type_v[0];
-                    if(count($type) != $i){
-                        $text.= ' & ';
-                    }
-                    $conditions2[] = "{$column} = '{$text}'";
-                }
-            }else{
-                $type = explode('__',$type);
-                $column = $type[1];
-                $text = $type[0];
-                $conditions2[] = "{$column} = '{$text}'";
-            }
+            $text_and_conditions = $this->get_text_and_conditions($type);
+            $text = $text_and_conditions['text'];
+            $conditions = $text_and_conditions['conditions'];
 
-            $new_where .= " AND (".implode(' OR ', $conditions2).")";
+            $new_where .= " AND (".implode(' OR ', $conditions).")";
 
             if(!empty($filters['locations'])){
                 $new_where .= ' AND (';
@@ -259,15 +243,56 @@ final class WPDP_Graphs {
             ) AS t ORDER BY week_start ASC
             ");
             $res = $wpdb->get_results($query);
-            $data[$text] = $res;
-            $count += count($res);
-        }
 
+            foreach($filters['fatalities'] as $fat){
+                $fat_text_and_conditions = $this->get_text_and_conditions($fat);
+                if($text === $fat_text_and_conditions['text']){
+                    $data_fat[$text] = $res;
+                }
+            }
+
+            foreach($filters['disorder_type'] as $disorder_type){
+                $disorder_type_text_and_conditions = $this->get_text_and_conditions($disorder_type);
+                if($text === $disorder_type_text_and_conditions['text']){
+                    $data[$text] = $res;
+                }
+            }
+
+        }
 
         return [
             'data'=>$data,
+            'data_fat'=>$data_fat,
             'chart_sql'=>$chart_sql,
-            'count'=>$count
+        ];
+    }
+
+    public function get_text_and_conditions($type){
+        $conditions = [];
+        $text = '';
+        if(strpos($type,'+') !== false){
+            $type = explode('+',$type);
+            $text = '';
+            $i=0;
+            foreach($type as $type_v){$i++;
+                $type_v = explode('__',$type_v);
+                $column = $type_v[1];
+                $text .= $type_v[0];
+                if(count($type) != $i){
+                    $text.= ' & ';
+                }
+                $conditions[] = "{$column} = '{$text}'";
+            }
+        }else{
+            $type = explode('__',$type);
+            $column = $type[1];
+            $text = $type[0];
+            $conditions[] = "{$column} = '{$text}'";
+        }
+
+        return [
+            'text'=>$text,
+            'conditions'=>$conditions
         ];
     }
 
