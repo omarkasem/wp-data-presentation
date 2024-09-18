@@ -658,7 +658,6 @@
 
     self.dataTables = function(){
       if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
-        console.log(selectedIncidents);
         $('#wpdp-loader').css('display','flex');
         
         self.table = $('#wpdp_datatable').DataTable({

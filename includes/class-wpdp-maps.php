@@ -130,126 +130,27 @@ final class WPDP_Maps {
         $filters = $this->format_dates_to_one_year($filters);
         global $wpdb;
         $data = [];
-
-        $where_sql = ' WHERE 1=1';
-        if (!empty($filters)) {
-            foreach($filters as $key => $filter) {
-                if(!empty($filter)){
-                    if(is_array($filter)){
-                        if($key == "locations"){
-
-                            $where_sql .= ' AND ';
-                            $loci = 0;
-                            foreach($filter as $value){ $loci++;
-                                $conditions = array();
-                                if(strpos($value,'+') !== false){
-                                    $value = explode(' + ',$value);
-                                    foreach($value as $v){
-                                        $real_v = explode('__',$v);
-                                        $column = $real_v[1];
-                                        $real_value = $real_v[0];
-                                        $conditions[] = "$column = '{$real_value}'";
-                                    }
-                                }else{
-                                    $real_v = explode('__',$value);
-                                    $column = $real_v[1];
-                                    $real_value = $real_v[0];
-                                    $conditions[] = "$column = '{$real_value}'";
-                                }
-                                $where_sql .= " (".implode(' AND ', $conditions).")";
-                                if($loci !== count($filters['locations'])){
-                                    $where_sql.= ' OR ';
-                                }
-                            }
-                        }elseif($key === 'disorder_type'){
-                            $conditions2 = [];
-                            foreach($filter as $inc_v){
-
-                                if(strpos($inc_v,'+') !== false){
-                                    $inc_v = explode('+',$inc_v);
-                                    $i=0;
-                                    foreach($inc_v as $inc_v2){$i++;
-                                        $inc_v2 = explode('__',$inc_v2);
-                                        $inc_type[$inc_v2[1]][] = $inc_v2[0];
-                                    }
-                                }else{
-                                    $inc_v = explode('__',$inc_v);
-                                    $inc_type[$inc_v[1]][] = $inc_v[0];
-                                }
-
-                            }
-
-                            foreach($inc_type as $inc_type_k => $inc_type_v){$i++;
-                                $conditions2[] = "{$inc_type_k} IN ('" . implode("', '", $inc_type_v) . "')";
-                            }
-
-                            $where_sql .= " AND (".implode(' OR ', $conditions2).")";
- 
-                        }elseif($key === 'fatalities'){
-                            $conditions3 = [];
-                            foreach($filter as $inc_v){
-
-                                if(strpos($inc_v,'+') !== false){
-                                    $inc_v = explode('+',$inc_v);
-                                    $i=0;
-                                    foreach($inc_v as $inc_v2){$i++;
-                                        $inc_v2 = explode('__',$inc_v2);
-                                        $inc_type[$inc_v2[1]][] = $inc_v2[0];
-                                    }
-                                }else{
-                                    $inc_v = explode('__',$inc_v);
-                                    $inc_type[$inc_v[1]][] = $inc_v[0];
-                                }
-
-                            }
-                            
-                            foreach($inc_type as $inc_type_k => $inc_type_v){$i++;
-                                $conditions3[] = "{$inc_type_k} IN ('" . implode("', '", $inc_type_v) . "')";
-                            }
-
-                            $where_sql .= " AND (".implode(' OR ', $conditions3).") AND fatalities > 0";
- 
-                        }
-                    }
-                }
-            }
-        }
-
+        $queryArgs = [];
         $union_queries = [];
 
         foreach($posts as $id){
-            $new_where = $where_sql;
             $table_name = $wpdb->prefix. 'wpdp_data_'.$id;
             $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
             if(!$table_exists){
                 continue;
             }
 
-
             $date_sample = $wpdb->get_var("SELECT event_date FROM $table_name LIMIT 1");
             $date_format = WPDP_Shortcode::get_date_format($date_sample);
-            $mysql_date_format = $date_format['mysql'];
-            $filter_format_from = date($date_format['php'],strtotime($filters['from']));
-            $filter_format_to = date($date_format['php'],strtotime($filters['to']));
-            
-            if($filters['from'] != ''){
-                $new_where .= " AND STR_TO_DATE(event_date, '$mysql_date_format') >= STR_TO_DATE('{$filter_format_from}', '$mysql_date_format')";
-            }
-    
-            if($filters['to'] != ''){
-                $new_where .= " AND STR_TO_DATE(event_date, '$mysql_date_format') <= STR_TO_DATE('{$filter_format_to}', '$mysql_date_format')";
-            }
-
-            $new_where = str_replace('%%','%',$new_where);
+            $whereSQL = $this->build_where_clause($filters, $queryArgs, $date_format);
 
             $query = "SELECT 
             ".implode(', ', $types)." 
-             FROM {$table_name} {$new_where}";
+             FROM {$table_name} {$whereSQL}";
 
             $union_queries[] = $query;
 
         }
-
         $union_query = implode(' UNION ALL ', $union_queries);
 
         $final_query = "
@@ -258,11 +159,61 @@ final class WPDP_Maps {
         LIMIT 500
         ";
 
-        $result = $wpdb->get_results($final_query);
+        $result = $wpdb->get_results($wpdb->prepare($final_query, $queryArgs), ARRAY_A);
         $count = count($result);
         return ['data'=>$result,'count'=>$count];
 
     }
+
+    private function build_where_clause($filters, &$queryArgs, $date_format) {
+        $whereSQL = ' WHERE 1=1 ';
+
+        if(!empty($filters['locations'])){
+            $whereSQL .= ' AND (';
+            $conditions = [];
+            foreach ($filters['locations'] as $value) {
+                $sub_conditions = [];
+                $value_parts = explode(' + ', $value);
+                foreach ($value_parts as $part) {
+                    list($val, $col) = explode('__', $part);
+                    $sub_conditions[] = "$col = %s";
+                    $queryArgs[] = $val;
+                }
+                $conditions[] = '(' . implode(' AND ', $sub_conditions) . ')';
+            }
+            $whereSQL .= implode(' OR ', $conditions) . ')';
+        }
+
+
+        if(!empty($filters['disorder_type'])){
+            $conditions = [];
+            foreach ($filters['disorder_type'] as $value) {
+                $value_parts = explode('+', $value);
+                $sub_conditions = [];
+                foreach ($value_parts as $part) {
+                    list($val, $col) = explode('__', $part);
+                    $sub_conditions[] = "$col = %s".(in_array($value,$filters['fatalities']) ? ' AND fatalities > 0' : '');
+                    $queryArgs[] = $val;
+                }
+                $conditions[] = '(' . implode(' AND ', $sub_conditions) . ')';
+            }
+            $whereSQL .= " AND (" . implode(' OR ', $conditions) . ")";
+        }
+
+        $mysql_date_format = $date_format['mysql'];
+
+        if(!empty($filters['from'])){
+            $whereSQL .= " AND STR_TO_DATE(event_date, '{$mysql_date_format}') >= STR_TO_DATE(%s, '{$mysql_date_format}')";
+            $queryArgs[] = date($date_format['php'], strtotime($filters['from']));
+        }
+
+        if(!empty($filters['to'])){
+            $whereSQL .= " AND STR_TO_DATE(event_date, '{$mysql_date_format}') <= STR_TO_DATE(%s, '{$mysql_date_format}')";
+            $queryArgs[] = date($date_format['php'], strtotime($filters['to']));
+        }
+        return $whereSQL;
+    }
+
 
     public function get_map_data(){
         $filters = [
@@ -274,16 +225,8 @@ final class WPDP_Maps {
             'to' => isset($_REQUEST['to_val']) ? $_REQUEST['to_val'] : ''
         ];
 
-
-        // Merge actors and disorder_type and remove any duplicates
-        $merged_types = array_unique(array_merge($filters['actors'], $filters['disorder_type']));
+        $merged_types = array_unique(array_merge($filters['actors'], $filters['disorder_type'],$filters['fatalities']));
         $filters['disorder_type'] = $merged_types;
-
-        foreach ($filters['disorder_type'] as $fatality) {
-            if (($key = array_search($fatality, $filters['fatalities'])) !== false) {
-                unset($filters['fatalities'][$key]);
-            }
-        }
 
         $types = [
             'event_date',

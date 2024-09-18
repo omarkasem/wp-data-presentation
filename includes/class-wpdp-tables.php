@@ -119,15 +119,8 @@ final class WPDP_Tables {
             'fatalities' => isset($_REQUEST['fat_val']) ? $_REQUEST['fat_val'] : []
         ];
 
-
-        $merged_types = array_unique(array_merge($filters['actors'], $filters['disorder_type']));
+        $merged_types = array_unique(array_merge($filters['actors'], $filters['disorder_type'],$filters['fatalities']));
         $filters['disorder_type'] = $merged_types;
-
-        foreach ($filters['disorder_type'] as $fatality) {
-            if (($key = array_search($fatality, $filters['fatalities'])) !== false) {
-                unset($filters['fatalities'][$key]);
-            }
-        }
 
         $start = $_REQUEST['start']; // Starting row
         $length = $_REQUEST['length']; // Page length
@@ -270,70 +263,50 @@ final class WPDP_Tables {
     }
     
     private function build_where_clause($filters, &$queryArgs, $date_format) {
-        $whereSQL = '';
-        if (!empty($filters)) {
-            $whereSQL = ' WHERE 1=1';
-            foreach ($filters as $key => $filter) {
-                if (!empty($filter)) {
-                    if (is_array($filter)) {
-                        if ($key == "locations") {
-                            $whereSQL .= ' AND (';
-                            $conditions = [];
-                            foreach ($filter as $value) {
-                                $sub_conditions = [];
-                                $value_parts = explode(' + ', $value);
-                                foreach ($value_parts as $part) {
-                                    list($val, $col) = explode('__', $part);
-                                    $sub_conditions[] = "$col = %s";
-                                    $queryArgs[] = $val;
-                                }
-                                $conditions[] = '(' . implode(' AND ', $sub_conditions) . ')';
-                            }
-                            $whereSQL .= implode(' OR ', $conditions) . ')';
-                        } elseif ($key == 'disorder_type') {
-                            $conditions = [];
-                            foreach ($filter as $value) {
-                                $value_parts = explode('+', $value);
-                                $sub_conditions = [];
-                                foreach ($value_parts as $part) {
-                                    list($val, $col) = explode('__', $part);
-                                    $sub_conditions[] = "$col = %s";
-                                    $queryArgs[] = $val;
-                                }
-                                $conditions[] = '(' . implode(' AND ', $sub_conditions) . ')';
-                            }
-                            $whereSQL .= " AND (" . implode(' OR ', $conditions) . ")";
-                        }elseif ($key == 'fatalities') {
-                            $conditions = [];
-                            foreach ($filter as $value) {
-                                $value_parts = explode('+', $value);
-                                $sub_conditions = [];
-                                foreach ($value_parts as $part) {
-                                    list($val, $col) = explode('__', $part);
-                                    $sub_conditions[] = "$col = %s";
-                                    $queryArgs[] = $val;
-                                }
-                                $conditions[] = '(' . implode(' AND ', $sub_conditions) . ')';
-                            }
-                            $whereSQL .= " AND (" . implode(' OR ', $conditions) . ") AND fatalities > 0";
-                        }
-                    } else {
-                        
-                        $mysql_date_format = $date_format['mysql'];
-    
-                        if ($key === 'from') {
-                            $whereSQL .= " AND STR_TO_DATE(event_date, '{$mysql_date_format}') >= STR_TO_DATE(%s, '{$mysql_date_format}')";
-                            $queryArgs[] = date($date_format['php'], strtotime($filter));
-                        } elseif ($key === 'to') {
-                            $whereSQL .= " AND STR_TO_DATE(event_date, '{$mysql_date_format}') <= STR_TO_DATE(%s, '{$mysql_date_format}')";
-                            $queryArgs[] = date($date_format['php'], strtotime($filter));
-                        } else {
-                            $whereSQL .= " AND $key = %s";
-                            $queryArgs[] = $filter;
-                        }
-                    }
+        $whereSQL = ' WHERE 1=1 ';
+
+        if(!empty($filters['locations'])){
+            $whereSQL .= ' AND (';
+            $conditions = [];
+            foreach ($filters['locations'] as $value) {
+                $sub_conditions = [];
+                $value_parts = explode(' + ', $value);
+                foreach ($value_parts as $part) {
+                    list($val, $col) = explode('__', $part);
+                    $sub_conditions[] = "$col = %s";
+                    $queryArgs[] = $val;
                 }
+                $conditions[] = '(' . implode(' AND ', $sub_conditions) . ')';
             }
+            $whereSQL .= implode(' OR ', $conditions) . ')';
+        }
+
+
+        if(!empty($filters['disorder_type'])){
+            $conditions = [];
+            foreach ($filters['disorder_type'] as $value) {
+                $value_parts = explode('+', $value);
+                $sub_conditions = [];
+                foreach ($value_parts as $part) {
+                    list($val, $col) = explode('__', $part);
+                    $sub_conditions[] = "$col = %s".(in_array($value,$filters['fatalities']) ? ' AND fatalities > 0' : '');
+                    $queryArgs[] = $val;
+                }
+                $conditions[] = '(' . implode(' AND ', $sub_conditions) . ')';
+            }
+            $whereSQL .= " AND (" . implode(' OR ', $conditions) . ")";
+        }
+
+        $mysql_date_format = $date_format['mysql'];
+
+        if(!empty($filters['from'])){
+            $whereSQL .= " AND STR_TO_DATE(event_date, '{$mysql_date_format}') >= STR_TO_DATE(%s, '{$mysql_date_format}')";
+            $queryArgs[] = date($date_format['php'], strtotime($filters['from']));
+        }
+
+        if(!empty($filters['to'])){
+            $whereSQL .= " AND STR_TO_DATE(event_date, '{$mysql_date_format}') <= STR_TO_DATE(%s, '{$mysql_date_format}')";
+            $queryArgs[] = date($date_format['php'], strtotime($filters['to']));
         }
         return $whereSQL;
     }
