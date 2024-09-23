@@ -54,7 +54,44 @@ final class WPDP_Graphs {
         add_action( 'wp_ajax_nopriv_wpdp_graph_request', array($this,'get_graph_data') );
         add_action( 'wp_ajax_wpdp_graph_request', array($this,'get_graph_data') );
 
+        if(isset($_REQUEST['test'])){
+            var_dump($this->aggregate_data(get_option('test')));exit;
+        }
 
+
+    }
+
+    private function aggregate_data($data){
+
+        if(empty($data)){
+            return [];
+        }
+
+        $result = [];
+
+        foreach($data as $key => $values){
+            $aggregated = [];
+
+            foreach($values as $value){
+                $year = $value->year_week;
+
+                if(!isset($aggregated[$year])){
+                    $aggregated[$year] = (object) [
+                        'fatalities_count' => 0,
+                        'events_count' => 0,
+                        'year_week' => $year,
+                        'week_start' => $year . '-01-01'
+                    ];
+                }
+
+                $aggregated[$year]->fatalities_count += (int) $value->fatalities_count;
+                $aggregated[$year]->events_count += (int) $value->events_count;
+            }
+
+            $result[$key] = array_values($aggregated);
+        }
+
+        return $result;
     }
 
     public function get_graph_data(){
@@ -75,8 +112,28 @@ final class WPDP_Graphs {
             'fatalities' => isset($_REQUEST['fat_val']) ? $_REQUEST['fat_val'] : []
         ];
 
-        $merged_types = array_unique(array_merge($filters['actors'], $filters['disorder_type'], $filters['fatalities']));
+        $merged_types = [];
+        $new_disorder_type = [];
+        $new_fatalities = [];
+
+        foreach (array_merge($filters['disorder_type'], $filters['fatalities']) as $value) {
+            $parts = explode('+', $value);
+            foreach ($parts as $part) {
+                if (!in_array($part, $merged_types)) {
+                    $merged_types[] = $part;
+                }
+                if (in_array($value, $filters['disorder_type']) && !in_array($part, $new_disorder_type)) {
+                    $new_disorder_type[] = $part;
+                }
+                if (in_array($value, $filters['fatalities']) && !in_array($part, $new_fatalities)) {
+                    $new_fatalities[] = $part;
+                }
+            }
+        }
+
         $filters['merged_types'] = $merged_types;
+        $filters['disorder_type'] = $new_disorder_type;
+        $filters['fatalities'] = $new_fatalities;
 
         $data = $this->get_data($filters,$types);
 
@@ -175,36 +232,28 @@ final class WPDP_Graphs {
             }
 
 
-            $sql_parts[] = "SELECT 
-                SUM(fatalities) as fatalities_count,
-                COUNT(*) as events_count,
-                {$sql_type}(STR_TO_DATE(event_date, '$mysql_date_format')) as year_week,
-                MIN(STR_TO_DATE(event_date, '$mysql_date_format')) as week_start,
-                disorder_type,event_type,sub_event_type
-            FROM {$table_name} {$whereSQL} 
-            ";
-
-        }
-
-        if(empty($sql_parts)){
-            return [];
-        }
-
-        $count = 0;
-        $data = [];
-        $data_fat = [];
-        foreach($filters['merged_types'] as $type){
-            $new_sql = [];
-            $new_where = '';
-
-            $text_and_conditions = $this->get_text_and_conditions($type);
-            $text = $text_and_conditions['text'];
-            $conditions = $text_and_conditions['conditions'];
-
-            $new_where .= " AND (".implode(' OR ', $conditions).")";
+            if(!empty($filters['actors'])){
+                $actor_values = [];
+                foreach ($filters['actors'] as $value) {
+                    $value_parts = explode('+', $value);
+                    foreach ($value_parts as $part) {
+                        $actor_values[] = $part;
+                    }
+                }
+                $actor_values = array_map(function($val) { return "'{$val}'"; }, $actor_values);
+                $actor_values_str = implode(',', $actor_values);
+                
+                // Check if the current table has the column 'inter2'
+                $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'inter2'");
+                if (!empty($column_exists)) {
+                    $whereSQL .= " AND (inter1 IN ({$actor_values_str}) OR inter2 IN ({$actor_values_str}))";
+                } else {
+                    $whereSQL .= " AND inter1 IN ({$actor_values_str})";
+                }
+            }
 
             if(!empty($filters['locations'])){
-                $new_where .= ' AND (';
+                $whereSQL .= ' AND (';
                 $loci = 0;
                 foreach($filters['locations'] as $value){ $loci++;
 
@@ -223,18 +272,44 @@ final class WPDP_Graphs {
                         $real_value = $real_v[0];
                         $conditions[] = "$column = '{$real_value}'";
                     }
-                    $new_where .= " (".implode(' AND ', $conditions).")";
+                    $whereSQL .= " (".implode(' AND ', $conditions).")";
                     if($loci !== count($filters['locations'])){
-                        $new_where.= ' OR ';
+                        $whereSQL.= ' OR ';
                     }
                 }
-                $new_where .= ')';
+                $whereSQL .= ')';
             }
+
+
+
+            $sql_parts[] = "SELECT 
+                SUM(fatalities) as fatalities_count,
+                COUNT(*) as events_count,
+                {$sql_type}(STR_TO_DATE(event_date, '$mysql_date_format')) as year_week,
+                MIN(STR_TO_DATE(event_date, '$mysql_date_format')) as week_start
+            FROM {$table_name} {$whereSQL} 
+            ";
+
+        }
+
+        if(empty($sql_parts)){
+            return [];
+        }
+
+        $count = 0;
+        $data = [];
+        $data_fat = [];
+        foreach($filters['merged_types'] as $type){
+            $new_sql = [];
+            $text_and_conditions = $this->get_text_and_conditions($type);
+            $text = $text_and_conditions['text'];
+            $conditions = $text_and_conditions['conditions'];
+
+            $new_where = " AND (".implode(' OR ', $conditions).")";
 
             foreach($sql_parts as $sql){
-                $new_sql[]= $sql.' '.$new_where  . ' GROUP BY year_week, disorder_type ';
+                $new_sql[]= $sql.' '.$new_where  . ' GROUP BY year_week';
             }
-
 
             $query = $wpdb->prepare("
             SELECT *
@@ -257,12 +332,12 @@ final class WPDP_Graphs {
                     $data[$text] = $res;
                 }
             }
-
         }
 
+
         return [
-            'data'=>$data,
-            'data_fat'=>$data_fat,
+            'data'=>$this->aggregate_data($data),
+            'data_fat'=>$this->aggregate_data($data_fat),
             'chart_sql'=>$chart_sql,
         ];
     }
@@ -305,6 +380,8 @@ final class WPDP_Graphs {
         <canvas id="wpdp_chart" width="800" ></canvas>
         <hr>
         <canvas id="wpdp_chart_fat" width="800" ></canvas>
+        <hr>
+        <canvas id="wpdp_chart_bar_chart" width="800" ></canvas>
     <?php }
 
 

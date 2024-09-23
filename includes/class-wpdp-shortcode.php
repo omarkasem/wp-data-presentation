@@ -633,9 +633,10 @@ final class WPDP_Shortcode {
         $class = 'wpdp_incident_type';
         foreach ($array as $item) { 
             if ($not_incident) {
-                $value = $this->get_value_from_incident_type($item['mapping_to_incident']);
                 $class = 'wpdp_actors';
+                $value = (isset($item['actor_code'])  ? $item['actor_code'] : '');
                 if($not_incident === 'fat'){
+                    $value = $this->get_value_from_incident_type($item['mapping_to_incident']);
                     $class = 'wpdp_fat';
                 }
             } else {

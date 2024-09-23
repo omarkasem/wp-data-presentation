@@ -142,7 +142,8 @@ final class WPDP_Maps {
 
             $date_sample = $wpdb->get_var("SELECT event_date FROM $table_name LIMIT 1");
             $date_format = WPDP_Shortcode::get_date_format($date_sample);
-            $whereSQL = $this->build_where_clause($filters, $queryArgs, $date_format);
+            $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'inter2'");
+            $whereSQL = $this->build_where_clause($filters, $queryArgs, $date_format, $column_exists);
 
             $query = "SELECT 
             ".implode(', ', $types)." 
@@ -165,7 +166,7 @@ final class WPDP_Maps {
 
     }
 
-    private function build_where_clause($filters, &$queryArgs, $date_format) {
+    private function build_where_clause($filters, &$queryArgs, $date_format, $column_exists) {
         $whereSQL = ' WHERE 1=1 ';
 
         if(!empty($filters['locations'])){
@@ -200,6 +201,23 @@ final class WPDP_Maps {
             $whereSQL .= " AND (" . implode(' OR ', $conditions) . ")";
         }
 
+
+        if(!empty($filters['actors'])){
+            $conditions = [];
+            foreach ($filters['actors'] as $value) {
+                $value_parts = explode('+', $value);
+                foreach ($value_parts as $part) {
+                    $conditions[] = "inter1 = %s";
+                    $queryArgs[] = $part;
+                    if($column_exists){
+                        $conditions[] = "inter2 = %s";
+                        $queryArgs[] = $part;
+                    }
+                }
+            }
+            $whereSQL .= " AND (" . implode(' OR ', $conditions) . ")";
+        }
+        
         $mysql_date_format = $date_format['mysql'];
 
         if(!empty($filters['from'])){
@@ -225,7 +243,7 @@ final class WPDP_Maps {
             'to' => isset($_REQUEST['to_val']) ? $_REQUEST['to_val'] : ''
         ];
 
-        $merged_types = array_unique(array_merge($filters['actors'], $filters['disorder_type'],$filters['fatalities']));
+        $merged_types = array_unique(array_merge($filters['disorder_type'],$filters['fatalities']));
         $filters['disorder_type'] = $merged_types;
 
         $types = [

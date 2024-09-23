@@ -119,7 +119,7 @@ final class WPDP_Tables {
             'fatalities' => isset($_REQUEST['fat_val']) ? $_REQUEST['fat_val'] : []
         ];
 
-        $merged_types = array_unique(array_merge($filters['actors'], $filters['disorder_type'],$filters['fatalities']));
+        $merged_types = array_unique(array_merge( $filters['disorder_type'],$filters['fatalities']));
         $filters['disorder_type'] = $merged_types;
 
         $start = $_REQUEST['start']; // Starting row
@@ -130,7 +130,7 @@ final class WPDP_Tables {
 
         $totalRecords = $this->get_total_records_count(); // Implement a function to get the total number of records
 
-        $data = $this->get_data($filters,$types, $start, $length, $columnName, $orderDir,true);
+        $data = $this->get_data($filters,$types, $start, $length, $columnName, $orderDir);
 
         $arr = [
             "draw" => intval($_REQUEST['draw']),
@@ -182,7 +182,7 @@ final class WPDP_Tables {
 
 
     
-    public function get_data($filters, $types, $start, $length, $columnName, $orderDir, $values_only = false) {
+    public function get_data($filters, $types, $start, $length, $columnName, $orderDir) {
         global $wpdb;
     
         $posts = get_posts(array(
@@ -195,13 +195,6 @@ final class WPDP_Tables {
             return ['data' => [], 'count' => 0];
         }
     
-        // Ensure event_id_cnty is always in the types array
-        if (!in_array('event_id_cnty', $types)) {
-            $types[] = 'event_id_cnty';
-        }
-    
-        $arr_type = $values_only ? ARRAY_N : ARRAY_A;
-    
         $union_queries = [];
         $queryArgs = [];
     
@@ -213,7 +206,9 @@ final class WPDP_Tables {
             $date_sample = $wpdb->get_var("SELECT event_date FROM $table_name LIMIT 1");
             $date_format = WPDP_Shortcode::get_date_format($date_sample);
             $mysql_date_format = $date_format['mysql'];
-            $whereSQL = $this->build_where_clause($filters, $queryArgs, $date_format);
+            $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'inter2'");
+
+            $whereSQL = $this->build_where_clause($filters, $queryArgs, $date_format,$column_exists);
             
             $query = "SELECT " . implode(', ', array_map(function($type) use ($table_name, $mysql_date_format) {
                 if ($type === 'event_date') {
@@ -257,12 +252,12 @@ final class WPDP_Tables {
         ) AS t
         ";
 
-        $data = $wpdb->get_results($wpdb->prepare($final_query, $queryArgs), $arr_type);
+        $data = $wpdb->get_results($wpdb->prepare($final_query, $queryArgs), ARRAY_N);
         $count = $wpdb->get_var($wpdb->prepare($count_query, $queryArgs));
         return ['data' => $data, 'count' => $count];
     }
     
-    private function build_where_clause($filters, &$queryArgs, $date_format) {
+    private function build_where_clause($filters, &$queryArgs, $date_format, $column_exists) {
         $whereSQL = ' WHERE 1=1 ';
 
         if(!empty($filters['locations'])){
@@ -293,6 +288,22 @@ final class WPDP_Tables {
                     $queryArgs[] = $val;
                 }
                 $conditions[] = '(' . implode(' AND ', $sub_conditions) . ')';
+            }
+            $whereSQL .= " AND (" . implode(' OR ', $conditions) . ")";
+        }
+
+        if(!empty($filters['actors'])){
+            $conditions = [];
+            foreach ($filters['actors'] as $value) {
+                $value_parts = explode('+', $value);
+                foreach ($value_parts as $part) {
+                    $conditions[] = "inter1 = %s";
+                    $queryArgs[] = $part;
+                    if($column_exists){
+                        $conditions[] = "inter2 = %s";
+                        $queryArgs[] = $part;
+                    }
+                }
             }
             $whereSQL .= " AND (" . implode(' OR ', $conditions) . ")";
         }

@@ -61,7 +61,7 @@ final class WPDP_Metabox {
         
         // Mapping
         add_filter('acf/load_field/name=fatalities_filter', array($this,'load_fat_choices'));
-        add_filter('acf/load_field/name=actor_filter', array($this,'load_actor_choices'));
+        // add_filter('acf/load_field/name=actor_filter', array($this,'load_actor_choices'));
         add_filter('acf/load_field/name=incident_type_filter', array($this,'load_incidents_choices'));
 
         add_filter('acf/load_value/name=incident_type_filter', array($this,'set_default_repeater_values'), 10, 3);

@@ -326,7 +326,7 @@
     self.maps = function(){
 
       $('#wpdp-loader').css('display','flex');
-
+      self.setDefaultFilters();
       $.ajax({
         url: wpdp_obj.ajax_url,
         data: {
@@ -1006,7 +1006,7 @@
 
       $('#wpdp-loader').css('display','flex');
 
-      if(selectedIncidents.length <= 0 && selectedActors.length <= 0){
+      if(selectedIncidents.length <= 0){
         // Select only parent checkboxes if no filtered applied.
         if ($('input[type="checkbox"].wpdp_incident_type:checked').length === 0) {
           $('ul.first_one > li > input[type="checkbox"].wpdp_incident_type').each(function() {
@@ -1039,9 +1039,13 @@
         },
         type: 'POST',
         success: function(response) {
-          let combinedData = self.combineWeekData(response.data.data);
-          let combinedDataFat = self.combineWeekData(response.data.data_fat);
-          self.chartInit(combinedData,combinedDataFat,response.data.chart_sql);
+          if(!response.data || response.data.length <= 0){
+            $('#wpdp-loader').hide();
+            $('.filter_data .no_data').show();
+            return;
+          }
+
+          self.chartInit(response.data.data,response.data.data_fat,response.data.chart_sql);
           $('#wpdp-loader').hide();
           $('.wpdp .con').css('left','-152%').removeClass('active');
           $('.wpdp .filter span').attr('class','fas fa-sliders-h');
@@ -1055,54 +1059,29 @@
       });
     }
 
-
-    self.combineWeekData = function(data) {
-      const processArray = (array) => {
-        const combinedData = {};
-        
-        array.forEach(item => {
-          // Extract year and month from week_start
-          const [year, month] = item.week_start.split('-');
-          const key = `${year}-${month}`;
-          
-          // Set the date to the first day of the month
-          const firstDayOfMonth = `${year}-${month}-01`;
-          
-          if (combinedData[key]) {
-            // If an entry for this month already exists, combine the data
-            combinedData[key].fatalities_count = (parseInt(combinedData[key].fatalities_count) + parseInt(item.fatalities_count)).toString();
-            combinedData[key].events_count = (parseInt(combinedData[key].events_count) + parseInt(item.events_count)).toString();
-          } else {
-            // If this is a new month, add the item to combinedData
-            combinedData[key] = {...item, week_start: firstDayOfMonth};
-          }
-        });
-        
-        // Convert the object back to an array
-        return Object.values(combinedData);
-      };
-    
-      const result = {};
-      
-      // Process each category separately
-      for (const [key, value] of Object.entries(data)) {
-        result[key] = processArray(value);
-      }
-    
-      return result;
-    
-    
-        
-    }
-
     self.chartInit = function(data,data_fat,chart_sql){
       var datasets = [];
       var datasets_fat = [];
       const colors = [
-        "#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4", "#46f0f0", "#f032e6",
-        "#bcf60c", "#fabebe", "#008080", "#e6beff", "#9a6324", "#fffac8", "#800000", "#aaffc3",
-        "#808000", "#ffd8b1", "#000075", "#808080", "#ffffff", "#000000", "#ff4500", "#00ff00",
-        "#ffa500", "#7fffd4", "#8a2be2", "#ff69b4", "#ff1493", "#4b0082", "#00ff7f", "#ff6347"
+        '#4dc9f6',
+        '#f67019',
+        '#f53794',
+        '#537bc4',
+        '#acc236',
+        '#166a8f',
+        '#00a950',
+        '#58595b',
+        '#8549ba',
+        '#ff9f40',
+        '#ffcd56',
+        '#36a2eb',
+        '#9966ff',
+        '#c9cbcf',
+        '#ff6384',
+        '#4bc0c0',
+        '#ff9f40',
+        '#ffcd56',
+        '#36a2eb'
       ];
 
       let i =0;
@@ -1145,8 +1124,12 @@
         window.myChart.destroy();
       }
 
-      if (window.myChartFat) {
-        window.myChartFat.destroy();
+      if (window.myChartBarFat) {
+        window.myChartBarFat.destroy();
+      }
+
+      if (window.myChartBar) {
+        window.myChartBar.destroy();
       }
       
       if(!document.getElementById('wpdp_chart')){
@@ -1178,10 +1161,62 @@
         
       let ctx = document.getElementById('wpdp_chart').getContext('2d');
       let ctx_fat = document.getElementById('wpdp_chart_fat').getContext('2d');
+      let ctx_bar = document.getElementById('wpdp_chart_bar_chart').getContext('2d');
       let title_text_fat = title_text.replace('Incidents', 'Incidents with Fatalities');
 
-      self.graphFun(ctx,datasets,title_text,chart_sql);
-      self.graphFun(ctx_fat,datasets_fat,title_text_fat,chart_sql,true);
+      self.graphFun(ctx,datasets,title_text,chart_sql,false);
+      self.graphFunBar(ctx_fat,datasets_fat,title_text_fat,chart_sql,true);
+      self.graphFunBar(ctx_bar,datasets,title_text,chart_sql,false);
+    }
+
+    self.graphFunBar = function(ctx,datasets,title_text,chart_sql,is_fat){
+      var chartVar = 'myChartBar';
+      if(is_fat){
+        chartVar = 'myChartBarFat';
+      }
+      datasets.forEach(function(dataset) {
+        dataset.backgroundColor = dataset.borderColor;
+        delete dataset.borderColor;
+      });
+      window[chartVar] = new Chart(ctx, {
+        type: 'bar',
+        data: {datasets:datasets},
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            tooltip: {
+                callbacks: {
+                    title: function(tooltipItems) {
+                        var date = new Date(tooltipItems[0].parsed.x);
+                        var monthNames = ["January", "February", "March", "April", "May", "June",
+                                          "July", "August", "September", "October", "November", "December"];
+                        return monthNames[date.getMonth()] + ' ' + date.getFullYear();
+                    }
+                }
+            },
+              title: {
+                  display: true,
+                  text: title_text
+              },
+          },
+          scales: {
+              x: {
+                type: 'time',
+                time: {
+                  unit: chart_sql,
+                },
+                stacked: true,
+              },
+              y: {
+                type: 'linear',
+                display: true,
+                beginAtZero: true,
+                stacked: true,
+              }
+          },
+        }
+      });
     }
 
 
