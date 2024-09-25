@@ -73,19 +73,20 @@ final class WPDP_Graphs {
             $aggregated = [];
 
             foreach($values as $value){
-                $year = $value->year_week;
+                $year_month = date('Y-m', strtotime($value->week_start));
+                $week_start = date('Y-m', strtotime($value->week_start));
 
-                if(!isset($aggregated[$year])){
-                    $aggregated[$year] = (object) [
+                if(!isset($aggregated[$year_month])){
+                    $aggregated[$year_month] = (object) [
                         'fatalities_count' => 0,
                         'events_count' => 0,
-                        'year_week' => $year,
-                        'week_start' => $year . '-01-01'
+                        'year_week' => $year_month,
+                        'week_start' => $week_start
                     ];
                 }
 
-                $aggregated[$year]->fatalities_count += (int) $value->fatalities_count;
-                $aggregated[$year]->events_count += (int) $value->events_count;
+                $aggregated[$year_month]->fatalities_count += (int) $value->fatalities_count;
+                $aggregated[$year_month]->events_count += (int) $value->events_count;
             }
 
             $result[$key] = array_values($aggregated);
@@ -333,7 +334,6 @@ final class WPDP_Graphs {
                 }
             }
         }
-
 
         return [
             'data'=>$this->aggregate_data($data),

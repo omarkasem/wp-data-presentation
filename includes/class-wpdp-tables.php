@@ -85,7 +85,14 @@ final class WPDP_Tables {
             if(!$table_exists){
                 continue;
             }
-            $result = $wpdb->get_row("SELECT event_type, sub_event_type, source, notes, region, country, admin1, admin2, admin3, location, event_id_cnty, timestamp, fatalities FROM {$table_name} WHERE event_id_cnty = '{$event_id}'", ARRAY_A);
+
+            $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'inter2'");
+
+            if ($column_exists) {
+                $result = $wpdb->get_row("SELECT event_type, sub_event_type, source, notes, region, country, admin1, admin2, admin3, location, event_id_cnty, timestamp, fatalities, inter1, inter2 FROM {$table_name} WHERE event_id_cnty = '{$event_id}'", ARRAY_A);
+            } else {
+                $result = $wpdb->get_row("SELECT event_type, sub_event_type, source, notes, region, country, admin1, admin2, admin3, location, event_id_cnty, timestamp, fatalities, inter1 FROM {$table_name} WHERE event_id_cnty = '{$event_id}'", ARRAY_A);
+            }
             if(!empty($result)){
                 break;
             }

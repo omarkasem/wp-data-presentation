@@ -824,6 +824,25 @@
             },
             type: 'POST',
             success: function(response) {
+
+              const interLabels = {
+                1: "State Forces",
+                2: "Rebel Groups",
+                3: "Political Militias",
+                4: "Identity Militias",
+                5: "Rioters",
+                6: "Protesters",
+                7: "Civilians",
+                8: "External/Other Force"
+              };
+              console.log(response);
+              if (response.data[0].inter1 && interLabels[response.data[0].inter1]) {
+                response.data[0].inter1 = interLabels[response.data[0].inter1];
+              }
+
+              if (response.data[0].inter2 && interLabels[response.data[0].inter2]) {
+                response.data[0].inter2 = interLabels[response.data[0].inter2];
+              }
               
               var htmlContent = `
                 <ul class="wpdp_more_info">
@@ -843,6 +862,11 @@
                       <b>Source Type:</b>
                       `+response.data[0].source+`
                     </li>
+                    <li>
+                      <b>Inter1:</b>
+                      `+response.data[0].inter1+`
+                    </li>
+                    `+(response.data[0].inter2 ? '<li><b>Inter2:</b>'+response.data[0].inter2+'</li>' : '')+`
                     <li>
                       <b>Fatalities:</b>
                       `+(response.data[0].fatalities > 0 ? response.data[0].fatalities + ' from ' + response.data[0].event_type : response.data[0].fatalities)+`
@@ -1044,7 +1068,7 @@
             $('.filter_data .no_data').show();
             return;
           }
-
+          console.log(response);
           self.chartInit(response.data.data,response.data.data_fat,response.data.chart_sql);
           $('#wpdp-loader').hide();
           $('.wpdp .con').css('left','-152%').removeClass('active');
@@ -1207,6 +1231,7 @@
                   unit: chart_sql,
                 },
                 stacked: true,
+                bounds: 'ticks',
               },
               y: {
                 type: 'linear',
