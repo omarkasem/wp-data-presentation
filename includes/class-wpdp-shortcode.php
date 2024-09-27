@@ -646,8 +646,9 @@ final class WPDP_Shortcode {
     
             $checkbox_name = sanitize_title($item['text']);
             $checkbox_value = implode('+', $value);
-            $is_checked = $this->get_session_value($checkbox_name) === $checkbox_value ? 'checked' : '';
-    
+
+            $is_checked = $this->get_session_value($checkbox_name) === $checkbox_value ? 'checked="checked"' : '';
+
             $html .= '<li class="expandable '.($class == 'wpdp_fat' && $first == 1 ? 'expanded' : '').'">';
             $html .= '<input class="wpdp_filter_checkbox '.$class.'" type="checkbox" name="'.$checkbox_name.'" value="'.$checkbox_value.'" '.$is_checked.'>';
             $html .= '<div class="exp_click"><span>' . $item['text'] . '</span><span class="dashicons arrow dashicons-arrow-down-alt2"></span></div>';

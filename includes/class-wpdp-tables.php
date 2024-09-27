@@ -259,8 +259,19 @@ final class WPDP_Tables {
         ) AS t
         ";
 
-        $data = $wpdb->get_results($wpdb->prepare($final_query, $queryArgs), ARRAY_N);
-        $count = $wpdb->get_var($wpdb->prepare($count_query, $queryArgs));
+        $transient_key = md5($final_query); 
+        $data = get_transient('wpdp_cache_'.$transient_key);
+        if(empty($data)){
+            $data = $wpdb->get_results($wpdb->prepare($final_query, $queryArgs), ARRAY_N);
+            set_transient('wpdp_cache_'.$transient_key, $data);
+        }
+
+        $transient_key_count = md5($count_query);
+        $count = get_transient('wpdp_cache_'.$transient_key_count);
+        if(empty($count)){
+            $count = $wpdb->get_var($wpdb->prepare($count_query, $queryArgs));
+            set_transient('wpdp_cache_'.$transient_key_count, $count);
+        }
         return ['data' => $data, 'count' => $count];
     }
     

@@ -689,6 +689,10 @@ final class WPDP_Metabox {
             $this->create_data_table($post_id, false);
             error_log("Updated ACLED presentation: " . $post_id);
         }
+
+        global $wpdb;
+        $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_wpdp_cache_%'");
+
     }
 
     public function add_custom_mime_types($mimes) {

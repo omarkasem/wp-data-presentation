@@ -144,7 +144,17 @@ final class WPDP_Maps {
             $date_format = WPDP_Shortcode::get_date_format($date_sample);
             $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'inter2'");
             $whereSQL = $this->build_where_clause($filters, $queryArgs, $date_format, $column_exists);
-
+            if($column_exists){
+                $types[] = 'inter2';
+                if (($key = array_search('iso', $types)) !== false) {
+                    unset($types[$key]);
+                }
+            }else{
+                if (($key = array_search('inter2', $types)) !== false) {
+                    unset($types[$key]);
+                }
+                $types[] = 'iso';
+            }
             $query = "SELECT 
             ".implode(', ', $types)." 
              FROM {$table_name} {$whereSQL}";
@@ -160,9 +170,15 @@ final class WPDP_Maps {
         LIMIT 500
         ";
 
-        $result = $wpdb->get_results($wpdb->prepare($final_query, $queryArgs), ARRAY_A);
-        $count = count($result);
-        return ['data'=>$result,'count'=>$count];
+        // $transient_key = md5($final_query); 
+        // $data = get_transient('wpdp_cache_'.$transient_key);
+        // if(empty($data)){
+            $data = $wpdb->get_results($wpdb->prepare($final_query, $queryArgs), ARRAY_A);
+        //     set_transient('wpdp_cache_'.$transient_key, $data);
+        // }
+
+        $count = count($data);
+        return ['data'=>$data,'count'=>$count];
 
     }
 
@@ -255,6 +271,7 @@ final class WPDP_Maps {
             'region',
             'country',
             'fatalities',
+            'inter1',
             'location',
             'admin1',
             'admin2',

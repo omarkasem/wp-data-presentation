@@ -15,6 +15,16 @@
     var fromYear = '';
     var toYear = '';
     var timeframe = '';
+    const interLabels = {
+      1: "State Forces",
+      2: "Rebel Groups",
+      3: "Political Militias",
+      4: "Identity Militias",
+      5: "Rioters",
+      6: "Protesters",
+      7: "Civilians",
+      8: "External/Other Force"
+    };
 
     self.init = function(){
       self.setDefaultFilters();
@@ -24,9 +34,7 @@
       self.filtersChange();
       self.expandable();
       self.showMapDetails();
-      // self.graphCountSelector();
       self.datePicker();
-      // self.actors();
       self.checkbox();
       self.checkfForIndeterminate();
       self.locationSearch();
@@ -166,24 +174,6 @@
 
     };
 
-    self.actors = function(){
-      function updateIncidentTypes(triggerElem, action) {
-        var values = $(triggerElem).val().split('+');
-        values.forEach(function(value) {
-            $('.wpdp_incident_type').each(function() {
-                if ($(this).val() == value) {
-                    $(this).prop('checked', action);
-                }
-            });
-        });
-      }
-
-      $('.wpdp_actors, .wpdp_fat').change(function() {
-          var isChecked = $(this).is(':checked');
-          updateIncidentTypes(this, isChecked);
-          self.checkfForIndeterminate();
-      });
-    };
 
     self.datePicker = function(){
 
@@ -264,26 +254,6 @@
 
     },
 
-    // self.graphCountSelector = function(){
-    //   if(document.getElementById('wpdp_type_selector')){
-    //     document.getElementById('wpdp_type_selector').addEventListener('change', function () {
-    //       if(self.myChart){
-    //         let val = this.value;
-    //         let i = -1;
-    //         for(let set of self.myChart.data.datasets){ i++;
-    //           if(val == 'incident_count'){
-    //             self.myChart.data.datasets[i].data = self.myChart.data.datasets[i].count;
-    //           } else {
-    //             self.myChart.data.datasets[i].data = self.myChart.data.datasets[i].fat;
-    //           }
-    //         }
-    //         self.myChart.update();
-    //       }
-
-    //     });
-    //   }
-
-    // };
 
     self.showMapDetails = function(){
       $(document).on('click','.map_more_details span',function(e){
@@ -614,7 +584,15 @@
     
         global_markers.push(marker);
         let timestamp = new Date(loc.timestamp * 1000);
-    
+        console.log(loc);
+        if (loc.inter1 && interLabels[loc.inter1]) {
+          loc.inter1 = interLabels[loc.inter1];
+        }
+
+        if (loc.inter2 && interLabels[loc.inter2]) {
+          loc.inter2 = interLabels[loc.inter2];
+        }
+
         marker.addListener('click', function() {
           infoWindow.close();
           infoWindow.setContent(`
@@ -631,6 +609,8 @@
                   <ul>
                     <li><b>Event ID:</b> ${loc.event_id_cnty}</li>
                     <li><b>Event Type:</b> ${loc.event_type}</li>
+                    <li><b>Actor 1:</b> ${loc.inter1}</li>
+                    ${loc.inter2 ? `<li><b>Actor 2:</b> ${loc.inter2}</li>` : ''}
                     <li><b>Sub Event Type:</b> ${loc.sub_event_type}</li>
                     <li><b>Source:</b> ${loc.source}</li>
                     <li><b>Full Location:</b> ${loc.region} ${loc.country} ${loc.admin1} ${loc.admin2} ${loc.admin3} ${loc.location}</li>
@@ -825,17 +805,6 @@
             type: 'POST',
             success: function(response) {
 
-              const interLabels = {
-                1: "State Forces",
-                2: "Rebel Groups",
-                3: "Political Militias",
-                4: "Identity Militias",
-                5: "Rioters",
-                6: "Protesters",
-                7: "Civilians",
-                8: "External/Other Force"
-              };
-              console.log(response);
               if (response.data[0].inter1 && interLabels[response.data[0].inter1]) {
                 response.data[0].inter1 = interLabels[response.data[0].inter1];
               }
@@ -863,10 +832,10 @@
                       `+response.data[0].source+`
                     </li>
                     <li>
-                      <b>Inter1:</b>
+                      <b>Actor 1:</b>
                       `+response.data[0].inter1+`
                     </li>
-                    `+(response.data[0].inter2 ? '<li><b>Inter2:</b>'+response.data[0].inter2+'</li>' : '')+`
+                    `+(response.data[0].inter2 ? '<li><b>Actor 2:</b>'+response.data[0].inter2+'</li>' : '')+`
                     <li>
                       <b>Fatalities:</b>
                       `+(response.data[0].fatalities > 0 ? response.data[0].fatalities + ' from ' + response.data[0].event_type : response.data[0].fatalities)+`
@@ -1049,6 +1018,8 @@
 
       }
 
+      console.log(selectedActors);
+
       $.ajax({
         url: wpdp_obj.ajax_url,
         data: {
@@ -1063,13 +1034,14 @@
         },
         type: 'POST',
         success: function(response) {
+          console.log(response);
           if(!response.data || response.data.length <= 0){
             $('#wpdp-loader').hide();
             $('.filter_data .no_data').show();
             return;
           }
-          console.log(response);
-          self.chartInit(response.data.data,response.data.data_fat,response.data.chart_sql);
+
+          self.chartInit(response.data.data,response.data.data_fat,response.data.data_actors,response.data.chart_sql);
           $('#wpdp-loader').hide();
           $('.wpdp .con').css('left','-152%').removeClass('active');
           $('.wpdp .filter span').attr('class','fas fa-sliders-h');
@@ -1083,9 +1055,10 @@
       });
     }
 
-    self.chartInit = function(data,data_fat,chart_sql){
+    self.chartInit = function(data,data_fat,data_actors,chart_sql){
       var datasets = [];
       var datasets_fat = [];
+      var datasets_actors = [];
       const colors = [
         '#4dc9f6',
         '#f67019',
@@ -1123,6 +1096,23 @@
           dataset.data.push({x: val.week_start, y: val.events_count});
         }
         datasets.push(dataset);
+      }
+
+      i =0;
+      for(let label in data_actors){i++;
+        let dataset_actors = {
+          label:label,
+          borderColor: colors[i],
+          fill: false,
+          data: [],
+          count:[],
+          fat:[],
+        };
+
+        for(let val of data_actors[label]){
+          dataset_actors.data.push({x: val.week_start, y: val.events_count});
+        }
+        datasets_actors.push(dataset_actors);
       }
 
       i =0;
@@ -1186,11 +1176,12 @@
       let ctx = document.getElementById('wpdp_chart').getContext('2d');
       let ctx_fat = document.getElementById('wpdp_chart_fat').getContext('2d');
       let ctx_bar = document.getElementById('wpdp_chart_bar_chart').getContext('2d');
-      let title_text_fat = title_text.replace('Incidents', 'Incidents with Fatalities');
+      let title_text_fat = title_text.replace('Incidents', 'Incidents by Fatalities');
+      let title_text_actors = title_text.replace('Incidents', 'Incidents by Actors');
 
       self.graphFun(ctx,datasets,title_text,chart_sql,false);
       self.graphFunBar(ctx_fat,datasets_fat,title_text_fat,chart_sql,true);
-      self.graphFunBar(ctx_bar,datasets,title_text,chart_sql,false);
+      self.graphFunBar(ctx_bar,datasets_actors,title_text_actors,chart_sql,false);
     }
 
     self.graphFunBar = function(ctx,datasets,title_text,chart_sql,is_fat){
