@@ -295,9 +295,9 @@ final class WPDP_Maps {
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'google-maps-api');
         
     ?>
-
-        <div id="wpdp_map"></div>
-
+        <div class="wpdp_filter_content">
+                <div id="wpdp_map"></div>
+        </div>
     <?php }
 
 

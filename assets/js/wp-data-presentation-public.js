@@ -314,8 +314,8 @@
           self.mapInit(response.data.data);
           $('#wpdp-loader').hide();
 
-          $('.wpdp .con').css('left','-152%').removeClass('active');
-          $('.wpdp .filter span').attr('class','fas fa-sliders-h');
+          // $('.wpdp .con').css('left','-152%').removeClass('active');
+          // $('.wpdp .filter span').attr('class','fas fa-sliders-h');
           if(response.data.count == 0){
             $('.filter_data .no_data').show();
           }
@@ -564,7 +564,7 @@
     
       mapData.forEach(function(loc) {
         var originalLocation = loc.latitude + ',' + loc.longitude;
-        var offset = 0.0001; // Small offset value
+        var offset = 0.0009; // Small offset value
     
         if (seenLocations[originalLocation]) {
           // Apply a small random offset to avoid overlapping
@@ -584,7 +584,6 @@
     
         global_markers.push(marker);
         let timestamp = new Date(loc.timestamp * 1000);
-        console.log(loc);
         if (loc.inter1 && interLabels[loc.inter1]) {
           loc.inter1 = interLabels[loc.inter1];
         }
@@ -595,6 +594,8 @@
 
         marker.addListener('click', function() {
           infoWindow.close();
+          let locationString = loc.region+', '+loc.country+', '+loc.admin1+', '+loc.admin2+', '+loc.admin3+', '+loc.location;
+          locationString = locationString.replace(', ,', ',');
           infoWindow.setContent(`
             <div style="color: #333; font-size: 16px; padding: 10px; line-height: 1.6; border: 2px solid #333; border-radius: 10px; background: #fff;">
               <h2 style="margin: 0 0 10px; font-size: 20px; border-bottom: 1px solid #333; padding-bottom: 5px;">
@@ -613,7 +614,7 @@
                     ${loc.inter2 ? `<li><b>Actor 2:</b> ${loc.inter2}</li>` : ''}
                     <li><b>Sub Event Type:</b> ${loc.sub_event_type}</li>
                     <li><b>Source:</b> ${loc.source}</li>
-                    <li><b>Full Location:</b> ${loc.region} ${loc.country} ${loc.admin1} ${loc.admin2} ${loc.admin3} ${loc.location}</li>
+                    <li><b>Location:</b> ${locationString}</li>
                     <li><b>Notes:</b> ${loc.notes}</li>
                     <li><b>Timestamp:</b> ${timestamp.toISOString()}</li>
                   </ul>
@@ -666,12 +667,16 @@
               if($('#wpdp_chart').length <= 0){
                 $('#wpdp-loader').hide();
               }
-              $('.wpdp .con').css('left','-152%').removeClass('active');
-              $('.wpdp .filter span').attr('class','fas fa-sliders-h');
+              // $('.wpdp .con').css('left','-152%').removeClass('active');
+              // $('.wpdp .filter span').attr('class','fas fa-sliders-h');
             },
 
             processing: true,
             serverSide: true,
+            searching: true,
+            language: {
+              search: "Search Event ID"
+            },
             deferRender: true,
             pagingType: "full_numbers",
             lengthChange: false,
@@ -812,6 +817,10 @@
               if (response.data[0].inter2 && interLabels[response.data[0].inter2]) {
                 response.data[0].inter2 = interLabels[response.data[0].inter2];
               }
+
+              let locationString = response.data[0].region+', '+response.data[0].country+', '+response.data[0].admin1+', '+response.data[0].admin2+', '+response.data[0].admin3+', '+response.data[0].location;
+              locationString = locationString.replace(', ,', ',');
+    
               
               var htmlContent = `
                 <ul class="wpdp_more_info">
@@ -835,19 +844,14 @@
                       <b>Actor 1:</b>
                       `+response.data[0].inter1+`
                     </li>
-                    `+(response.data[0].inter2 ? '<li><b>Actor 2:</b>'+response.data[0].inter2+'</li>' : '')+`
+                    `+(response.data[0].inter2 ? '<li><b>Actor 2: </b>'+response.data[0].inter2+'</li>' : '')+`
                     <li>
                       <b>Fatalities:</b>
                       `+(response.data[0].fatalities > 0 ? response.data[0].fatalities + ' from ' + response.data[0].event_type : response.data[0].fatalities)+`
                     </li>
                     <li>
-                      <b>Event Full Location:</b>
-                      `+response.data[0].region+`
-                      `+response.data[0].country+` 
-                      `+response.data[0].admin1+` 
-                      `+response.data[0].admin2+` 
-                      `+response.data[0].admin3+` 
-                      `+response.data[0].location+` 
+                      <b>Location:</b>
+                      `+locationString+`
                     </li>
                     <li>
                       <b>Notes:</b>
@@ -897,15 +901,15 @@
             // Don't do anything if datepicker or select2 dropdown is visible
             return;
         }
-        if (!$(e.target).closest('.wpdp .con').length && 
-            !$(e.target).hasClass('hasDatepicker') && 
-            !$(e.target).closest('.ui-datepicker').length && 
-            !$(e.target).hasClass('select2-selection__choice__remove') &&
-            !$(e.target).hasClass('ui-datepicker-trigger') &&
-            !$(e.target).closest('.select2-selection').length) {
-            $('.wpdp .con').css('left','-152%').removeClass('active');
-            $('.wpdp .filter span').attr('class','fas fa-sliders-h');
-        }
+        // if (!$(e.target).closest('.wpdp .con').length && 
+        //     !$(e.target).hasClass('hasDatepicker') && 
+        //     !$(e.target).closest('.ui-datepicker').length && 
+        //     !$(e.target).hasClass('select2-selection__choice__remove') &&
+        //     !$(e.target).hasClass('ui-datepicker-trigger') &&
+        //     !$(e.target).closest('.select2-selection').length) {
+        //     $('.wpdp .con').css('left','-152%').removeClass('active');
+        //     $('.wpdp .filter span').attr('class','fas fa-sliders-h');
+        // }
       });
 
     
@@ -913,15 +917,14 @@
         e.preventDefault();
         e.stopPropagation();
 
-        if($(this).find('span').hasClass('fa-close')){
-          $('.wpdp .con').css('left','-152%').removeClass('active');
+        if($(this).find('span').hasClass('fa-arrow-left')){
+          $('.wpdp .con').animate({marginLeft:'-300px'},1).removeClass('active');
           $('.wpdp .filter span').attr('class','fas fa-sliders-h');
+          $('.wpdp_filter_content').animate({marginLeft:'0'},200);
         }else{
-          $('.wpdp .con').css('left','0').addClass('active');
-          let that = $(this);
-          setTimeout(function () {
-            that.find('span').attr('class','fas fa-close');
-          },200);
+          $('.wpdp .con').animate({marginLeft:'0'},200).addClass('active');
+          $(this).find('span').attr('class','fas fa-arrow-left');
+          $('.wpdp_filter_content').animate({marginLeft:'300px'},200);
         }
       });
     
@@ -1018,7 +1021,6 @@
 
       }
 
-      console.log(selectedActors);
 
       $.ajax({
         url: wpdp_obj.ajax_url,
@@ -1043,8 +1045,8 @@
 
           self.chartInit(response.data.data,response.data.data_fat,response.data.data_actors,response.data.chart_sql);
           $('#wpdp-loader').hide();
-          $('.wpdp .con').css('left','-152%').removeClass('active');
-          $('.wpdp .filter span').attr('class','fas fa-sliders-h');
+          // $('.wpdp .con').css('left','-152%').removeClass('active');
+          // $('.wpdp .filter span').attr('class','fas fa-sliders-h');
           if(response.data.count == 0){
             $('.filter_data .no_data').show();
           }

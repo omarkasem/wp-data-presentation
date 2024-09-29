@@ -1,7 +1,9 @@
 .wpdp-presentation{
   position:relative;
 }
-
+.wpdp_filter_content{
+  margin-left: 300px;
+}
 
 #wpdp-loader {
   position: fixed;
@@ -113,17 +115,15 @@
 
 .wpdp .con{
   position: fixed;
-  left:-152%;
+  left:0;
   border: 1px solid #cdcdcd;
   transition: all .5s ease;
   background: #eaeaea;
-  z-index: 99;
-  width: 400px;
+  width: 300px;
   padding: 20px;
   overflow-y: scroll;
   height: 100%;
   top: 135px;
-  /* top:0; */
   padding-bottom: 150px;
 }
 .filter_back{
@@ -147,15 +147,7 @@
   color: rgb(42, 39, 94);
 }
 
-/* .wpdp .filter:hover{
-  background:#2f2f2f;
-}
-.wpdp .filter:hover .dashicons{
-  color:#fff;
-}
-.wpdp .filter .dashicons{
-  color: #000;
-} */
+
 #wpdp_map{
   width:100%;
   height: calc(100vh - 85px);
@@ -172,9 +164,6 @@
   position:relative;
   gap: 5px;
   margin-bottom: 15px;
-}
-#wpdp_datatable_filter{
-  display:none;
 }
 .wpdp_more_info{
   margin:0;

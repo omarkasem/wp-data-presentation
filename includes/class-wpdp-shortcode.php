@@ -157,6 +157,8 @@ final class WPDP_Shortcode {
 
         wp_register_script(WP_DATA_PRESENTATION_NAME . 'public', WP_DATA_PRESENTATION_URL . 'assets/js/wp-data-presentation-public.js', array('jquery', 'jquery-ui-datepicker'), WP_DATA_PRESENTATION_VERSION, true);
 
+        wp_register_style(WP_DATA_PRESENTATION_NAME . 'font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css', [], WP_DATA_PRESENTATION_VERSION);
+
         wp_localize_script(WP_DATA_PRESENTATION_NAME . 'public', 'wpdp_obj', [
             'url'      => WP_DATA_PRESENTATION_URL,
             'ajax_url' => admin_url('admin-ajax.php'),
@@ -381,6 +383,7 @@ final class WPDP_Shortcode {
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME . 'select2');
         wp_enqueue_style(WP_DATA_PRESENTATION_NAME . 'select2');
         wp_enqueue_style(WP_DATA_PRESENTATION_NAME . 'public');
+        wp_enqueue_style(WP_DATA_PRESENTATION_NAME . 'font-awesome');
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME . 'public');
         wp_enqueue_style(WP_DATA_PRESENTATION_NAME . 'jquery-ui');
         wp_enqueue_style('dashicons');
@@ -445,7 +448,7 @@ final class WPDP_Shortcode {
     function get_html_filter($filters, $atts) {
         ?>
         <div class="filter_data" style="display:none;">
-            <a class="filter" href=""><span class="fas fa-sliders-h"></span></a>
+            <a class="filter" href=""><span class="fas fa-arrow-left"></span></a>
             <div class="con">
                 <form id="filter_form" action="" style="margin-top:15px;">
 

@@ -129,6 +129,7 @@ final class WPDP_Tables {
         $merged_types = array_unique(array_merge( $filters['disorder_type'],$filters['fatalities']));
         $filters['disorder_type'] = $merged_types;
 
+        $search = isset($_REQUEST['search']['value']) ? $_REQUEST['search']['value'] : '';
         $start = $_REQUEST['start']; // Starting row
         $length = $_REQUEST['length']; // Page length
         $columnIndex = $_REQUEST['order'][0]['column']; // Column index for sorting
@@ -137,7 +138,7 @@ final class WPDP_Tables {
 
         $totalRecords = $this->get_total_records_count(); // Implement a function to get the total number of records
 
-        $data = $this->get_data($filters,$types, $start, $length, $columnName, $orderDir);
+        $data = $this->get_data($filters,$types, $start, $length, $columnName, $orderDir, $search);
 
         $arr = [
             "draw" => intval($_REQUEST['draw']),
@@ -189,7 +190,7 @@ final class WPDP_Tables {
 
 
     
-    public function get_data($filters, $types, $start, $length, $columnName, $orderDir) {
+    public function get_data($filters, $types, $start, $length, $columnName, $orderDir, $search) {
         global $wpdb;
     
         $posts = get_posts(array(
@@ -204,7 +205,7 @@ final class WPDP_Tables {
     
         $union_queries = [];
         $queryArgs = [];
-    
+
         foreach ($posts as $id) {
             $table_name = $wpdb->prefix . 'wpdp_data_' . $id;
             if ($wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") !== $table_name) {
@@ -215,7 +216,7 @@ final class WPDP_Tables {
             $mysql_date_format = $date_format['mysql'];
             $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'inter2'");
 
-            $whereSQL = $this->build_where_clause($filters, $queryArgs, $date_format,$column_exists);
+            $whereSQL = $this->build_where_clause($filters, $queryArgs, $date_format,$column_exists, $search);
             
             $query = "SELECT " . implode(', ', array_map(function($type) use ($table_name, $mysql_date_format) {
                 if ($type === 'event_date') {
@@ -275,8 +276,13 @@ final class WPDP_Tables {
         return ['data' => $data, 'count' => $count];
     }
     
-    private function build_where_clause($filters, &$queryArgs, $date_format, $column_exists) {
+    private function build_where_clause($filters, &$queryArgs, $date_format, $column_exists, $search) {
         $whereSQL = ' WHERE 1=1 ';
+
+        if(!empty($search)){
+            $whereSQL .= " AND event_id_cnty = %s";
+            $queryArgs[] = $search;
+        }
 
         if(!empty($filters['locations'])){
             $whereSQL .= ' AND (';
@@ -349,21 +355,19 @@ final class WPDP_Tables {
         wp_enqueue_style(WP_DATA_PRESENTATION_NAME.'datatables');
         
     ?>
-
-        <table id="wpdp_datatable" style="width:100%;">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Incident Type</th>
-                    <th>Location</th>
-                    <th>Fatalities.</th>
-                    <th> </th>
-                </tr>
-            </thead>
-
-
-        </table>
-
+        <div class="wpdp_filter_content">
+            <table id="wpdp_datatable" style="width:100%;">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Incident Type</th>
+                        <th>Location</th>
+                        <th>Fatalities.</th>
+                        <th> </th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
         <style>
             tr.group, tr.group:hover {
                 background-color: #ddd !important;
