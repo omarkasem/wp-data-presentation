@@ -344,7 +344,7 @@ final class WPDP_Graphs {
 
             $sql_parts[] = $sql.$whereSQL;
             $sql_parts_actors[] = $sql.$whereSQL_actors;
-            $column_exists_arr[] = $column_exists;
+            $column_exists_arr[] = ($column_exists ? $table_name : 0);
         }
 
         if(empty($sql_parts) && empty($sql_parts_actors)){
@@ -415,8 +415,10 @@ final class WPDP_Graphs {
                 $value_parts = explode('+', $type);
                 foreach ($value_parts as $part) {
                     $conditions[] = "inter1 = '{$part}'";
-                    if($column_exists_arr[$key]){
-                        $conditions[] = "inter2 = '{$part}'";
+                    foreach($column_exists_arr as $column_exists){
+                        if(strpos($column_exists,$sql) !== false){
+                            $conditions[] = "inter2 = '{$part}'";
+                        }
                     }
                 }
     
@@ -424,7 +426,6 @@ final class WPDP_Graphs {
 
                 $new_sql[]= $sql.' '.$new_where  . ' GROUP BY year_week';
             }
- 
             $query = "
             SELECT *
             FROM (
