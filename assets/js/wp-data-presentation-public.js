@@ -918,13 +918,13 @@
         e.stopPropagation();
 
         if($(this).find('span').hasClass('fa-arrow-left')){
-          $('.wpdp .con').animate({marginLeft:'-300px'},1).removeClass('active');
+          $('.wpdp .con').animate({marginLeft:'-220px'},1).removeClass('active');
           $('.wpdp .filter span').attr('class','fas fa-sliders-h');
           $('.wpdp_filter_content').animate({marginLeft:'0'},200);
         }else{
           $('.wpdp .con').animate({marginLeft:'0'},200).addClass('active');
           $(this).find('span').attr('class','fas fa-arrow-left');
-          $('.wpdp_filter_content').animate({marginLeft:'300px'},200);
+          $('.wpdp_filter_content').animate({marginLeft:'220px'},200);
         }
       });
     
