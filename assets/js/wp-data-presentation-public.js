@@ -611,7 +611,7 @@
                     <li><b>Event ID:</b> ${loc.event_id_cnty}</li>
                     <li><b>Event Type:</b> ${loc.event_type}</li>
                     <li><b>Actor 1:</b> ${loc.inter1}</li>
-                    ${loc.inter2 ? `<li><b>Actor 2:</b> ${loc.inter2}</li>` : ''}
+                    ${loc.inter2 ? `<li><b>Actor 2:</b> ${loc.inter2 == '0' ? 'N/A' : loc.inter2}</li>` : ''}
                     <li><b>Sub Event Type:</b> ${loc.sub_event_type}</li>
                     <li><b>Source:</b> ${loc.source}</li>
                     <li><b>Location:</b> ${locationString}</li>
@@ -655,7 +655,7 @@
                 d.locations_val = selectedLocations;
               },
               "dataSrc": function(json) {
-                if (json.data.length === 0) {
+                if (!json.data || json.data.length === 0) {
                   $('.filter_data .no_data').show();
                   $('#wpdp-loader').hide();
                   return [];
@@ -675,7 +675,8 @@
             serverSide: true,
             searching: true,
             language: {
-              search: "Search Event ID"
+              searchPlaceholder: "Search Event ID",
+              search: "" 
             },
             deferRender: true,
             pagingType: "full_numbers",
@@ -826,40 +827,40 @@
                 <ul class="wpdp_more_info">
                     <li>
                       <b>Event ID:</b>
-                      `+response.data[0].event_id_cnty+`
+                      <span>`+response.data[0].event_id_cnty+`</span>
                     </li>
                     <li>
                       <b>Event Type:</b>
-                      `+response.data[0].event_type+`
+                      <span>`+response.data[0].event_type+`</span>
                     </li>
                     <li>
                       <b>Sub Event Type:</b>
-                      `+response.data[0].sub_event_type+`
+                      <span>`+response.data[0].sub_event_type+`</span>
                     </li>
                     <li>
                       <b>Source Type:</b>
-                      `+response.data[0].source+`
+                      <span>`+response.data[0].source+`</span>
                     </li>
                     <li>
                       <b>Actor 1:</b>
-                      `+response.data[0].inter1+`
+                      <span>`+response.data[0].inter1+`</span>
                     </li>
-                    `+(response.data[0].inter2 ? '<li><b>Actor 2: </b>'+response.data[0].inter2+'</li>' : '')+`
+                    `+(response.data[0].inter2 ? '<li><b>Actor 2: </b><span>'+(response.data[0].inter2 == '0' ? 'N/A' : response.data[0].inter2)+'</span></li>' : '')+`
                     <li>
                       <b>Fatalities:</b>
-                      `+(response.data[0].fatalities > 0 ? response.data[0].fatalities + ' from ' + response.data[0].event_type : response.data[0].fatalities)+`
+                      <span>`+(response.data[0].fatalities > 0 ? response.data[0].fatalities + ' from ' + response.data[0].event_type : response.data[0].fatalities)+`</span>
                     </li>
                     <li>
                       <b>Location:</b>
-                      `+locationString+`
+                      <span>`+locationString+`</span>
                     </li>
                     <li>
                       <b>Notes:</b>
-                      `+response.data[0].notes+`
+                      <span>`+response.data[0].notes+`</span>
                     </li>
                     <li>
                       <b>Timestamp:</b>
-                      `+response.data[0].timestamp+`
+                      <span>`+response.data[0].timestamp+`</span>
                     </li>
         
                   </ul>
@@ -883,6 +884,10 @@
       setTimeout(function() {
           $('.wpdp .filter_data').show();
       }, 500);
+
+      if ($(window).width() <= 1200) {
+        $('.wpdp .filter span').removeClass('fa-arrow-left').addClass('fa-sliders-h');
+      }
 
 
       $('.expandable > .exp_click').on('click', function(event) {
@@ -918,11 +923,11 @@
         e.stopPropagation();
 
         if($(this).find('span').hasClass('fa-arrow-left')){
-          $('.wpdp .con').animate({marginLeft:'-220px'},1).removeClass('active');
+          $('.wpdp .con').animate({marginLeft:'-220px'},1).hide().removeClass('active');
           $('.wpdp .filter span').attr('class','fas fa-sliders-h');
           $('.wpdp_filter_content').animate({marginLeft:'0'},200);
         }else{
-          $('.wpdp .con').animate({marginLeft:'0'},200).addClass('active');
+          $('.wpdp .con').animate({marginLeft:'0'},200).show().addClass('active');
           $(this).find('span').attr('class','fas fa-arrow-left');
           $('.wpdp_filter_content').animate({marginLeft:'220px'},200);
         }

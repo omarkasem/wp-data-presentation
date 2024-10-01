@@ -216,73 +216,73 @@ final class WPDP_Tables {
             $mysql_date_format = $date_format['mysql'];
             $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'inter2'");
 
-            $whereSQL = $this->build_where_clause($filters, $queryArgs, $date_format,$column_exists, $search);
+            list($whereSQL, $localQueryArgs) = $this->build_where_clause($filters, $queryArgs, $date_format, $column_exists, $search);
             
-            $query = "SELECT " . implode(', ', array_map(function($type) use ($table_name, $mysql_date_format) {
-                if ($type === 'event_date') {
-                    return "CONVERT(STR_TO_DATE(event_date, '$mysql_date_format') USING utf8mb4) AS date_column_standard";
+            $select_parts = [];
+            foreach ($types as $type) {
+                switch ($type) {
+                    case 'event_date':
+                        $select_parts[] = "CONVERT(STR_TO_DATE(event_date, '$mysql_date_format') USING utf8mb4) AS date_column_standard";
+                        break;
+                    case 'fatalities':
+                        $select_parts[] = "CONVERT(CASE WHEN $type > 0 THEN CONCAT($type, ' from ', event_type) ELSE CAST($type AS CHAR) END USING utf8mb4) AS $type";
+                        break;
+                    case 'disorder_type':
+                        $select_parts[] = "CONVERT(CONCAT($type, ' / ', event_type, ' / ', sub_event_type) USING utf8mb4) AS $type";
+                        break;
+                    default:
+                        $select_parts[] = "CONVERT($type USING utf8mb4) AS $type";
                 }
-                if ($type === 'fatalities') {
-                    return "CONVERT(CASE WHEN $type > 0 THEN CONCAT($type, ' from ', event_type) ELSE CAST($type AS CHAR) END USING utf8mb4) AS $type";
-                }
-                if ($type === 'disorder_type') {
-                    return "CONVERT(CONCAT($type, ' / ', event_type, ' / ', sub_event_type) USING utf8mb4) AS $type";
-                }
-                return "CONVERT($type USING utf8mb4) AS $type";
-            }, $types)) . " FROM {$table_name}";
+            }
             
-            $query .= " {$whereSQL}";
-            $union_queries[] = $query;
+            $query = "SELECT DISTINCT " . implode(', ', $select_parts) . " FROM {$table_name} {$whereSQL}";
+            $union_queries[] = $wpdb->prepare($query, $localQueryArgs);
         }
 
         if (empty($union_queries)) {
             return ['data' => [], 'count' => 0];
         }
-    
-        $union_query = implode(' UNION ALL ', $union_queries);
-    
+
+        $union_query = implode(' UNION ', $union_queries);
+
         $order_by = $columnName === 'event_date' ? 'date_column_standard' : $columnName;
-    
+
         $final_query = "
-        SELECT DISTINCT t.*
+        SELECT t.*
         FROM ({$union_query}) AS t
+        GROUP BY t.event_id_cnty
         ORDER BY {$order_by} {$orderDir}
         LIMIT {$start}, {$length}
         ";
 
-        
         $count_query = "
         SELECT COUNT(DISTINCT event_id_cnty)
-        FROM (
-            SELECT event_id_cnty
-            FROM ({$union_query}) AS sub
-            GROUP BY event_id_cnty
-        ) AS t
+        FROM ({$union_query}) AS t
         ";
 
         $transient_key = md5($final_query); 
         $data = get_transient('wpdp_cache_'.$transient_key);
         if(empty($data)){
-            $data = $wpdb->get_results($wpdb->prepare($final_query, $queryArgs), ARRAY_N);
+            $data = $wpdb->get_results($final_query, ARRAY_N);
             set_transient('wpdp_cache_'.$transient_key, $data);
         }
-
-        $transient_key_count = md5($count_query);
-        $count = get_transient('wpdp_cache_'.$transient_key_count);
+        
+        $transient_key = md5($count_query); 
+        $count = get_transient('wpdp_cache_'.$transient_key);
         if(empty($count)){
-            $count = $wpdb->get_var($wpdb->prepare($count_query, $queryArgs));
-            set_transient('wpdp_cache_'.$transient_key_count, $count);
+            $count = $wpdb->get_var($count_query);
+            set_transient('wpdp_cache_'.$transient_key, $count);
         }
+
         return ['data' => $data, 'count' => $count];
     }
     
     private function build_where_clause($filters, &$queryArgs, $date_format, $column_exists, $search) {
-        $whereSQL = ' WHERE 1=1 ';
-
-        if(!empty($search)){
-            $whereSQL .= " AND event_id_cnty = %s";
-            $queryArgs[] = $search;
+        if (!empty($search)) {
+            return [" WHERE event_id_cnty = %s", array($search)];
         }
+
+        $whereSQL = ' WHERE 1=1 ';
 
         if(!empty($filters['locations'])){
             $whereSQL .= ' AND (';
@@ -343,7 +343,8 @@ final class WPDP_Tables {
             $whereSQL .= " AND STR_TO_DATE(event_date, '{$mysql_date_format}') <= STR_TO_DATE(%s, '{$mysql_date_format}')";
             $queryArgs[] = date($date_format['php'], strtotime($filters['to']));
         }
-        return $whereSQL;
+
+        return array($whereSQL, $queryArgs);
     }
     
     

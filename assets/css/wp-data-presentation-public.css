@@ -125,6 +125,7 @@
   height: 100%;
   top: 135px;
   padding-bottom: 150px;
+  z-index: 10;
 }
 .filter_back{
   cursor:pointer;
@@ -323,13 +324,20 @@
   transform: rotate(180deg);
 }
 
-@media only screen and (max-width: 400px) {
+/* @media only screen and (max-width: 400px) {
 	.wpdp .con{
 		width: 310px;
 	}
+} */
+
+@media only screen and (max-width: 1200px) {
+	.wpdp .con{
+    display:none;
+  }
+  .wpdp_filter_content{
+    margin-left: 0;
+  }
 }
-
-
 
 .not_all {
   background-color: red;

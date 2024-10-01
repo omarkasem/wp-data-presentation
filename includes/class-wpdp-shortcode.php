@@ -568,9 +568,9 @@ final class WPDP_Shortcode {
                             </div>
                             <?php if ('graph' === $atts['type'] || '' == $atts['type']) {?>
                             <div class="dates">
-                                <label for="wpdp_date_timeframe">Timeframe <br>(for graphs)</label>
+                                <label for="wpdp_date_timeframe">Timeframe</label>
                                 <select name="wpdp_date_timeframe" id="wpdp_date_timeframe">
-                                    <option value="">Choose Timeframe</option>
+                                    <option value="">Graph Timeframe</option>
                                     <option value="yearly" <?php selected($this->get_session_value('wpdp_date_timeframe'), 'yearly'); ?>>Yearly</option>
                                     <option value="monthly" <?php selected($this->get_session_value('wpdp_date_timeframe'), 'monthly'); ?>>Monthly</option>
                                     <option value="weekly" <?php selected($this->get_session_value('wpdp_date_timeframe'), 'weekly'); ?>>Weekly</option>

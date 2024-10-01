@@ -170,12 +170,12 @@ final class WPDP_Maps {
         LIMIT 500
         ";
 
-        // $transient_key = md5($final_query); 
-        // $data = get_transient('wpdp_cache_'.$transient_key);
-        // if(empty($data)){
+        $transient_key = md5($final_query); 
+        $data = get_transient('wpdp_cache_'.$transient_key);
+        if(empty($data)){
             $data = $wpdb->get_results($wpdb->prepare($final_query, $queryArgs), ARRAY_A);
-        //     set_transient('wpdp_cache_'.$transient_key, $data);
-        // }
+            set_transient('wpdp_cache_'.$transient_key, $data);
+        }
 
         $count = count($data);
         return ['data'=>$data,'count'=>$count];
