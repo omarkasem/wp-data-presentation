@@ -2,7 +2,7 @@
   position:relative;
 }
 .wpdp_filter_content{
-  margin-left: 220px;
+  margin-left: 270px;
 }
 
 #wpdp-loader {
@@ -112,6 +112,8 @@
   position: relative;
   z-index: 2;
 }
+
+
 
 .wpdp .con{
   position: fixed;
@@ -324,11 +326,10 @@
   transform: rotate(180deg);
 }
 
-/* @media only screen and (max-width: 400px) {
-	.wpdp .con{
-		width: 310px;
-	}
-} */
+.not_all {
+  background-color: red;
+  border-color: red;
+}
 
 @media only screen and (max-width: 1200px) {
 	.wpdp .con{
@@ -339,7 +340,3 @@
   }
 }
 
-.not_all {
-  background-color: red;
-  border-color: red;
-}

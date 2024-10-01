@@ -487,12 +487,12 @@ final class WPDP_Graphs {
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'chartjs-moment');
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'chartjs-adapter');
     ?>
-    <div class="wpdp_filter_content">
-        <canvas id="wpdp_chart" width="800" ></canvas>
+    <div class="wpdp_filter_content table-responsive" >
+        <canvas id="wpdp_chart"   ></canvas>
         <hr>
-        <canvas id="wpdp_chart_fat" width="800" ></canvas>
+        <canvas id="wpdp_chart_fat"  ></canvas>
         <hr>
-        <canvas id="wpdp_chart_bar_chart" width="800" ></canvas>
+        <canvas id="wpdp_chart_bar_chart"  ></canvas>
     </div>
     <?php }
 
