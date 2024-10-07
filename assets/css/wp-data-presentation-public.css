@@ -1,9 +1,18 @@
 .wpdp-presentation{
   position:relative;
 }
-.wpdp_filter_content{
-  margin-left: 270px;
+
+.wpdp_filter_content {
+    width: 80%;
+    position: relative;
+	 margin-left: 270px;
 }
+
+.wpdp_filter_content canvas {
+    max-height: 400px;
+}
+
+
 
 #wpdp-loader {
   position: fixed;
@@ -331,12 +340,16 @@
   border-color: red;
 }
 
+
+
+
 @media only screen and (max-width: 1200px) {
 	.wpdp .con{
     display:none;
   }
   .wpdp_filter_content{
     margin-left: 0;
+	      width: 100%;
   }
 }
 

@@ -607,16 +607,16 @@
               <div class="map_more_details">
                 <span style="cursor:pointer;color:#cd0202;font-size:25px;margin-top:3px;" class="dashicons dashicons-info"></span>
                 <div class="det">
-                  <ul>
-                    <li><b>Event ID:</b> ${loc.event_id_cnty}</li>
-                    <li><b>Event Type:</b> ${loc.event_type}</li>
-                    <li><b>Actor 1:</b> ${loc.inter1}</li>
-                    ${loc.inter2 ? `<li><b>Actor 2:</b> ${loc.inter2 == '0' ? 'N/A' : loc.inter2}</li>` : ''}
-                    <li><b>Sub Event Type:</b> ${loc.sub_event_type}</li>
-                    <li><b>Source:</b> ${loc.source}</li>
-                    <li><b>Location:</b> ${locationString}</li>
-                    <li><b>Notes:</b> ${loc.notes}</li>
-                    <li><b>Timestamp:</b> ${timestamp.toISOString()}</li>
+                  <ul class="wpdp_more_info_map">
+                    <li><b>Event ID:</b> <span>${loc.event_id_cnty}</span></li>
+                    <li><b>Event Type:</b> <span>${loc.event_type}</span></li>
+                    <li><b>Actor 1:</b> <span>${loc.inter1}</span></li>
+                    ${loc.inter2 ? `<li><b>Actor 2:</b> <span>${loc.inter2 == '0' ? 'N/A' : loc.inter2}</span></li>` : ''}
+                    <li><b>Sub Event Type:</b> <span>${loc.sub_event_type}</span></li>
+                    <li><b>Source:</b> <span>${loc.source}</span></li>
+                    <li><b>Location:</b> <span>${locationString}</span></li>
+                    <li class="notes"><b>Notes:</b> <span>${loc.notes}</span></li>
+                    <li><b>Timestamp:</b> <span>${timestamp.toISOString()}</span></li>
                   </ul>
                 </div>
               </div>
@@ -854,7 +854,7 @@
                       <b>Location:</b>
                       <span>`+locationString+`</span>
                     </li>
-                    <li>
+                    <li class="notes">
                       <b>Notes:</b>
                       <span>`+response.data[0].notes+`</span>
                     </li>
@@ -1205,7 +1205,9 @@
         data: {datasets:datasets},
         options: {
           responsive: true,
-          maintainAspectRatio: true,
+            maintainAspectRatio: false, // Changed to false
+            height: 400, // Explicit height
+
           plugins: {
             tooltip: {
                 callbacks: {
@@ -1253,7 +1255,9 @@
         data: {datasets:datasets},
         options: {
           responsive: true,
-          maintainAspectRatio: true,
+            maintainAspectRatio: false, // Changed to false
+            height: 400, // Explicit height
+
           plugins: {
             tooltip: {
                 callbacks: {
