@@ -262,14 +262,14 @@ final class WPDP_Tables {
 
         $transient_key = md5($final_query); 
         $data = get_transient('wpdp_cache_'.$transient_key);
-        if(empty($data)){
+        if(empty($data) || WP_DATA_PRESENTATION_DISABLE_CACHE){
             $data = $wpdb->get_results($final_query, ARRAY_N);
             set_transient('wpdp_cache_'.$transient_key, $data);
         }
         
         $transient_key = md5($count_query); 
         $count = get_transient('wpdp_cache_'.$transient_key);
-        if(empty($count)){
+        if(empty($count) || WP_DATA_PRESENTATION_DISABLE_CACHE){
             $count = $wpdb->get_var($count_query);
             set_transient('wpdp_cache_'.$transient_key, $count);
         }

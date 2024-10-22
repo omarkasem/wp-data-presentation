@@ -695,72 +695,67 @@
                 extend: 'copyHtml5',
                 exportOptions: {
                     columns: [0,1,2,3]
+                },
+                action: function (e, dt, button, config) {
+                  var selfy = this;
+                  self.exportAllData(selfy, dt, button, config);
                 }
-            },
-            {
+              },
+              {
                 extend: 'excelHtml5',
                 exportOptions: {
                     columns: [0,1,2,3]
+                },
+                action: function (e, dt, button, config) {
+                  var selfy = this;
+                  self.exportAllData(selfy, dt, button, config);
                 }
-            },
-            { 
-              extend: 'csvHtml5',
-              exportOptions: {
-                  columns: [0,1,2,3]
-              }
-            },
-            {
+              },
+              { 
+                extend: 'csvHtml5',
+                exportOptions: {
+                    columns: [0,1,2,3]
+                },
+                action: function (e, dt, button, config) {
+                  var selfy = this;
+                  self.exportAllData(selfy, dt, button, config);
+                }
+              },
+              {
                 extend: 'pdfHtml5',
                 exportOptions: {
                     columns: [0,1,2,3]
                 },
-				
-            customize: function (doc) {
-              // Get the chart as a base64 image
-              var canvas = document.getElementById('wpdp_chart');
-              if(!canvas){
-                return;
-              }
-              var chartImage = canvas.toDataURL('image/png');
-              
-              doc.content.push({
-                text: ' ',
-                margin: [0, 10] // Adjust margin as needed for spacing
-              });
-              // Add the image to the PDF after the table
-              doc.content.push({
-                image: chartImage,
-                width: 500 // Adjust the width as needed
-              });
-            }
-
-			
-            },
-            {
-              extend: 'print',
-              exportOptions: {
-                  columns: [0,1,2,3]
+                action: function (e, dt, button, config) {
+                  var selfy = this;
+                  self.exportAllData(selfy, dt, button, config);
+                }
               },
+              {
+                extend: 'print',
+                exportOptions: {
+                    columns: [0,1,2,3]
+                },
 				
 				
-              customize: function (win) {
-                // Get the chart as a base64 image
-                var canvas = document.getElementById('wpdp_chart');
-                var chartImage = canvas.toDataURL('image/png');
+                customize: function (win) {
+                  // Get the chart as a base64 image
+                  var canvas = document.getElementById('wpdp_chart');
+                  var chartImage = canvas.toDataURL('image/png');
 
-                // Create an image element for the chart
-                var img = $('<img>').attr('src', chartImage).css({
-                  width: '500px', // Adjust the width as needed
-                  marginTop: '10px' // Add some space before the chart image
-                });
+                  // Create an image element for the chart
+                  var img = $('<img>').attr('src', chartImage).css({
+                    width: '500px', // Adjust the width as needed
+                    marginTop: '10px' // Add some space before the chart image
+                  });
 
-                // Append the chart image after the table
-                $(win.document.body).find('table').after(img);
-              }
-            },
+                  // Append the chart image after the table
+                  $(win.document.body).find('table').after(img);
+                }
+              },
 
 
-            ],
+              ],
             "columnDefs": [
               { "orderable": false, "targets": 4 },
               {
@@ -883,6 +878,54 @@
           
       }
     },
+
+    // Add this new method to your self object
+    self.exportAllData = function(selfy, dt, button, config) {
+
+      var oldStart = dt.settings()[0]._iDisplayStart;
+      var oldOrder = dt.order();  // Store the current order
+
+      
+      dt.one('preXhr', function (e, s, data) {
+          // Just this once, load all data from the server...
+          data.start = 0;
+          data.length = 2147483647;
+          
+          dt.one('preDraw', function (e, settings) {
+              // Call the original action function
+              if (button[0].className.indexOf('buttons-copy') >= 0) {
+                  $.fn.dataTable.ext.buttons.copyHtml5.action.call(selfy, e, dt, button, config);
+              } else if (button[0].className.indexOf('buttons-excel') >= 0) {
+                  $.fn.dataTable.ext.buttons.excelHtml5.available(dt, config) ?
+                      $.fn.dataTable.ext.buttons.excelHtml5.action.call(selfy, e, dt, button, config) :
+                      $.fn.dataTable.ext.buttons.excelFlash.action.call(selfy, e, dt, button, config);
+              } else if (button[0].className.indexOf('buttons-csv') >= 0) {
+                  $.fn.dataTable.ext.buttons.csvHtml5.available(dt, config) ?
+                      $.fn.dataTable.ext.buttons.csvHtml5.action.call(selfy, e, dt, button, config) :
+                      $.fn.dataTable.ext.buttons.csvFlash.action.call(selfy, e, dt, button, config);
+              } else if (button[0].className.indexOf('buttons-pdf') >= 0) {
+                  $.fn.dataTable.ext.buttons.pdfHtml5.available(dt, config) ?
+                      $.fn.dataTable.ext.buttons.pdfHtml5.action.call(selfy, e, dt, button, config) :
+                      $.fn.dataTable.ext.buttons.pdfFlash.action.call(selfy, e, dt, button, config);
+              } else if (button[0].className.indexOf('buttons-print') >= 0) {
+                  $.fn.dataTable.ext.buttons.print.action(e, dt, button, config);
+              }
+              dt.one('preXhr', function (e, s, data) {
+                  // DataTables thinks the first item displayed is index 0, but we're not drawing that.
+                  // Set the property to what it was before exporting.
+                  settings._iDisplayStart = oldStart;
+                  data.start = oldStart;
+              });
+              // Reload the grid with the original page. Otherwise, API functions like table.cell(this) don't work properly.
+              setTimeout(dt.ajax.reload, 0);
+              // Prevent rendering of the full data to the DOM
+              return false;
+          });
+      });
+      // Requery the server with the new one-time export settings
+      dt.ajax.reload();
+    },
+
 
     self.menuFilters = function(){
 
