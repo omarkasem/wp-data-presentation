@@ -38,6 +38,13 @@
       self.checkbox();
       self.checkfForIndeterminate();
       self.locationSearch();
+      self.tippy();
+    },
+
+    self.tippy = function(){
+      tippy('.tippy-icon', {
+        trigger: 'click',
+      });
     },
 
     self.setDefaultFilters = function(){
@@ -711,6 +718,9 @@
             customize: function (doc) {
               // Get the chart as a base64 image
               var canvas = document.getElementById('wpdp_chart');
+              if(!canvas){
+                return;
+              }
               var chartImage = canvas.toDataURL('image/png');
               
               doc.content.push({
@@ -748,14 +758,7 @@
                 $(win.document.body).find('table').after(img);
               }
             },
-            {
-              text: 'Filter',
-              action: function ( e, dt, node, config ) {
-                setTimeout(function() {
-                    $('.wpdp .filter').trigger('click');
-                }, 10);
-              }
-            },
+
 
             ],
             "columnDefs": [
@@ -779,6 +782,8 @@
             },
 
         });
+
+        $('#wpdp_datatable_filter label').css('position','relative').append(wpdp_obj.search_info_icon);
 
 
       $('#wpdp_datatable tbody').on('click', 'span.more-info', function() {

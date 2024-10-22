@@ -162,7 +162,11 @@ final class WPDP_Shortcode {
         wp_localize_script(WP_DATA_PRESENTATION_NAME . 'public', 'wpdp_obj', [
             'url'      => WP_DATA_PRESENTATION_URL,
             'ajax_url' => admin_url('admin-ajax.php'),
+            'search_info_icon'=>self::info_icon('Search and find a specific event by entering the event ID which can be found for each event in the database.',' position: absolute;top: 0;right: 5px;'),
         ]);
+
+        wp_register_script(WP_DATA_PRESENTATION_NAME . 'popper.min', WP_DATA_PRESENTATION_URL . 'assets/js/popper.min.js', [], WP_DATA_PRESENTATION_VERSION, true);
+        wp_register_script(WP_DATA_PRESENTATION_NAME . 'tooltip', WP_DATA_PRESENTATION_URL . 'assets/js/tippy-bundle.umd.min.js',[], WP_DATA_PRESENTATION_VERSION, true);
 
     }
 
@@ -384,6 +388,8 @@ final class WPDP_Shortcode {
         wp_enqueue_style(WP_DATA_PRESENTATION_NAME . 'select2');
         wp_enqueue_style(WP_DATA_PRESENTATION_NAME . 'public');
         wp_enqueue_style(WP_DATA_PRESENTATION_NAME . 'font-awesome');
+        wp_enqueue_script(WP_DATA_PRESENTATION_NAME . 'popper.min');
+        wp_enqueue_script(WP_DATA_PRESENTATION_NAME . 'tooltip');
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME . 'public');
         wp_enqueue_style(WP_DATA_PRESENTATION_NAME . 'jquery-ui');
         wp_enqueue_style('dashicons');
@@ -442,6 +448,12 @@ final class WPDP_Shortcode {
                 return date('d F Y', strtotime(end($filters['years'])));
             // }
         }
+    }
+
+    public static function info_icon($content, $extra_css = ''  ){
+        return'
+            <span data-tippy-content="'.$content.'" style="cursor:pointer;color:#000;font-size:18px;'.$extra_css.'" class="tippy-icon dashicons dashicons-info"></span>
+        ';
     }
 
 
