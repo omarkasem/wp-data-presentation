@@ -8,6 +8,10 @@
 	 margin-left: 270px;
 }
 
+.wpdp_filter_content.maps{
+	width:100%;
+}
+
 .wpdp_filter_content canvas {
     max-height: 400px;
 }

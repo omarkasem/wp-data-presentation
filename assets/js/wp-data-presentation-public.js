@@ -925,11 +925,11 @@
         if($(this).find('span').hasClass('fa-arrow-left')){
           $('.wpdp .con').animate({marginLeft:'-270px'},1).hide().removeClass('active');
           $('.wpdp .filter span').attr('class','fas fa-sliders-h');
-          $('.wpdp_filter_content').animate({marginLeft:'0'},200);
+          $('.wpdp_filter_content').animate({marginLeft:'0',width:'100%'},200);
         }else{
           $('.wpdp .con').animate({marginLeft:'0'},200).show().addClass('active');
           $(this).find('span').attr('class','fas fa-arrow-left');
-          $('.wpdp_filter_content').animate({marginLeft:'270px'},200);
+          $('.wpdp_filter_content').animate({marginLeft:'270px',width:'80%'},200);
         }
       });
     
