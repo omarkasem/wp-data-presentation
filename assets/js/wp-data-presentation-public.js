@@ -161,21 +161,33 @@
 
 
     self.checkbox = function(){
-      $('.filter_data li input[type="checkbox"]').on('change', function() {
-        // $(this).parent().find('li input[type="checkbox"]').prop('checked', this.checked).change();
+      $('.filter_data li input[type="checkbox"]:not(.select_unselect_all)').on('change', function() {
         $('.filter_data .no_data').hide();
         self.checkfForIndeterminate();
       });
 
-      $('.filter_data li input[type="checkbox"]:not(.wpdp_location)').on('change', function() {
+      $('.filter_data li input[type="checkbox"]').not('.wpdp_location, .select_unselect_all').on('change', function() {
         $(this).parent().find('li input[type="checkbox"]').prop('checked', this.checked).change();
       });
 
-
+      // Reset
       $('#filter_form').on('reset', function() {
         $(this).find('input[type="checkbox"]').prop('indeterminate', false);
         $('.filter_data .no_data').hide();
         $('#wpdp_search_location').val('').change();
+      });
+
+      // Select/Unselect All
+      $('.filter_data').on('change', 'li input[type="checkbox"].select_unselect_all', function() {
+        var $content = $(this).closest('.content');
+        var isChecked = this.checked;
+        
+        requestAnimationFrame(function() {
+          $content.find('input[type="checkbox"]').each(function(index, checkbox) {
+            checkbox.checked = isChecked;
+            checkbox.indeterminate = false;
+          });
+        });
       });
 
 
@@ -1055,25 +1067,11 @@
 
       $('#wpdp-loader').css('display','flex');
 
-      if(selectedIncidents.length <= 0){
-        // Select only parent checkboxes if no filtered applied.
-        if ($('input[type="checkbox"].wpdp_incident_type:checked').length === 0) {
-          $('ul.first_one > li > input[type="checkbox"].wpdp_incident_type').each(function() {
-            selectedIncidents.push($(this).val());
-          });
-        }
+      let allIncidentsAndFatSelected = 0;
+
+      if($('.grp.inident_type .content input:checked').not('.select_unselect_all').length === $('.grp.inident_type .content input').not('.select_unselect_all').length && $('.grp.fatalities .content input:checked').not('.select_unselect_all').length === $('.grp.fatalities .content input').not('.select_unselect_all').length){
+        allIncidentsAndFatSelected = 1;
       }
-
-
-      if(selectedGraphFat.length <= 0){
-        if ($('input[type="checkbox"].wpdp_fat:checked').length === 0) {
-          $('input[type="checkbox"].wpdp_fat').each(function() {
-            selectedGraphFat.push($(this).val());
-          });
-        }
-
-      }
-
 
       $.ajax({
         url: wpdp_obj.ajax_url,
@@ -1085,11 +1083,12 @@
           fat_val: selectedGraphFat,
           from_val: fromYear,
           to_val: toYear,
-          timeframe: timeframe
+          timeframe: timeframe,
+          all_selected: allIncidentsAndFatSelected
         },
         type: 'POST',
         success: function(response) {
-          console.log(response);
+
           if(!response.data || response.data.length <= 0){
             $('#wpdp-loader').hide();
             $('.filter_data .no_data').show();
@@ -1098,8 +1097,7 @@
 
           self.chartInit(response.data.data,response.data.data_fat,response.data.data_actors,response.data.chart_sql);
           $('#wpdp-loader').hide();
-          // $('.wpdp .con').css('left','-152%').removeClass('active');
-          // $('.wpdp .filter span').attr('class','fas fa-sliders-h');
+
           if(response.data.count == 0){
             $('.filter_data .no_data').show();
           }
@@ -1205,9 +1203,9 @@
         return;  
       }
 
-      let title_text = 'Incidents in all ICGLR Member States';
+      let title_text = 'Events in all ICGLR Member States';
       if(selectedLocations.length > 0){
-        title_text = 'Incidents in ';
+        title_text = 'Events in ';
         let countries = new Set();
         $.each(selectedLocations,function(index,value){
           value = value.split('+');
@@ -1222,7 +1220,7 @@
         if (countriesArray.length > 1 && countriesArray.length < 12) {
           title_text += countriesArray.slice(0, -1).join(', ') + ' and ' + countriesArray.slice(-1);
         }else if(countriesArray.length >= 12){
-          title_text = 'Incidents in all ICGLR Member States';
+          title_text = 'Events in all ICGLR Member States';
         } else {
           title_text += countriesArray[0];
         }
@@ -1231,8 +1229,8 @@
       let ctx = document.getElementById('wpdp_chart').getContext('2d');
       let ctx_fat = document.getElementById('wpdp_chart_fat').getContext('2d');
       let ctx_bar = document.getElementById('wpdp_chart_bar_chart').getContext('2d');
-      let title_text_fat = title_text.replace('Incidents', 'Incidents by Fatalities');
-      let title_text_actors = title_text.replace('Incidents', 'Incidents by Actors');
+      let title_text_fat = title_text.replace('Events', 'Events by Fatalities');
+      let title_text_actors = title_text.replace('Events', 'Events by Actors');
 
       self.graphFun(ctx,datasets,title_text,chart_sql,false);
       self.graphFunBar(ctx_fat,datasets_fat,title_text_fat,chart_sql,true);

@@ -57,7 +57,6 @@ final class WPDP_Graphs {
         
         add_action('init',array($this,'clear_cache'));
 
-
     }
 
     public function clear_cache(){
@@ -120,12 +119,30 @@ final class WPDP_Graphs {
             'actors' => isset($_REQUEST['actors_val']) ? $_REQUEST['actors_val'] : [],
             'fatalities' => isset($_REQUEST['fat_val']) ? $_REQUEST['fat_val'] : []
         ];
+        
+        if((int) $_REQUEST['all_selected'] === 1){
+            $filters['disorder_type'] = [];
+            $filters['fatalities'] = [];
+            $incidents = get_field('incident_type_filter','option');
+            $db_columns = array(
+                'disorder_type',
+                'event_type',
+                'sub_event_type'
+            );
 
+            foreach($incidents as $incident){
+                foreach($incident['filter'] as $filter){
+                    if(strpos($filter['hierarchial'],'1') !== false){
+                        foreach($db_columns as $column){
+                            $filters['disorder_type'] = array_merge($filters['disorder_type'],$filter[$column]);
+                        }
+                    }
+                }
+            }
+        }
+        
         $merged_types = [];
-        $new_disorder_type = [];
-        $new_fatalities = [];
         $new_actors = [];
-
 
         foreach (array_merge($filters['disorder_type'], $filters['fatalities']) as $value) {
             $parts = explode('+', $value);
@@ -133,18 +150,10 @@ final class WPDP_Graphs {
                 if (!in_array($part, $merged_types)) {
                     $merged_types[] = $part;
                 }
-                if (in_array($value, $filters['disorder_type']) && !in_array($part, $new_disorder_type)) {
-                    $new_disorder_type[] = $part;
-                }
-                if (in_array($value, $filters['fatalities']) && !in_array($part, $new_fatalities)) {
-                    $new_fatalities[] = $part;
-                }
             }
         }
 
         $filters['merged_types'] = $merged_types;
-        $filters['disorder_type'] = $new_disorder_type;
-        $filters['fatalities'] = $new_fatalities;
 
         if(empty($filters['actors'])){
             $filters['actors'] = [1,2,3,4,5,6,7,8];
@@ -160,6 +169,10 @@ final class WPDP_Graphs {
 
             $filters['actors'] = array_unique($new_actors);
         }
+
+
+
+
 
         $data = $this->get_data($filters,$types);
 
@@ -373,24 +386,14 @@ final class WPDP_Graphs {
             ";
             $transient_key = md5($query);
             $res = get_transient('wpdp_cache_'.$transient_key);
-            if(empty($res)){
+            if(empty($res) || WP_DATA_PRESENTATION_DISABLE_CACHE){
                 $res = $wpdb->get_results($wpdb->prepare($query));
                 set_transient('wpdp_cache_'.$transient_key, $res);
             }
 
-            foreach($filters['fatalities'] as $fat){
-                $fat_text_and_conditions = $this->get_text_and_conditions($fat);
-                if($text === $fat_text_and_conditions['text']){
-                    $data_fat[$text] = $res;
-                }
-            }
-
-            foreach($filters['disorder_type'] as $disorder_type){
-                $disorder_type_text_and_conditions = $this->get_text_and_conditions($disorder_type);
-                if($text === $disorder_type_text_and_conditions['text']){
-                    $data[$text] = $res;
-                }
-            }
+            $data_fat[$text] = $res;
+            $data[$text] = $res;
+    
         }
 
         $inter_labels = [
@@ -435,7 +438,7 @@ final class WPDP_Graphs {
 
             $transient_key = md5($query);
             $res = get_transient('wpdp_cache_'.$transient_key);
-            if(empty($res)){
+            if(empty($res) || WP_DATA_PRESENTATION_DISABLE_CACHE){
                 $res = $wpdb->get_results($wpdb->prepare($query));
                 set_transient('wpdp_cache_'.$transient_key, $res);
             }

@@ -73,9 +73,8 @@ final class WPDP_Shortcode {
         add_action('wp_ajax_search_location', array($this, 'search_location'));
         add_action('wp_ajax_nopriv_search_location', array($this, 'search_location'));
 
-        if(isset($_GET['test5555'])){
-            session_start();
-            var_dump($_SESSION);exit;
+        if(isset($_GET['test3'])){
+            var_dump(get_option('test3'));exit;
         }
     }
 
@@ -354,7 +353,11 @@ final class WPDP_Shortcode {
                 }
                 $checkbox_name = 'wpdp_'.sanitize_title($key_val[0]);
                 $is_checked = $this->get_session_value($checkbox_name) === $input_val ? 'checked' : '';
-    
+                // if(!self::check_if_wpdp_session_exist()){
+                //     $is_checked = 'checked="checked"';
+                // }
+
+
                 echo '<li class="expandable">';
                 echo '<input type="checkbox" class="wpdp_filter_checkbox wpdp_location" name="' . $checkbox_name . '" value="' . $input_val . '" ' . $is_checked . '>';
                 echo '<div class="exp_click"><span for="' . $key . '">' . $key_val[0] . '</span>';
@@ -456,6 +459,16 @@ final class WPDP_Shortcode {
         ';
     }
 
+    function get_select_unselect_all_html(){
+        return '<ul>
+                <li class="expandable ">
+                    <input class="wpdp_filter_checkbox select_unselect_all" checked type="checkbox" value="">
+                    <div class="exp_click">
+                        <span>Select/Unselect All</span>
+                    </div>
+                </li>
+            </ul>';
+    }
 
     function get_html_filter($filters, $atts) {
         ?>
@@ -468,9 +481,10 @@ final class WPDP_Shortcode {
                     <div class="grp inident_type">
 
                         <div class="title">
-                            INCIDENT TYPE <span class="dashicons dashicons-arrow-down-alt2"></span>
+                        EVENT TYPE <span class="dashicons dashicons-arrow-down-alt2"></span>
                         </div>
                         <div class="content">
+                            <?php echo $this->get_select_unselect_all_html();?>
                             <?php 
                                 $filter = get_field('incident_type_filter','option');
                                 foreach($filter as $filt){
@@ -489,6 +503,7 @@ final class WPDP_Shortcode {
                             ACTORS <span class="dashicons dashicons-arrow-down-alt2"></span>
                         </div>
                         <div class="content">
+                        <?php echo $this->get_select_unselect_all_html();?>
                             <?php 
                                 $filter = get_field('actor_filter','option');
                                 foreach($filter as $filt){
@@ -502,12 +517,13 @@ final class WPDP_Shortcode {
 
 
 
-                    <div class="grp actors">
+                    <div class="grp fatalities ">
 
                         <div class="title">
                             FATALITIES <span class="dashicons dashicons-arrow-down-alt2"></span>
                         </div>
                         <div class="content">
+                        <?php echo $this->get_select_unselect_all_html();?>
                             <?php 
                                 $filter = get_field('fatalities_filter','option');
                                 foreach($filter as $filt){
@@ -548,6 +564,7 @@ final class WPDP_Shortcode {
                             </div>
 
                           <br>
+                 
                             <?php $this->printArrayAsList($filters['locations']);?>
                         </div>
                     </div>
@@ -643,6 +660,17 @@ final class WPDP_Shortcode {
         return $value;
     }
 
+    public static function check_if_wpdp_session_exist(){
+        session_start();
+        $exist = false;
+        foreach ($_SESSION as $key => $value) {
+            if (strpos($key, 'wpdp_') !== false) {
+                $exist = true;
+            }
+        }
+        return $exist;
+    }
+
     function generateHierarchy($array, $not_incident = false, $first = 1) {
         $html = '<ul '.($first == 1 ? 'class="first_one"' : '').'>';
         $class = 'wpdp_incident_type';
@@ -663,6 +691,9 @@ final class WPDP_Shortcode {
             $checkbox_value = implode('+', $value);
 
             $is_checked = $this->get_session_value($checkbox_name) === $checkbox_value ? 'checked="checked"' : '';
+            if(!self::check_if_wpdp_session_exist()){
+                $is_checked = 'checked="checked"';
+            }
 
             $html .= '<li class="expandable '.($class == 'wpdp_fat' && $first == 1 ? 'expanded' : '').'">';
             $html .= '<input class="wpdp_filter_checkbox '.$class.'" type="checkbox" name="'.$checkbox_name.'" value="'.$checkbox_value.'" '.$is_checked.'>';
@@ -715,8 +746,8 @@ final class WPDP_Shortcode {
             }
         }
 
-
         $filter_data = $_POST['filter_data'];
+
         foreach ($filter_data as $key => $value) {
             $_SESSION['wpdp_'.$key] = $value;
         }
