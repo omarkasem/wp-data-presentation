@@ -117,7 +117,8 @@ final class WPDP_Graphs {
             'to' => isset($_REQUEST['to_val']) ? $_REQUEST['to_val'] : '',
             'timeframe' => isset($_REQUEST['timeframe']) ? $_REQUEST['timeframe'] : '',
             'actors' => isset($_REQUEST['actors_val']) ? $_REQUEST['actors_val'] : [],
-            'fatalities' => isset($_REQUEST['fat_val']) ? $_REQUEST['fat_val'] : []
+            'fatalities' => isset($_REQUEST['fat_val']) ? $_REQUEST['fat_val'] : [],
+            'actor_names' => isset($_REQUEST['actor_names_val']) ? $_REQUEST['actor_names_val'] : ''
         ];
         
         if((int) $_REQUEST['all_selected'] === 1){
@@ -188,7 +189,7 @@ final class WPDP_Graphs {
         wp_register_script(WP_DATA_PRESENTATION_NAME.'chartjs-moment', WP_DATA_PRESENTATION_URL.'assets/js/moment.min.js', array('jquery'), WP_DATA_PRESENTATION_VERSION, true);
     }
     
-    public function build_where_clause($filters, $date_format, $column_exists,$include_actors = false) {
+    public function build_where_clause($filters, $date_format, $column_exists,$actor_column_exists,$include_actors = false) {
         $whereSQL = ' WHERE 1=1 ';
         $mysql_date_format = $date_format['mysql'];
         $filter_format_from = date($date_format['php'],strtotime($filters['from']));
@@ -218,6 +219,17 @@ final class WPDP_Graphs {
                 $whereSQL .= " AND (inter1 IN ({$actor_values_str}) OR inter2 IN ({$actor_values_str}))";
             } else {
                 $whereSQL .= " AND inter1 IN ({$actor_values_str})";
+            }
+        }
+
+        if(!empty($filters['actor_names'])){
+            $actor_names_values = array_map(function($val) { return "'{$val}'"; }, $filters['actor_names']);
+            $actor_names_values_str = implode(',', $actor_names_values);
+            
+            if (!empty($actor_column_exists)) {
+                $whereSQL .= " AND (actor1 IN ({$actor_names_values_str}) OR actor2 IN ({$actor_names_values_str}))";
+            } else {
+                $whereSQL .= " AND actor1 IN ({$actor_names_values_str})";
             }
         }
 
@@ -345,8 +357,9 @@ final class WPDP_Graphs {
             $date_format = WPDP_Shortcode::get_date_format($date_sample);
             $mysql_date_format = $date_format['mysql'];
             $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'inter2'");
-            $whereSQL = $this->build_where_clause($filters, $date_format, $column_exists,true);
-            $whereSQL_actors = $this->build_where_clause($filters, $date_format, $column_exists);
+            $actor_column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'actor2'");
+            $whereSQL = $this->build_where_clause($filters, $date_format, $column_exists,$actor_column_exists,true);
+            $whereSQL_actors = $this->build_where_clause($filters, $date_format, $column_exists,$actor_column_exists);
 
             $sql = "SELECT 
             SUM(fatalities) as fatalities_count,

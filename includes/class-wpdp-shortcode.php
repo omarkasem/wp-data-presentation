@@ -73,10 +73,21 @@ final class WPDP_Shortcode {
         add_action('wp_ajax_search_location', array($this, 'search_location'));
         add_action('wp_ajax_nopriv_search_location', array($this, 'search_location'));
 
+        add_action('wp_ajax_search_actor_names', array($this, 'search_actor_names'));
+        add_action('wp_ajax_nopriv_search_actor_names', array($this, 'search_actor_names'));
+
         if(isset($_GET['test3'])){
-            var_dump(get_option('test3'));exit;
+            var_dump($this->get_actors_names());exit;
         }
     }
+
+    public function search_actor_names(){
+        $search = $_REQUEST['search'];
+        $actors = $this->get_actors_names($search);
+        echo json_encode($actors);
+        die();
+    }
+
 
     public function search_location(){
         $search = $_REQUEST['search'];
@@ -470,6 +481,57 @@ final class WPDP_Shortcode {
             </ul>';
     }
 
+    function get_actors_names($search){
+        global $wpdb;
+        $posts = get_posts(array(
+            'post_type'      => 'wp-data-presentation',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+        ));
+
+        if (empty($posts)) {
+            return [];
+        }
+
+        $actors = [];
+        foreach ($posts as $id) {
+            $table_name   = $wpdb->prefix. 'wpdp_data_' . $id;
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
+            $actor_column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'actor2'");
+
+            if (!$table_exists) {
+                continue;
+            }
+
+            if (!empty($actor_column_exists)) {
+                $query = $wpdb->prepare(
+                    "SELECT DISTINCT actor1 AS actor FROM {$table_name} WHERE actor1 LIKE %s
+                     UNION
+                     SELECT DISTINCT actor2 AS actor FROM {$table_name} WHERE actor2 LIKE %s
+                     LIMIT 20",
+                    '%' . $wpdb->esc_like($search) . '%',
+                    '%' . $wpdb->esc_like($search) . '%'
+                );
+            } else {
+                $query = $wpdb->prepare(
+                    "SELECT DISTINCT actor1 AS actor FROM {$table_name} WHERE actor1 LIKE %s
+                     LIMIT 20",
+                    '%' . $wpdb->esc_like($search) . '%'
+                );
+            }
+            
+            $results = $wpdb->get_col($query);
+            $actors = array_merge($actors, $results);
+        }
+
+        $unique_actors = array_unique($actors);
+        sort($unique_actors);
+        
+        return array_map(function($actor) {
+            return ['id' => $actor, 'text' => $actor];
+        }, $unique_actors);
+    }
+
     function get_html_filter($filters, $atts) {
         ?>
         <div class="filter_data" style="display:none;">
@@ -503,7 +565,9 @@ final class WPDP_Shortcode {
                             ACTORS <span class="dashicons dashicons-arrow-down-alt2"></span>
                         </div>
                         <div class="content">
-                        <?php echo $this->get_select_unselect_all_html();?>
+
+                            <?php echo $this->get_select_unselect_all_html();?>
+
                             <?php 
                                 $filter = get_field('actor_filter','option');
                                 foreach($filter as $filt){
@@ -515,6 +579,28 @@ final class WPDP_Shortcode {
                         </div>
                     </div>
 
+                    <div class="grp actors_names">
+
+                        <div class="title">
+                            ACTORS NAMES <span class="dashicons dashicons-arrow-down-alt2"></span>
+                        </div>
+                        <div class="content">
+                            <div>
+                                <select name="wpdp_search_actors" id="wpdp_search_actors" multiple="multiple">
+                                <?php
+                                $selected_actors = $this->get_session_value('wpdp_search_actors', []);
+
+                                if (!empty($selected_actors)) {
+                                    foreach ($selected_actors as $actor) {
+                                        echo '<option value="' . esc_attr($actor) . '" selected>' . esc_html($actor) . '</option>';
+                                    }
+                                }
+                                ?>
+                                </select>
+                            </div>
+
+                        </div>
+                    </div>
 
 
                     <div class="grp fatalities ">
@@ -578,21 +664,21 @@ final class WPDP_Shortcode {
                             <div class="dates">
                                 <label for="wpdp_from">FROM</label>
                                 <input value="<?php 
-                                    if ('map' === $atts['type'] && empty($this->get_session_value('wpdp_from'))) {
-                                        echo date('d F Y', strtotime('-30 days'));
-                                    } else {
+                                    // if ('map' === $atts['type'] && empty($this->get_session_value('wpdp_from'))) {
+                                    //     echo date('d F Y', strtotime('-30 days'));
+                                    // } else {
                                         echo $this->get_session_value('wpdp_from', $this->get_from_date_value($filters, $atts));
-                                    }
+                                    // }
                                 ?>" type="text" name="wpdp_from" id="wpdp_from">
                             </div>
                             <div class="dates">
                                 <label style="margin-right: 23px;" for="wpdp_to">TO</label>
                                 <input value="<?php 
-                                    if ('map' === $atts['type'] && empty($this->get_session_value('wpdp_to'))) {
-                                        echo date('d F Y');
-                                    } else {
+                                    // if ('map' === $atts['type'] && empty($this->get_session_value('wpdp_to'))) {
+                                    //     echo date('d F Y');
+                                    // } else {
                                         echo $this->get_session_value('wpdp_to', $this->get_to_date_value($filters, $atts));
-                                    }
+                                    // }
                                 ?>" type="text" name="wpdp_to" id="wpdp_to">
                             </div>
                             <?php if ('graph' === $atts['type'] || '' == $atts['type']) {?>
@@ -661,7 +747,9 @@ final class WPDP_Shortcode {
     }
 
     public static function check_if_wpdp_session_exist(){
-        session_start();
+        if (session_status() == PHP_SESSION_NONE) {
+            session_start();
+        }
         $exist = false;
         foreach ($_SESSION as $key => $value) {
             if (strpos($key, 'wpdp_') !== false) {

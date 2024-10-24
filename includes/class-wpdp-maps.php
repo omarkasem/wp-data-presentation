@@ -127,7 +127,7 @@ final class WPDP_Maps {
             return 'No data';
         }
 
-        $filters = $this->format_dates_to_one_year($filters);
+        // $filters = $this->format_dates_to_one_year($filters);
         global $wpdb;
         $data = [];
         $queryArgs = [];
@@ -143,7 +143,8 @@ final class WPDP_Maps {
             $date_sample = $wpdb->get_var("SELECT event_date FROM $table_name LIMIT 1");
             $date_format = WPDP_Shortcode::get_date_format($date_sample);
             $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'inter2'");
-            $whereSQL = $this->build_where_clause($filters, $queryArgs, $date_format, $column_exists);
+            $actor_column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'actor2'");
+            $whereSQL = $this->build_where_clause($filters, $queryArgs, $date_format, $column_exists, $actor_column_exists);
             if($column_exists){
                 $types[] = 'inter2';
                 if (($key = array_search('iso', $types)) !== false) {
@@ -182,7 +183,7 @@ final class WPDP_Maps {
 
     }
 
-    private function build_where_clause($filters, &$queryArgs, $date_format, $column_exists) {
+    private function build_where_clause($filters, &$queryArgs, $date_format, $column_exists, $actor_column_exists) {
         $whereSQL = ' WHERE 1=1 ';
 
         if(!empty($filters['locations'])){
@@ -234,6 +235,21 @@ final class WPDP_Maps {
             $whereSQL .= " AND (" . implode(' OR ', $conditions) . ")";
         }
         
+
+        if(!empty($filters['actors_names'])){
+            $conditions = [];
+            foreach ($filters['actors_names'] as $value) {
+                $conditions[] = "actor1 = %s";
+                $queryArgs[] = $value;
+                if($actor_column_exists){
+                    $conditions[] = "actor2 = %s";
+                    $queryArgs[] = $value;
+                }
+            }
+            $whereSQL .= " AND (" . implode(' OR ', $conditions) . ")";
+        }
+
+
         $mysql_date_format = $date_format['mysql'];
 
         if(!empty($filters['from'])){
@@ -256,7 +272,8 @@ final class WPDP_Maps {
             'actors' => isset($_REQUEST['actors_val']) ? $_REQUEST['actors_val'] : [],
             'fatalities' => isset($_REQUEST['fat_val']) ? $_REQUEST['fat_val'] : [],
             'from' => isset($_REQUEST['from_val']) ? $_REQUEST['from_val'] : '',
-            'to' => isset($_REQUEST['to_val']) ? $_REQUEST['to_val'] : ''
+            'to' => isset($_REQUEST['to_val']) ? $_REQUEST['to_val'] : '',
+            'actors_names' => isset($_REQUEST['actors_names_val']) ? $_REQUEST['actors_names_val'] : ''
         ];
 
         $merged_types = array_unique(array_merge($filters['disorder_type'],$filters['fatalities']));
@@ -282,7 +299,6 @@ final class WPDP_Maps {
             'notes',
             'timestamp',
         ];
-   
 
         $data = $this->get_data($filters,$types);
 

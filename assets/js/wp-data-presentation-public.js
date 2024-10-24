@@ -9,6 +9,7 @@
     var markerCluster;
     var selectedLocations = [];
     var selectedIncidents = [];
+    var selectedActorNames = [];
     var selectedActors = [];
     var selectedFat = [];
     var selectedGraphFat = [];
@@ -37,7 +38,7 @@
       self.datePicker();
       self.checkbox();
       self.checkfForIndeterminate();
-      self.locationSearch();
+      self.select2();
       self.tippy();
     },
 
@@ -51,6 +52,7 @@
       selectedLocations = [];
       selectedIncidents = [];
       selectedActors = [];
+      selectedActorNames = [];
       selectedFat = [];
       selectedGraphFat = [];
       fromYear = '';
@@ -91,6 +93,9 @@
         selectedActors.push($(this).val());
       });
 
+
+      selectedActorNames = $('#wpdp_search_actors').val();
+
       $('input[type="checkbox"].wpdp_fat:checked').each(function() {
         selectedFat.push($(this).val());
         selectedGraphFat.push($(this).val());
@@ -99,7 +104,7 @@
 
     },
 
-    self.locationSearch = function(){
+    self.select2 = function(){
       $('#wpdp_search_location').select2({
         multiple: true,
         ajax: {
@@ -135,6 +140,38 @@
         width: 'element',
         dropdownParent: $('#wpdp_search_location').parent()
       });
+
+      $('#wpdp_search_actors').select2({
+        multiple: true,
+        minimumInputLength: 3,
+        ajax: {
+          url: wpdp_obj.ajax_url,
+          dataType: 'json',
+          delay: 250,
+          data: function (params) {
+            return {
+              search: params.term,
+              action: 'search_actor_names'
+            };
+          },
+          processResults: function (data) {
+            console.log(data);
+            return {
+              results: $.map(data, function(item) {
+                return {
+                  id: item.id,
+                  text: item.text
+                };
+              })
+            };
+          },
+          cache: true
+        },
+        placeholder: 'Search Actor Name',
+        width: 'element',
+        dropdownParent: $('#wpdp_search_actors').parent()
+      });
+
     },
 
     self.checkfForIndeterminate = function(){
@@ -210,16 +247,16 @@
         changeYear: true,
         yearRange: "c-100:c+100",
         onSelect: function(selectedDate) {
-          if($('.content.filter_maps').length > 0){
-            var endDate = new Date(selectedDate);
-            endDate.setDate(endDate.getDate() + 1);
-            endDate.setFullYear(endDate.getFullYear() + 1);
+          // if($('.content.filter_maps').length > 0){
+          //   var endDate = new Date(selectedDate);
+          //   endDate.setDate(endDate.getDate() + 1);
+          //   endDate.setFullYear(endDate.getFullYear() + 1);
       
-            var currentToDate = $('#wpdp_to').datepicker('getDate');
-            if (currentToDate < new Date(selectedDate) || currentToDate > endDate) {
-              $('#wpdp_to').datepicker('setDate', endDate);
-            }
-          }
+          //   var currentToDate = $('#wpdp_to').datepicker('getDate');
+          //   if (currentToDate < new Date(selectedDate) || currentToDate > endDate) {
+          //     $('#wpdp_to').datepicker('setDate', endDate);
+          //   }
+          // }
           $('.filter_data .no_data').hide();
         },
         beforeShow: function (input, inst) {
@@ -246,16 +283,16 @@
         changeYear: true,
         yearRange: "c-100:c+100",
         onSelect: function(selectedDate) {
-          if($('.content.filter_maps').length > 0){
-            var startDate = new Date(selectedDate);
-            startDate.setDate(startDate.getDate() - 1);
-            startDate.setFullYear(startDate.getFullYear() - 1);
+          // if($('.content.filter_maps').length > 0){
+          //   var startDate = new Date(selectedDate);
+          //   startDate.setDate(startDate.getDate() - 1);
+          //   startDate.setFullYear(startDate.getFullYear() - 1);
       
-            var currentFromDate = $('#wpdp_from').datepicker('getDate');
-            if (currentFromDate > new Date(selectedDate) || currentFromDate < startDate) {
-              $('#wpdp_from').datepicker('setDate', startDate);
-            }
-          }
+          //   var currentFromDate = $('#wpdp_from').datepicker('getDate');
+          //   if (currentFromDate > new Date(selectedDate) || currentFromDate < startDate) {
+          //     $('#wpdp_from').datepicker('setDate', startDate);
+          //   }
+          // }
           $('.filter_data .no_data').hide();
         },
         beforeShow: function (input, inst) {
@@ -323,6 +360,7 @@
           type_val: selectedIncidents,
           locations_val: selectedLocations,
           actors_val: selectedActors,
+          actors_names_val: selectedActorNames,
           fat_val: selectedFat,
           from_val: fromYear,
           to_val: toYear
@@ -669,6 +707,7 @@
                 d.type_val = selectedIncidents;
                 d.from_val = fromYear;
                 d.actors_val = selectedActors;
+                d.actor_names_val = selectedActorNames;
                 d.fat_val = selectedFat;
                 d.to_val = toYear;
                 d.locations_val = selectedLocations;
@@ -1080,6 +1119,7 @@
           type_val: selectedIncidents,
           locations_val: selectedLocations,
           actors_val: selectedActors,
+          actor_names_val: selectedActorNames,
           fat_val: selectedGraphFat,
           from_val: fromYear,
           to_val: toYear,

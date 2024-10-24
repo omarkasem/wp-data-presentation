@@ -123,6 +123,7 @@ final class WPDP_Tables {
             'from' => isset($_REQUEST['from_val']) ? $_REQUEST['from_val'] : null,
             'to' => isset($_REQUEST['to_val']) ? $_REQUEST['to_val'] : null,
             'actors' => isset($_REQUEST['actors_val']) ? $_REQUEST['actors_val'] : [],
+            'actor_names' => isset($_REQUEST['actor_names_val']) ? $_REQUEST['actor_names_val'] : [],
             'fatalities' => isset($_REQUEST['fat_val']) ? $_REQUEST['fat_val'] : []
         ];
 
@@ -215,8 +216,9 @@ final class WPDP_Tables {
             $date_format = WPDP_Shortcode::get_date_format($date_sample);
             $mysql_date_format = $date_format['mysql'];
             $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'inter2'");
+            $actor_column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'actor2'");
 
-            list($whereSQL, $localQueryArgs) = $this->build_where_clause($filters, $queryArgs, $date_format, $column_exists, $search);
+            list($whereSQL, $localQueryArgs) = $this->build_where_clause($filters, $queryArgs, $date_format, $column_exists, $actor_column_exists, $search);
             
             $select_parts = [];
             foreach ($types as $type) {
@@ -277,7 +279,7 @@ final class WPDP_Tables {
         return ['data' => $data, 'count' => $count];
     }
     
-    private function build_where_clause($filters, &$queryArgs, $date_format, $column_exists, $search) {
+    private function build_where_clause($filters, &$queryArgs, $date_format, $column_exists, $actor_column_exists, $search) {
         if (!empty($search)) {
             return [" WHERE event_id_cnty = %s", array($search)];
         }
@@ -332,6 +334,20 @@ final class WPDP_Tables {
             $whereSQL .= " AND (" . implode(' OR ', $conditions) . ")";
         }
 
+        if(!empty($filters['actor_names'])){
+            $whereSQL .= " AND (";
+            $conditions = [];
+            foreach ($filters['actor_names'] as $value) {
+                $conditions[] = "actor1 = %s";
+                $queryArgs[] = $value;
+                if($actor_column_exists){
+                    $conditions[] = "actor2 = %s";
+                    $queryArgs[] = $value;
+                }
+            }
+            $whereSQL .= implode(' OR ', $conditions) . ")";
+        }
+
         $mysql_date_format = $date_format['mysql'];
 
         if(!empty($filters['from'])){
@@ -343,7 +359,6 @@ final class WPDP_Tables {
             $whereSQL .= " AND STR_TO_DATE(event_date, '{$mysql_date_format}') <= STR_TO_DATE(%s, '{$mysql_date_format}')";
             $queryArgs[] = date($date_format['php'], strtotime($filters['to']));
         }
-
         return array($whereSQL, $queryArgs);
     }
     
@@ -361,7 +376,7 @@ final class WPDP_Tables {
                 <thead>
                     <tr>
                         <th>Date</th>
-                        <th>Incident Type</th>
+                        <th>Event Type</th>
                         <th>Location</th>
                         <th>Fatalities.</th>
                         <th> </th>
