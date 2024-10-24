@@ -144,7 +144,7 @@ final class WPDP_Maps {
             $date_format = WPDP_Shortcode::get_date_format($date_sample);
             $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'inter2'");
             $actor_column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'actor2'");
-            $whereSQL = $this->build_where_clause($filters, $queryArgs, $date_format, $column_exists, $actor_column_exists);
+            list($whereSQL, $localQueryArgs) = $this->build_where_clause($filters, $queryArgs, $date_format, $column_exists, $actor_column_exists);
 
             if($actor_column_exists){
                 $types[] = 'actor2';
@@ -187,7 +187,7 @@ final class WPDP_Maps {
         $transient_key = md5($final_query); 
         $data = get_transient('wpdp_cache_'.$transient_key);
         if(empty($data)){
-            $data = $wpdb->get_results($wpdb->prepare($final_query, $queryArgs), ARRAY_A);
+            $data = $wpdb->get_results($wpdb->prepare($final_query, $localQueryArgs), ARRAY_A);
             set_transient('wpdp_cache_'.$transient_key, $data);
         }
 
@@ -274,7 +274,10 @@ final class WPDP_Maps {
             $whereSQL .= " AND STR_TO_DATE(event_date, '{$mysql_date_format}') <= STR_TO_DATE(%s, '{$mysql_date_format}')";
             $queryArgs[] = date($date_format['php'], strtotime($filters['to']));
         }
-        return $whereSQL;
+        return array(
+            $whereSQL,
+            $queryArgs
+        );
     }
 
 

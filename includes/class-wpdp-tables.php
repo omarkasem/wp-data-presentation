@@ -124,7 +124,9 @@ final class WPDP_Tables {
             'to' => isset($_REQUEST['to_val']) ? $_REQUEST['to_val'] : null,
             'actors' => isset($_REQUEST['actors_val']) ? $_REQUEST['actors_val'] : [],
             'actor_names' => isset($_REQUEST['actor_names_val']) ? $_REQUEST['actor_names_val'] : [],
-            'fatalities' => isset($_REQUEST['fat_val']) ? $_REQUEST['fat_val'] : []
+            'fatalities' => isset($_REQUEST['fat_val']) ? $_REQUEST['fat_val'] : [],
+            'target_civ' => isset($_REQUEST['target_civ']) ? $_REQUEST['target_civ'] : '',
+            'target_civ_fat' => isset($_REQUEST['target_civ_fat']) ? $_REQUEST['target_civ_fat'] : ''
         ];
 
         $merged_types = array_unique(array_merge( $filters['disorder_type'],$filters['fatalities']));
@@ -346,6 +348,12 @@ final class WPDP_Tables {
                 }
             }
             $whereSQL .= implode(' OR ', $conditions) . ")";
+        }
+
+        if(!empty($filters['target_civ'])){
+            if($filters['target_civ'] == 'yes'){
+                $whereSQL .= " AND civilian_targeting != ''";
+            }
         }
 
         $mysql_date_format = $date_format['mysql'];

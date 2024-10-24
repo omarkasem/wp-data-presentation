@@ -118,10 +118,11 @@ final class WPDP_Graphs {
             'timeframe' => isset($_REQUEST['timeframe']) ? $_REQUEST['timeframe'] : '',
             'actors' => isset($_REQUEST['actors_val']) ? $_REQUEST['actors_val'] : [],
             'fatalities' => isset($_REQUEST['fat_val']) ? $_REQUEST['fat_val'] : [],
-            'actor_names' => isset($_REQUEST['actor_names_val']) ? $_REQUEST['actor_names_val'] : ''
+            'actor_names' => isset($_REQUEST['actor_names_val']) ? $_REQUEST['actor_names_val'] : '',
+            'target_civ' => isset($_REQUEST['target_civ']) ? $_REQUEST['target_civ'] : ''
         ];
         
-        if((int) $_REQUEST['all_selected'] === 1){
+        if((int) $_REQUEST['all_selected'] === 1 || (empty($filters['disorder_type']) && empty($filters['fatalities']))){
             $filters['disorder_type'] = [];
             $filters['fatalities'] = [];
             $incidents = get_field('incident_type_filter','option');
@@ -172,9 +173,6 @@ final class WPDP_Graphs {
         }
 
 
-
-
-
         $data = $this->get_data($filters,$types);
 
         wp_send_json_success($data);
@@ -205,14 +203,28 @@ final class WPDP_Graphs {
 
 
         if(!empty($filters['actors']) && $include_actors){
-            $conditions = [];
-            $whereSQL .= " AND (";
+            $actor_values = array();
             foreach ($filters['actors'] as $value) {
                 $value_parts = explode('+', $value);
+                $actor_values = array_merge($actor_values, $value_parts);
+            }
+            $actor_values = array_unique($actor_values);
+            
+            $whereSQL .= " AND (inter1 IN ('" . implode("','", $actor_values) . "')";
+            if($column_exists){
+                $whereSQL .= " OR inter2 IN ('" . implode("','", $actor_values) . "')";
+            }
+            $whereSQL .= ")";
+        }
+
+        if(!empty($filters['actor_names'])){
+            $conditions = [];
+            foreach ($filters['actor_names'] as $value) {
+                $value_parts = explode('+', $value);
                 foreach ($value_parts as $part) {
-                    $conditions[] = "inter1 = %s";
-                    if($column_exists){
-                        $conditions[] = "inter2 = %s";
+                    $conditions[] = "actor1 = '" . esc_sql($part) . "'";
+                    if($actor_column_exists){
+                        $conditions[] = "actor2 = '" . esc_sql($part) . "'";
                     }
                 }
             }
@@ -220,21 +232,14 @@ final class WPDP_Graphs {
             $whereSQL .= " AND (" . implode(' OR ', $conditions) . ")";
         }
 
-        if(!empty($filters['actor_names'])){
-            $conditions = [];
-            $whereSQL .= " AND (";
-            foreach ($filters['actor_names'] as $value) {
-                $value_parts = explode('+', $value);
-                foreach ($value_parts as $part) {
-                    $conditions[] = "actor1 = %s";
-                    if($actor_column_exists){
-                        $conditions[] = "actor2 = %s";
-                    }
-                }
+
+
+        if(!empty($filters['target_civ'])){
+            if($filters['target_civ'] == 'yes'){
+                $whereSQL .= " AND (civilian_targeting != '') ";
             }
-            
-            $whereSQL .= " AND (" . implode(' OR ', $conditions) . ")";
         }
+
 
         if(!empty($filters['merged_types']) && !$include_actors){
             $conditions = [];
@@ -314,6 +319,9 @@ final class WPDP_Graphs {
                 }elseif($days >= 370 && $days < 700){
                     $sql_type = 'MONTH';
                     $chart_sql = 'quarter';
+                }else{
+                    $sql_type = 'YEAR';
+                    $chart_sql = 'year';
                 }
             }
 
@@ -357,7 +365,7 @@ final class WPDP_Graphs {
             if($date_sample == ''){
                 continue;
             }
-            $date_format = WPDP_Shortcode::get_date_format($date_sample);
+            $date_format = WPDP_Shortcode::get_date_format($date_sample,true);
             $mysql_date_format = $date_format['mysql'];
             $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'inter2'");
             $actor_column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'actor2'");
@@ -393,7 +401,7 @@ final class WPDP_Graphs {
             foreach($sql_parts as $sql){
                 $new_sql[]= $sql.' '.$new_where  . ' GROUP BY year_week';
             }
-  
+
             $query = "
             SELECT *
             FROM (
@@ -403,7 +411,7 @@ final class WPDP_Graphs {
             $transient_key = md5($query);
             $res = get_transient('wpdp_cache_'.$transient_key);
             if(empty($res) || WP_DATA_PRESENTATION_DISABLE_CACHE){
-                $res = $wpdb->get_results($wpdb->prepare($query));
+                $res = $wpdb->get_results($query);
                 set_transient('wpdp_cache_'.$transient_key, $res);
             }
 
@@ -429,20 +437,18 @@ final class WPDP_Graphs {
             $new_sql = [];
             $conditions = [];
   
-            
-            foreach($sql_parts_actors as $key => $sql){
-                $value_parts = explode('+', $type);
-                foreach ($value_parts as $part) {
-                    $conditions[] = "inter1 = '{$part}'";
-                    foreach($column_exists_arr as $column_exists){
-                        if(strpos($column_exists,$sql) !== false){
-                            $conditions[] = "inter2 = '{$part}'";
-                        }
+            $value_parts = explode('+', $type);
+            foreach ($value_parts as $part) {
+                $conditions[] = "inter1 = '{$part}'";
+                foreach($column_exists_arr as $column_exists){
+                    if(strpos($column_exists,$sql) !== false){
+                        $conditions[] = "inter2 = '{$part}'";
                     }
                 }
-    
-                $new_where = " AND (".implode(' OR ', $conditions).")";
+            }
+            $new_where = " AND (".implode(' OR ', $conditions).")";
 
+            foreach($sql_parts_actors as $key => $sql){
                 $new_sql[]= $sql.' '.$new_where  . ' GROUP BY year_week';
             }
             $query = "
@@ -455,7 +461,7 @@ final class WPDP_Graphs {
             $transient_key = md5($query);
             $res = get_transient('wpdp_cache_'.$transient_key);
             if(empty($res) || WP_DATA_PRESENTATION_DISABLE_CACHE){
-                $res = $wpdb->get_results($wpdb->prepare($query));
+                $res = $wpdb->get_results($query);
                 set_transient('wpdp_cache_'.$transient_key, $res);
             }
 

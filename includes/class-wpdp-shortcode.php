@@ -77,7 +77,8 @@ final class WPDP_Shortcode {
         add_action('wp_ajax_nopriv_search_actor_names', array($this, 'search_actor_names'));
 
         if(isset($_GET['test3'])){
-            var_dump($this->get_actors_names());exit;
+            session_start();
+            var_dump($_SESSION);exit;
         }
     }
 
@@ -194,7 +195,7 @@ final class WPDP_Shortcode {
 
 
 
-    public static function get_date_format($date_sample) {
+    public static function get_date_format($date_sample, $graphs = false) {
         $date_formats = [
             'Y-m-d' => ['regex' => '/^\d{4}-\d{2}-\d{2}$/', 'mysql' => '%%Y-%%m-%%d'],
             'Y/m/d' => ['regex' => '/^\d{4}\/\d{2}\/\d{2}$/', 'mysql' => '%%Y/%%m/%%d'],
@@ -205,6 +206,17 @@ final class WPDP_Shortcode {
             'd F Y' => ['regex' => '/^\d{2} \w{3,9} \d{4}$/', 'mysql' => '%%d %%M %%Y']
         ];
     
+        if($graphs){
+            $date_formats = [
+                'Y-m-d' => ['regex' => '/^\d{4}-\d{2}-\d{2}$/', 'mysql' => '%Y-%m-%d'],
+                'Y/m/d' => ['regex' => '/^\d{4}\/\d{2}\/\d{2}$/', 'mysql' => '%Y/%m/%d'],
+                'd-m-Y' => ['regex' => '/^\d{2}-\d{2}-\d{4}$/', 'mysql' => '%d-%m-%Y'],
+                'd/m/Y' => ['regex' => '/^\d{2}\/\d{2}\/\d{4}$/', 'mysql' => '%d/%m/%Y'],
+                'm-d-Y' => ['regex' => '/^\d{2}-\d{2}-\d{4}$/', 'mysql' => '%m-%d-%Y'],
+                'm/d/Y' => ['regex' => '/^\d{2}\/\d{2}\/\d{4}$/', 'mysql' => '%m/%d/%Y'],
+                'd F Y' => ['regex' => '/^\d{2} \w{3,9} \d{4}$/', 'mysql' => '%d %M %Y']
+            ];
+        }
     
         foreach ($date_formats as $php_format => $format_info) {
             if (preg_match($format_info['regex'], $date_sample)) {
@@ -481,6 +493,17 @@ final class WPDP_Shortcode {
             </ul>';
     }
 
+    function get_civ_radio_html($text){
+        return'
+        	<div class="switch-field">
+                <input type="radio" id="radio-one" name="target_civ" value="no" '.($this->get_session_value('target_civ') == 'no' ? 'checked' : '').'/>
+                <label for="radio-one">All '.$text.'</label>
+                <input type="radio" id="radio-two" name="target_civ" value="yes" '.($this->get_session_value('target_civ') == 'yes' ? 'checked' : '').'/>
+                <label for="radio-two">Target Civilians</label>
+            </div>
+        ';
+    }
+
     function get_actors_names($search){
         global $wpdb;
         $posts = get_posts(array(
@@ -546,6 +569,7 @@ final class WPDP_Shortcode {
                         EVENT TYPE <span class="dashicons dashicons-arrow-down-alt2"></span>
                         </div>
                         <div class="content">
+                            <?php echo $this->get_civ_radio_html('Events');?>
                             <?php echo $this->get_select_unselect_all_html();?>
                             <?php 
                                 $filter = get_field('incident_type_filter','option');
@@ -609,7 +633,7 @@ final class WPDP_Shortcode {
                             FATALITIES <span class="dashicons dashicons-arrow-down-alt2"></span>
                         </div>
                         <div class="content">
-                        <?php echo $this->get_select_unselect_all_html();?>
+                            <?php echo $this->get_select_unselect_all_html();?>
                             <?php 
                                 $filter = get_field('fatalities_filter','option');
                                 foreach($filter as $filt){

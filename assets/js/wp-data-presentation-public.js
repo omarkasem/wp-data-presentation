@@ -16,6 +16,7 @@
     var fromYear = '';
     var toYear = '';
     var timeframe = '';
+    var targetCiv = '';
     const interLabels = {
       1: "State Forces",
       2: "Rebel Groups",
@@ -58,9 +59,12 @@
       fromYear = '';
       toYear = '';
       timeframe = '';
+      targetCiv = '';
 
       fromYear = $("#wpdp_from").val();
       toYear = $("#wpdp_to").val();
+
+      targetCiv = $('input[type="radio"][name="target_civ"]:checked').val();
 
       if(fromYear == '' && JSON.parse(wpdp_shortcode_atts).from != ''){
         fromYear = JSON.parse(wpdp_shortcode_atts).from;
@@ -363,7 +367,8 @@
           actors_names_val: selectedActorNames,
           fat_val: selectedFat,
           from_val: fromYear,
-          to_val: toYear
+          to_val: toYear,
+          target_civ: targetCiv
         },
         type: 'POST',
         success: function(response) {
@@ -711,6 +716,7 @@
                 d.fat_val = selectedFat;
                 d.to_val = toYear;
                 d.locations_val = selectedLocations;
+                d.target_civ = targetCiv;
               },
               "dataSrc": function(json) {
                 if (!json.data || json.data.length === 0) {
@@ -1045,7 +1051,7 @@
         var filterData = {};
         $(this).find('input, select').each(function() {
             var $this = $(this);
-            if ($this.is(':checkbox')) {
+            if ($this.is(':checkbox') || $this.is(':radio')) {
                 if ($this.is(':checked')) {
                     filterData[$this.attr('name')] = $this.val();
                 }
@@ -1124,7 +1130,8 @@
           from_val: fromYear,
           to_val: toYear,
           timeframe: timeframe,
-          all_selected: allIncidentsAndFatSelected
+          all_selected: allIncidentsAndFatSelected,
+          target_civ: targetCiv
         },
         type: 'POST',
         success: function(response) {
