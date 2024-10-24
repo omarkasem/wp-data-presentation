@@ -205,32 +205,35 @@ final class WPDP_Graphs {
 
 
         if(!empty($filters['actors']) && $include_actors){
-            $actor_values = [];
+            $conditions = [];
+            $whereSQL .= " AND (";
             foreach ($filters['actors'] as $value) {
                 $value_parts = explode('+', $value);
                 foreach ($value_parts as $part) {
-                    $actor_values[] = $part;
+                    $conditions[] = "inter1 = %s";
+                    if($column_exists){
+                        $conditions[] = "inter2 = %s";
+                    }
                 }
             }
-            $actor_values = array_map(function($val) { return "'{$val}'"; }, $actor_values);
-            $actor_values_str = implode(',', $actor_values);
             
-            if (!empty($column_exists)) {
-                $whereSQL .= " AND (inter1 IN ({$actor_values_str}) OR inter2 IN ({$actor_values_str}))";
-            } else {
-                $whereSQL .= " AND inter1 IN ({$actor_values_str})";
-            }
+            $whereSQL .= " AND (" . implode(' OR ', $conditions) . ")";
         }
 
         if(!empty($filters['actor_names'])){
-            $actor_names_values = array_map(function($val) { return "'{$val}'"; }, $filters['actor_names']);
-            $actor_names_values_str = implode(',', $actor_names_values);
-            
-            if (!empty($actor_column_exists)) {
-                $whereSQL .= " AND (actor1 IN ({$actor_names_values_str}) OR actor2 IN ({$actor_names_values_str}))";
-            } else {
-                $whereSQL .= " AND actor1 IN ({$actor_names_values_str})";
+            $conditions = [];
+            $whereSQL .= " AND (";
+            foreach ($filters['actor_names'] as $value) {
+                $value_parts = explode('+', $value);
+                foreach ($value_parts as $part) {
+                    $conditions[] = "actor1 = %s";
+                    if($actor_column_exists){
+                        $conditions[] = "actor2 = %s";
+                    }
+                }
             }
+            
+            $whereSQL .= " AND (" . implode(' OR ', $conditions) . ")";
         }
 
         if(!empty($filters['merged_types']) && !$include_actors){

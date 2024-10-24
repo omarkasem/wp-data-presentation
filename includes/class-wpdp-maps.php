@@ -145,6 +145,19 @@ final class WPDP_Maps {
             $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'inter2'");
             $actor_column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'actor2'");
             $whereSQL = $this->build_where_clause($filters, $queryArgs, $date_format, $column_exists, $actor_column_exists);
+
+            if($actor_column_exists){
+                $types[] = 'actor2';
+                if (($key = array_search('tags', $types)) !== false) {
+                    unset($types[$key]);
+                }
+            }else{
+                if (($key = array_search('actor2', $types)) !== false) {
+                    unset($types[$key]);
+                }
+                $types[] = 'tags';
+            }
+
             if($column_exists){
                 $types[] = 'inter2';
                 if (($key = array_search('iso', $types)) !== false) {
@@ -289,6 +302,7 @@ final class WPDP_Maps {
             'country',
             'fatalities',
             'inter1',
+            'actor1',
             'location',
             'admin1',
             'admin2',
