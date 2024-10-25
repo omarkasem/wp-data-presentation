@@ -485,7 +485,7 @@ final class WPDP_Shortcode {
     function get_select_unselect_all_html(){
         return '<ul>
                 <li class="expandable ">
-                    <input class="wpdp_filter_checkbox select_unselect_all" checked type="checkbox" value="">
+                    <input class="wpdp_filter_checkbox select_unselect_all" type="checkbox" value="">
                     <div class="exp_click">
                         <span>Select/Unselect All</span>
                     </div>

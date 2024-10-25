@@ -195,7 +195,6 @@ final class WPDP_Tables {
     
     public function get_data($filters, $types, $start, $length, $columnName, $orderDir, $search) {
         global $wpdb;
-    
         $posts = get_posts(array(
             'post_type' => 'wp-data-presentation',
             'posts_per_page' => -1,
@@ -207,7 +206,6 @@ final class WPDP_Tables {
         }
     
         $union_queries = [];
-        $queryArgs = [];
 
         foreach ($posts as $id) {
             $table_name = $wpdb->prefix . 'wpdp_data_' . $id;
@@ -220,7 +218,7 @@ final class WPDP_Tables {
             $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'inter2'");
             $actor_column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'actor2'");
 
-            list($whereSQL, $localQueryArgs) = $this->build_where_clause($filters, $queryArgs, $date_format, $column_exists, $actor_column_exists, $search);
+            list($whereSQL, $queryArgs) = $this->build_where_clause($filters, $date_format, $column_exists, $actor_column_exists, $search);
             
             $select_parts = [];
             foreach ($types as $type) {
@@ -240,9 +238,9 @@ final class WPDP_Tables {
             }
             
             $query = "SELECT DISTINCT " . implode(', ', $select_parts) . " FROM {$table_name} {$whereSQL}";
-            $union_queries[] = $wpdb->prepare($query, $localQueryArgs);
-        }
 
+            $union_queries[] = $wpdb->prepare($query, $queryArgs);
+        }
         if (empty($union_queries)) {
             return ['data' => [], 'count' => 0];
         }
@@ -281,10 +279,12 @@ final class WPDP_Tables {
         return ['data' => $data, 'count' => $count];
     }
     
-    private function build_where_clause($filters, &$queryArgs, $date_format, $column_exists, $actor_column_exists, $search) {
+    private function build_where_clause($filters, $date_format, $column_exists, $actor_column_exists, $search) {
         if (!empty($search)) {
             return [" WHERE event_id_cnty = %s", array($search)];
         }
+
+        $queryArgs = [];
 
         $whereSQL = ' WHERE 1=1 ';
 
@@ -312,7 +312,7 @@ final class WPDP_Tables {
                 $sub_conditions = [];
                 foreach ($value_parts as $part) {
                     list($val, $col) = explode('__', $part);
-                    $sub_conditions[] = "$col = %s".(in_array($value,$filters['fatalities']) ? ' AND fatalities > 0' : '');
+                    $sub_conditions[] = "$col = %s";
                     $queryArgs[] = $val;
                 }
                 $conditions[] = '(' . implode(' AND ', $sub_conditions) . ')';
@@ -321,35 +321,33 @@ final class WPDP_Tables {
         }
 
         if(!empty($filters['actors'])){
-            $conditions = [];
+            $actor_values = [];
             foreach ($filters['actors'] as $value) {
-                $value_parts = explode('+', $value);
-                foreach ($value_parts as $part) {
-                    $conditions[] = "inter1 = %s";
-                    $queryArgs[] = $part;
-                    if($column_exists){
-                        $conditions[] = "inter2 = %s";
-                        $queryArgs[] = $part;
-                    }
-                }
+                $actor_values = array_merge($actor_values, explode('+', $value));
             }
-            $whereSQL .= " AND (" . implode(' OR ', $conditions) . ")";
+            $actor_placeholders = implode(',', array_fill(0, count($actor_values), '%s'));
+            $whereSQL .= " AND (inter1 IN ($actor_placeholders)";
+            $queryArgs = array_merge($queryArgs, $actor_values);
+            
+            if($column_exists){
+                $whereSQL .= " OR inter2 IN ($actor_placeholders)";
+                $queryArgs = array_merge($queryArgs, $actor_values);
+            }
+            $whereSQL .= ")";
         }
 
         if(!empty($filters['actor_names'])){
-            $whereSQL .= " AND (";
-            $conditions = [];
-            foreach ($filters['actor_names'] as $value) {
-                $conditions[] = "actor1 = %s";
-                $queryArgs[] = $value;
-                if($actor_column_exists){
-                    $conditions[] = "actor2 = %s";
-                    $queryArgs[] = $value;
-                }
+            $actor_name_placeholders = implode(',', array_fill(0, count($filters['actor_names']), '%s'));
+            $whereSQL .= " AND (actor1 IN ($actor_name_placeholders)";
+            $queryArgs = array_merge($queryArgs, $filters['actor_names']);
+            
+            if($actor_column_exists){
+                $whereSQL .= " OR actor2 IN ($actor_name_placeholders)";
+                $queryArgs = array_merge($queryArgs, $filters['actor_names']);
             }
-            $whereSQL .= implode(' OR ', $conditions) . ")";
+            $whereSQL .= ")";
         }
-
+        
         if(!empty($filters['target_civ'])){
             if($filters['target_civ'] == 'yes'){
                 $whereSQL .= " AND civilian_targeting != ''";
