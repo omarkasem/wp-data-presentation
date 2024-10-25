@@ -219,9 +219,10 @@
       });
 
       // Select/Unselect All
-      $('.filter_data').on('change', 'li input[type="checkbox"].select_unselect_all', function() {
+      $('.filter_data').on('click', 'li a.select_unselect_all', function(e) {
+        e.preventDefault();
         var $content = $(this).closest('.content');
-        var isChecked = this.checked;
+        var isChecked = !$content.find('input[type="checkbox"]').first().prop('checked');
         
         requestAnimationFrame(function() {
           $content.find('input[type="checkbox"]').each(function(index, checkbox) {

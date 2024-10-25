@@ -173,7 +173,7 @@ final class WPDP_Shortcode {
         wp_localize_script(WP_DATA_PRESENTATION_NAME . 'public', 'wpdp_obj', [
             'url'      => WP_DATA_PRESENTATION_URL,
             'ajax_url' => admin_url('admin-ajax.php'),
-            'search_info_icon'=>self::info_icon('Search and find a specific event by entering the event ID which can be found for each event in the database.',' position: absolute;top: 0;right: 5px;'),
+            'search_info_icon'=>self::info_icon('Search and find a specific event by entering the event ID which can be found for each event in the database.',' position: absolute;top: 6px;right: 5px;'),
         ]);
 
         wp_register_script(WP_DATA_PRESENTATION_NAME . 'popper.min', WP_DATA_PRESENTATION_URL . 'assets/js/popper.min.js', [], WP_DATA_PRESENTATION_VERSION, true);
@@ -485,10 +485,7 @@ final class WPDP_Shortcode {
     function get_select_unselect_all_html(){
         return '<ul>
                 <li class="expandable ">
-                    <input class="wpdp_filter_checkbox select_unselect_all" type="checkbox" value="">
-                    <div class="exp_click">
-                        <span>Select/Unselect All</span>
-                    </div>
+                    <a style="color: #006cff;" class="select_unselect_all" href="#">Select/Unselect All</a>
                 </li>
             </ul>';
     }
@@ -496,10 +493,10 @@ final class WPDP_Shortcode {
     function get_civ_radio_html($text){
         return'
         	<div class="switch-field">
-                <input type="radio" id="radio-one" name="target_civ" value="no" '.($this->get_session_value('target_civ') == 'no' ? 'checked' : '').'/>
+                <input type="radio" id="radio-one" name="target_civ" value="no" '.($this->get_session_value('target_civ') == 'no' || empty($this->get_session_value('target_civ')) ? 'checked' : '').'/>
                 <label for="radio-one">All '.$text.'</label>
                 <input type="radio" id="radio-two" name="target_civ" value="yes" '.($this->get_session_value('target_civ') == 'yes' ? 'checked' : '').'/>
-                <label for="radio-two">Target Civilians</label>
+                <label for="radio-two">Civilian Targeting</label>
             </div>
         ';
     }
@@ -569,7 +566,6 @@ final class WPDP_Shortcode {
                         EVENT TYPE <span class="dashicons dashicons-arrow-down-alt2"></span>
                         </div>
                         <div class="content">
-                            <?php echo $this->get_civ_radio_html('Events');?>
                             <?php echo $this->get_select_unselect_all_html();?>
                             <?php 
                                 $filter = get_field('incident_type_filter','option');
@@ -645,6 +641,18 @@ final class WPDP_Shortcode {
                         </div>
                     </div>
 
+                    <div class="grp civ_targeting ">
+
+                        <div class="title">
+                            Civilian Targeting <span class="dashicons dashicons-arrow-down-alt2"></span>
+                        </div>
+                        <div class="content">
+                            <?php echo $this->get_civ_radio_html('Events');?>
+                            <p class="civ_targeting_info">Toggle to switch between seeing all events, or only events that were recorded as targeting civilians.</p>
+                        </div>
+                    </div>
+
+
                     <div class="grp ">
                         <div class="title">
                             LOCATION <span class="dashicons dashicons-arrow-down-alt2"></span>
@@ -688,21 +696,21 @@ final class WPDP_Shortcode {
                             <div class="dates">
                                 <label for="wpdp_from">FROM</label>
                                 <input value="<?php 
-                                    // if ('map' === $atts['type'] && empty($this->get_session_value('wpdp_from'))) {
-                                    //     echo date('d F Y', strtotime('-30 days'));
-                                    // } else {
+                                    if ('map' === $atts['type'] && empty($this->get_session_value('wpdp_from'))) {
+                                        echo date('d F Y', strtotime('-30 days'));
+                                    } else {
                                         echo $this->get_session_value('wpdp_from', $this->get_from_date_value($filters, $atts));
-                                    // }
+                                    }
                                 ?>" type="text" name="wpdp_from" id="wpdp_from">
                             </div>
                             <div class="dates">
                                 <label style="margin-right: 23px;" for="wpdp_to">TO</label>
                                 <input value="<?php 
-                                    // if ('map' === $atts['type'] && empty($this->get_session_value('wpdp_to'))) {
-                                    //     echo date('d F Y');
-                                    // } else {
+                                    if ('map' === $atts['type'] && empty($this->get_session_value('wpdp_to'))) {
+                                        echo date('d F Y');
+                                    } else {
                                         echo $this->get_session_value('wpdp_to', $this->get_to_date_value($filters, $atts));
-                                    // }
+                                    }
                                 ?>" type="text" name="wpdp_to" id="wpdp_to">
                             </div>
                             <?php if ('graph' === $atts['type'] || '' == $atts['type']) {?>
