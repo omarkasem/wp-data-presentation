@@ -65,12 +65,121 @@ final class WPDP_Maps {
         }, 10, 2);
 
 
+        add_action('wp_ajax_nopriv_wpdp_get_country_polygons_data', array($this,'get_country_polygons_data'));
+        add_action('wp_ajax_wpdp_get_country_polygons_data', array($this,'get_country_polygons_data'));
+
+    }
+
+    public function get_country_polygons_data(){
+        
+        $filters = [
+            'disorder_type' => isset($_REQUEST['type_val']) ? $_REQUEST['type_val'] : [],
+            'locations' => isset($_REQUEST['locations_val']) ? $_REQUEST['locations_val'] : [],
+            'actors' => isset($_REQUEST['actors_val']) ? $_REQUEST['actors_val'] : [],
+            'fatalities' => isset($_REQUEST['fat_val']) ? $_REQUEST['fat_val'] : [],
+            'from' => isset($_REQUEST['from_val']) ? $_REQUEST['from_val'] : '',
+            'to' => isset($_REQUEST['to_val']) ? $_REQUEST['to_val'] : '',
+            'actors_names' => isset($_REQUEST['actors_names_val']) ? $_REQUEST['actors_names_val'] : ''
+        ];
+
+        $merged_types = array_unique(array_merge($filters['disorder_type'],$filters['fatalities']));
+        $filters['disorder_type'] = $merged_types;
+
+        $types = [
+            'event_date',
+            'disorder_type',
+            'event_type',
+            'sub_event_type',
+            'event_id_cnty',
+            'region',
+            'country',
+            'fatalities',
+            'inter1',
+            'actor1',
+            'location',
+            'admin1',
+            'admin2',
+            'admin3',
+            'latitude',
+            'longitude',
+            'source',
+            'notes',
+            'timestamp',
+        ];
+
+        $data = $this->get_polygons_data($filters,$types);
+
+        wp_send_json_success($data);
+
+    }
+
+    public function get_polygons_data($filters,$types){
+
+        $posts = get_posts(array(
+            'post_type' => 'wp-data-presentation',
+            'posts_per_page' => -1,
+            'fields' => 'ids'
+        ));
+    
+        if(empty($posts)){
+            return 'No data';
+        }
+
+        // $filters = $this->format_dates_to_one_year($filters);
+        global $wpdb;
+        $data = [];
+        $queryArgs = [];
+        $union_queries = [];
+
+        foreach($posts as $id){
+            $table_name = $wpdb->prefix. 'wpdp_data_'.$id;
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
+            if(!$table_exists){
+                continue;
+            }
+
+            $date_sample = $wpdb->get_var("SELECT event_date FROM $table_name LIMIT 1");
+            $date_format = WPDP_Shortcode::get_date_format($date_sample);
+            $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'inter2'");
+            $actor_column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'actor2'");
+            list($whereSQL, $localQueryArgs) = $this->build_where_clause($filters, $queryArgs, $date_format, $column_exists, $actor_column_exists,true);
+
+            $query = "SELECT 
+            SUM(fatalities) as fatalities_count,
+            COUNT(*) as events_count,
+            country 
+            FROM {$table_name} {$whereSQL}
+            GROUP BY country";
+
+            $union_queries[] = $query;
+
+        }
+        $union_query = implode(' UNION ALL ', $union_queries);
+
+        $final_query = "
+        SELECT 
+            country,
+            SUM(fatalities_count) as fatalities_count,
+            SUM(events_count) as events_count
+        FROM ({$union_query}) AS t
+        GROUP BY country
+        ORDER BY events_count DESC";
+
+        $transient_key = md5($final_query); 
+        $data = get_transient('wpdp_cache_'.$transient_key);
+        if(empty($data) || WP_DATA_PRESENTATION_DISABLE_CACHE){
+            $data = $wpdb->get_results($wpdb->prepare($final_query, $localQueryArgs), ARRAY_A);
+            set_transient('wpdp_cache_'.$transient_key, $data);
+        }
+
+        $count = count($data);
+        return ['data'=>$data,'count'=>$count];
+
     }
 
 
-
     function enqueue_scripts() {
-        wp_register_script(WP_DATA_PRESENTATION_NAME.'google-maps-api', 'https://maps.googleapis.com/maps/api/js?key='.get_field('google_maps_api_key','option').'&callback=wpdp_maps&loading=async&libraries=marker', array(), null, true);
+        wp_register_script(WP_DATA_PRESENTATION_NAME.'google-maps-api', 'https://maps.googleapis.com/maps/api/js?key='.get_field('google_maps_api_key','option').'&callback=wpdp_map&loading=async&libraries=marker', array(), null, true);
 
         
         wp_register_script(WP_DATA_PRESENTATION_NAME.'google-maps-cluster',WP_DATA_PRESENTATION_URL. 'assets/js/markerclustererplus.js', array(), null, true);
@@ -181,12 +290,12 @@ final class WPDP_Maps {
         $final_query = "
         SELECT DISTINCT t.*
         FROM ({$union_query}) AS t
-        LIMIT 500
+        LIMIT 5000
         ";
 
         $transient_key = md5($final_query); 
         $data = get_transient('wpdp_cache_'.$transient_key);
-        if(empty($data)){
+        if(empty($data) || WP_DATA_PRESENTATION_DISABLE_CACHE){
             $data = $wpdb->get_results($wpdb->prepare($final_query, $localQueryArgs), ARRAY_A);
             set_transient('wpdp_cache_'.$transient_key, $data);
         }
@@ -196,10 +305,10 @@ final class WPDP_Maps {
 
     }
 
-    private function build_where_clause($filters, &$queryArgs, $date_format, $column_exists, $actor_column_exists) {
+    private function build_where_clause($filters, &$queryArgs, $date_format, $column_exists, $actor_column_exists, $polygons = false) {
         $whereSQL = ' WHERE 1=1 ';
 
-        if(!empty($filters['locations'])){
+        if(!empty($filters['locations']) && !$polygons){
             $whereSQL .= ' AND (';
             $conditions = [];
             foreach ($filters['locations'] as $value) {
@@ -213,6 +322,12 @@ final class WPDP_Maps {
                 $conditions[] = '(' . implode(' AND ', $sub_conditions) . ')';
             }
             $whereSQL .= implode(' OR ', $conditions) . ')';
+        }
+
+
+        if(isset($filters['selected_country']) && !empty($filters['selected_country'])){
+            $whereSQL .= " AND country = %s";
+            $queryArgs[] = sanitize_text_field($filters['selected_country']);
         }
 
 
@@ -289,7 +404,8 @@ final class WPDP_Maps {
             'fatalities' => isset($_REQUEST['fat_val']) ? $_REQUEST['fat_val'] : [],
             'from' => isset($_REQUEST['from_val']) ? $_REQUEST['from_val'] : '',
             'to' => isset($_REQUEST['to_val']) ? $_REQUEST['to_val'] : '',
-            'actors_names' => isset($_REQUEST['actors_names_val']) ? $_REQUEST['actors_names_val'] : ''
+            'actors_names' => isset($_REQUEST['actors_names_val']) ? $_REQUEST['actors_names_val'] : '',
+            'selected_country' => isset($_REQUEST['selected_country']) ? $_REQUEST['selected_country'] : ''
         ];
 
         $merged_types = array_unique(array_merge($filters['disorder_type'],$filters['fatalities']));
@@ -329,7 +445,11 @@ final class WPDP_Maps {
         
     ?>
         <div class="wpdp_filter_content maps">
+            <?php if(isset($_REQUEST['country']) && !empty($_REQUEST['country'])): ?>
                 <div id="wpdp_map"></div>
+                <?php else: ?>
+                <div id="polygons_map"></div>
+            <?php endif; ?>
         </div>
     <?php }
 

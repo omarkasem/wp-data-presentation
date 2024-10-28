@@ -118,7 +118,8 @@
           data: function (params) {
             return {
               search: params.term,
-              action: 'search_location'
+              action: 'search_location',
+              country: $('input[name="wpdp_search_location_country"]').length ? $('input[name="wpdp_search_location_country"]').val() : ''
             };
           },
           processResults: function (data) {
@@ -356,6 +357,8 @@
 
     self.maps = function(){
 
+      var selectedCountry = $('input[name="wpdp_search_location_country"]').length ? $('input[name="wpdp_search_location_country"]').val() : '';
+
       $('#wpdp-loader').css('display','flex');
       self.setDefaultFilters();
       $.ajax({
@@ -369,7 +372,8 @@
           fat_val: selectedFat,
           from_val: fromYear,
           to_val: toYear,
-          target_civ: targetCiv
+          target_civ: targetCiv,
+          selected_country: selectedCountry
         },
         type: 'POST',
         success: function(response) {
@@ -408,6 +412,185 @@
       };
     },
 
+    self.mapsStyles = function(){
+      return [
+        {
+            "featureType": "water",
+            "elementType": "geometry",
+            "stylers": [
+                {
+                    "color": "#e9e9e9"
+                },
+                {
+                    "lightness": 17
+                }
+            ]
+        },
+        {
+            "featureType": "landscape",
+            "elementType": "geometry",
+            "stylers": [
+                {
+                    "color": "#f5f5f5"
+                },
+                {
+                    "lightness": 20
+                }
+            ]
+        },
+        {
+            "featureType": "road.highway",
+            "elementType": "geometry.fill",
+            "stylers": [
+                {
+                    "color": "#ffffff"
+                },
+                {
+                    "lightness": 17
+                }
+            ]
+        },
+        {
+            "featureType": "road.highway",
+            "elementType": "geometry.stroke",
+            "stylers": [
+                {
+                    "color": "#ffffff"
+                },
+                {
+                    "lightness": 29
+                },
+                {
+                    "weight": 0.2
+                }
+            ]
+        },
+        {
+            "featureType": "road.arterial",
+            "elementType": "geometry",
+            "stylers": [
+                {
+                    "color": "#ffffff"
+                },
+                {
+                    "lightness": 18
+                }
+            ]
+        },
+        {
+            "featureType": "road.local",
+            "elementType": "geometry",
+            "stylers": [
+                {
+                    "color": "#ffffff"
+                },
+                {
+                    "lightness": 16
+                }
+            ]
+        },
+        {
+            "featureType": "poi",
+            "elementType": "geometry",
+            "stylers": [
+                {
+                    "color": "#f5f5f5"
+                },
+                {
+                    "lightness": 21
+                }
+            ]
+        },
+        {
+            "featureType": "poi.park",
+            "elementType": "geometry",
+            "stylers": [
+                {
+                    "color": "#dedede"
+                },
+                {
+                    "lightness": 21
+                }
+            ]
+        },
+        {
+            "elementType": "labels.text.stroke",
+            "stylers": [
+                {
+                    "visibility": "on"
+                },
+                {
+                    "color": "#ffffff"
+                },
+                {
+                    "lightness": 16
+                }
+            ]
+        },
+        {
+            "elementType": "labels.text.fill",
+            "stylers": [
+                {
+                    "saturation": 36
+                },
+                {
+                    "color": "#333333"
+                },
+                {
+                    "lightness": 40
+                }
+            ]
+        },
+        {
+            "elementType": "labels.icon",
+            "stylers": [
+                {
+                    "visibility": "off"
+                }
+            ]
+        },
+        {
+            "featureType": "transit",
+            "elementType": "geometry",
+            "stylers": [
+                {
+                    "color": "#f2f2f2"
+                },
+                {
+                    "lightness": 19
+                }
+            ]
+        },
+        {
+            "featureType": "administrative",
+            "elementType": "geometry.fill",
+            "stylers": [
+                {
+                    "color": "#fefefe"
+                },
+                {
+                    "lightness": 20
+                }
+            ]
+        },
+        {
+            "featureType": "administrative",
+            "elementType": "geometry.stroke",
+            "stylers": [
+                {
+                    "color": "#fefefe"
+                },
+                {
+                    "lightness": 17
+                },
+                {
+                    "weight": 1.2
+                }
+            ]
+        }
+    ];
+    }
+
     self.mapInit = function(mapData){
       if (!mapData || !Array.isArray(mapData) || mapData.length === 0) {
         console.log('No valid map data available');
@@ -415,197 +598,27 @@
       }
 
       var centerLocation = self.getCenterLocation(mapData);
-      
+      var zoom = 3.8;
+
+      if($('input[name="wpdp_search_location_country"]').length){
+        zoom = 5;
+      }
+
       if(!self.main_map){
         
         self.main_map = new google.maps.Map(
           document.getElementById('wpdp_map'),
           {
-              zoom: 3.8, 
+              zoom: zoom, 
               center: centerLocation,
-              styles: [
-                {
-                    "featureType": "water",
-                    "elementType": "geometry",
-                    "stylers": [
-                        {
-                            "color": "#e9e9e9"
-                        },
-                        {
-                            "lightness": 17
-                        }
-                    ]
-                },
-                {
-                    "featureType": "landscape",
-                    "elementType": "geometry",
-                    "stylers": [
-                        {
-                            "color": "#f5f5f5"
-                        },
-                        {
-                            "lightness": 20
-                        }
-                    ]
-                },
-                {
-                    "featureType": "road.highway",
-                    "elementType": "geometry.fill",
-                    "stylers": [
-                        {
-                            "color": "#ffffff"
-                        },
-                        {
-                            "lightness": 17
-                        }
-                    ]
-                },
-                {
-                    "featureType": "road.highway",
-                    "elementType": "geometry.stroke",
-                    "stylers": [
-                        {
-                            "color": "#ffffff"
-                        },
-                        {
-                            "lightness": 29
-                        },
-                        {
-                            "weight": 0.2
-                        }
-                    ]
-                },
-                {
-                    "featureType": "road.arterial",
-                    "elementType": "geometry",
-                    "stylers": [
-                        {
-                            "color": "#ffffff"
-                        },
-                        {
-                            "lightness": 18
-                        }
-                    ]
-                },
-                {
-                    "featureType": "road.local",
-                    "elementType": "geometry",
-                    "stylers": [
-                        {
-                            "color": "#ffffff"
-                        },
-                        {
-                            "lightness": 16
-                        }
-                    ]
-                },
-                {
-                    "featureType": "poi",
-                    "elementType": "geometry",
-                    "stylers": [
-                        {
-                            "color": "#f5f5f5"
-                        },
-                        {
-                            "lightness": 21
-                        }
-                    ]
-                },
-                {
-                    "featureType": "poi.park",
-                    "elementType": "geometry",
-                    "stylers": [
-                        {
-                            "color": "#dedede"
-                        },
-                        {
-                            "lightness": 21
-                        }
-                    ]
-                },
-                {
-                    "elementType": "labels.text.stroke",
-                    "stylers": [
-                        {
-                            "visibility": "on"
-                        },
-                        {
-                            "color": "#ffffff"
-                        },
-                        {
-                            "lightness": 16
-                        }
-                    ]
-                },
-                {
-                    "elementType": "labels.text.fill",
-                    "stylers": [
-                        {
-                            "saturation": 36
-                        },
-                        {
-                            "color": "#333333"
-                        },
-                        {
-                            "lightness": 40
-                        }
-                    ]
-                },
-                {
-                    "elementType": "labels.icon",
-                    "stylers": [
-                        {
-                            "visibility": "off"
-                        }
-                    ]
-                },
-                {
-                    "featureType": "transit",
-                    "elementType": "geometry",
-                    "stylers": [
-                        {
-                            "color": "#f2f2f2"
-                        },
-                        {
-                            "lightness": 19
-                        }
-                    ]
-                },
-                {
-                    "featureType": "administrative",
-                    "elementType": "geometry.fill",
-                    "stylers": [
-                        {
-                            "color": "#fefefe"
-                        },
-                        {
-                            "lightness": 20
-                        }
-                    ]
-                },
-                {
-                    "featureType": "administrative",
-                    "elementType": "geometry.stroke",
-                    "stylers": [
-                        {
-                            "color": "#fefefe"
-                        },
-                        {
-                            "lightness": 17
-                        },
-                        {
-                            "weight": 1.2
-                        }
-                    ]
-                }
-            ],
+              styles: self.mapsStyles(),
               mapTypeControl: false
           }
         );
           
       }else{
         self.main_map.setCenter(centerLocation);
-        self.main_map.setZoom(3.8);
+        self.main_map.setZoom(zoom);
       }
 
       var my_map = self.main_map;
@@ -1082,8 +1095,15 @@
     },
 
     self.filterAction = function(){
-      self.setDefaultFilters();
 
+      var selectedCountry = $('input[name="wpdp_country"]:checked').val();
+      if (selectedCountry) {
+        var currentUrl = window.location.href.split('?')[0];
+        window.location.href = currentUrl + '?country=' + selectedCountry;
+        return;
+      }
+
+      self.setDefaultFilters();
 
       if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
         self.table.draw(false);
@@ -1092,14 +1112,19 @@
       self.graphChange();
 
       if (typeof google === 'object' && typeof google.maps === 'object') {
-        for(let i=0; i<global_markers.length; i++){
-          global_markers[i].setMap(null);
+
+        if($('input[name="wpdp_country"]:radio').length > 0){
+          self.maps_polygons();
+        }else{
+          for(let i=0; i<global_markers.length; i++){
+            global_markers[i].setMap(null);
+          }
+          if(markerCluster){
+            markerCluster.clearMarkers();
+          }
+          global_markers = [];
+          self.maps();
         }
-        if(markerCluster){
-          markerCluster.clearMarkers();
-        }
-        global_markers = [];
-        self.maps();
       }
 
 
@@ -1386,11 +1411,263 @@
         }
       });
     }
-    
+
+    self.maps_polygons = function() {
+        const countryCoordinates = {
+
+          "Angola": [
+            {lat: -4.437778, lng: 11.845833},
+            {lat: -5.954722, lng: 16.787778},
+            {lat: -11.937778, lng: 17.962222},
+            {lat: -15.879167, lng: 15.087778},
+            {lat: -16.987778, lng: 12.162222},
+            {lat: -12.954722, lng: 13.787778},
+            {lat: -6.437778, lng: 12.345833},
+            {lat: -4.437778, lng: 11.845833}
+          ],
+          "Burundi": [
+            {lat: -2.912222, lng: 29.245833},
+            {lat: -2.937778, lng: 30.837778},
+            {lat: -4.454722, lng: 30.062222},
+            {lat: -4.487778, lng: 29.162222},
+            {lat: -2.912222, lng: 29.245833}
+          ],
+          "Central African Republic": [
+            {lat: 9.437778, lng: 14.845833},
+            {lat: 9.954722, lng: 22.787778},
+            {lat: 5.937778, lng: 27.962222},
+            {lat: 3.879167, lng: 25.087778},
+            {lat: 3.987778, lng: 15.162222},
+            {lat: 7.954722, lng: 14.787778},
+            {lat: 9.437778, lng: 14.845833}
+          ],
+          "Democratic Republic of Congo": [
+            {lat: 5.437778, lng: 13.845833},
+            {lat: 3.954722, lng: 30.787778},
+            {lat: -5.937778, lng: 29.962222},
+            {lat: -13.879167, lng: 28.087778},
+            {lat: -12.987778, lng: 18.162222},
+            {lat: -5.954722, lng: 12.787778},
+            {lat: 5.437778, lng: 13.845833}
+          ],
+          "Kenya": [
+            {lat: 4.437778, lng: 35.845833},
+            {lat: 4.954722, lng: 41.787778},
+            {lat: -4.937778, lng: 39.962222},
+            {lat: -4.879167, lng: 35.087778},
+            {lat: -0.987778, lng: 34.162222},
+            {lat: 2.954722, lng: 34.787778},
+            {lat: 4.437778, lng: 35.845833}
+          ],
+          "Republic of Congo": [
+            {lat: 3.437778, lng: 11.845833},
+            {lat: 3.954722, lng: 17.787778},
+            {lat: -4.937778, lng: 15.962222},
+            {lat: -4.879167, lng: 11.087778},
+            {lat: 0.987778, lng: 11.162222},
+            {lat: 3.437778, lng: 11.845833}
+          ],
+          "Rwanda": [
+            {lat: -1.054722, lng: 29.362222},
+            {lat: -1.187778, lng: 30.887778},
+            {lat: -2.837778, lng: 30.837778},
+            {lat: -2.712222, lng: 29.245833},
+            {lat: -1.054722, lng: 29.362222}
+          ],
+          "South Sudan": [
+            {lat: 12.437778, lng: 24.845833},
+            {lat: 11.954722, lng: 33.787778},
+            {lat: 3.937778, lng: 35.962222},
+            {lat: 3.879167, lng: 30.087778},
+            {lat: 4.987778, lng: 23.162222},
+            {lat: 9.954722, lng: 23.787778},
+            {lat: 12.437778, lng: 24.845833}
+          ],
+          "Sudan": [
+            {lat: 22.437778, lng: 22.845833},
+            {lat: 22.954722, lng: 36.787778},
+            {lat: 12.937778, lng: 34.962222},
+            {lat: 12.879167, lng: 24.087778},
+            {lat: 15.987778, lng: 22.162222},
+            {lat: 22.437778, lng: 22.845833}
+          ],
+          "Tanzania": [
+            {lat: -1.437778, lng: 29.845833},
+            {lat: -1.954722, lng: 40.787778},
+            {lat: -11.937778, lng: 39.962222},
+            {lat: -11.879167, lng: 31.087778},
+            {lat: -2.987778, lng: 30.162222},
+            {lat: -1.437778, lng: 29.845833}
+          ],
+          "Uganda": [
+            {lat: 4.214722, lng: 31.787778},
+            {lat: 3.879167, lng: 35.037778},
+            {lat: 1.418056, lng: 34.162222},
+            {lat: -1.054722, lng: 33.987778},
+            {lat: 0.345833, lng: 29.987778},
+            {lat: 2.845833, lng: 30.887778},
+            {lat: 4.214722, lng: 31.787778}
+          ],
+          "Zambia": [
+            {lat: -8.437778, lng: 22.845833},
+            {lat: -8.954722, lng: 33.787778},
+            {lat: -17.937778, lng: 31.962222},
+            {lat: -17.879167, lng: 22.087778},
+            {lat: -12.987778, lng: 21.162222},
+            {lat: -8.437778, lng: 22.845833}
+          ]
+      
+        };
+
+        var selectedCountries = $('input[name="wpdp_country"]:radio').map(function() {
+            return this.value;
+        }).get();
+
+
+        // Get country data from server
+        $.ajax({
+            url: wpdp_obj.ajax_url,
+            data: {
+                action: 'wpdp_get_country_polygons_data',
+                type_val: selectedIncidents,
+                locations_val: selectedCountries,
+                actors_val: selectedActors,
+                actors_names_val: selectedActorNames,
+                fat_val: selectedFat,
+                from_val: fromYear,
+                to_val: toYear,
+                target_civ: targetCiv
+            },
+            type: 'POST',
+            success: function(response) {
+
+              // Initialize the map
+              var map = new google.maps.Map(document.getElementById('polygons_map'), {
+                zoom: 4.1,
+                center: {lat: -1.054722, lng: 33.987778}, // Centered roughly on Central Africa
+                styles: self.mapsStyles(),
+                mapTypeControl: false
+
+              });
+
+                $('#wpdp-loader').hide();
+
+                const countryData = response.data.data;
+
+                for(let country of countryData) {
+                    // Skip if we don't have coordinates for this country
+                    if (!countryCoordinates[country.country]) continue;
+
+                    // Get color based on events count
+                    const color = self.getColorForIntensity(country.events_count);
+                    
+                    // Create polygon for each country
+                    const polygon = new google.maps.Polygon({
+                        paths: countryCoordinates[country.country],
+                        strokeColor: "#FFFFFF",
+                        strokeOpacity: 2,
+                        strokeWeight: 2,
+                        fillColor: color,
+                        fillOpacity: 0.35,
+                        map: map
+                    });
+
+                    // Create info window
+                    const infoWindow = new google.maps.InfoWindow();
+
+                    // Add hover listeners
+                    polygon.addListener("mouseover", (e) => {
+                        polygon.setOptions({ 
+                            fillOpacity: 0.7,
+                            strokeColor: "#FF0000",
+                            strokeWeight: 2
+                        });
+                        
+                        // Add color indicator to info window
+                        const severityLabel = country.events_count >= 1000 ? 'High' : 
+                                            country.events_count >= 500 ? 'Medium' : 'Low';
+                        const severityColor = self.getColorForIntensity(country.events_count);
+                        
+                        const content = `
+                            <div class="country-info">
+                                <h3>${country.country}</h3>
+                                <p>
+                                    <span>Severity Level:</span>
+                                    <strong style="color: ${severityColor}">${severityLabel}</strong>
+                                </p>
+                                <p>
+                                    <span>Total Incidents:</span>
+                                    <strong>${country.events_count.toLocaleString()}</strong>
+                                </p>
+                                <p>
+                                    <span>Fatalities:</span>
+                                    <strong>${country.fatalities_count.toLocaleString()}</strong>
+                                </p>
+                                ${country.additional_info ? `
+                                    <div class="additional-info">
+                                        ${country.additional_info}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                        
+                        infoWindow.setContent(content);
+                        infoWindow.setPosition(e.latLng);
+                        infoWindow.open(map);
+                    });
+
+                    polygon.addListener("mouseout", () => {
+                        polygon.setOptions({ 
+                            fillOpacity: 0.35,
+                            strokeColor: "#FFFFFF",
+                            strokeWeight: 1
+                        });
+                        infoWindow.close();
+                    });
+                }
+            },
+            error: function(errorThrown) {
+                console.error('Failed to load country data:', errorThrown);
+            }
+        });
+    };
+
+    // Update the getColorForIntensity function
+    self.getColorForIntensity = function(count) {
+        // Define thresholds for different categories
+        const THRESHOLDS = {
+            LARGE: 1000,  // Adjust these thresholds based on your data
+            MEDIUM: 500
+        };
+
+        // Define colors
+        const COLORS = {
+            LARGE: '#CD6155',   // Red for high count
+            MEDIUM: '#F0B27A',  // Orange for medium count
+            SMALL: '#F0B27A'    // Yellow for low count
+        };
+
+        if (count >= THRESHOLDS.LARGE) {
+            return COLORS.LARGE;
+        } else if (count >= THRESHOLDS.MEDIUM) {
+            return COLORS.MEDIUM;
+        } else {
+            return COLORS.SMALL;
+        }
+    };
+
+    self.mapsChoice = function(){
+      if($('input[name="wpdp_country"]:radio').length > 0){
+        self.maps_polygons();
+      }else{
+        self.maps();
+      }
+    }
 
     $( self.init );
 
 
-    window.wpdp_maps = self.maps;
-
+    // window.wpdp_maps = self.maps;
+    
+    window.wpdp_map = self.mapsChoice;
 }( jQuery ) );
