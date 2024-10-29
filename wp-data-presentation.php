@@ -15,7 +15,7 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 
-define( 'WP_DATA_PRESENTATION_VERSION', '1.5.3' );
+define( 'WP_DATA_PRESENTATION_VERSION', '1.5.3333' );
 define( 'WP_DATA_PRESENTATION_NAME', 'wp-data-presentation' );
 define( 'WP_DATA_PRESENTATION_URL', plugin_dir_url( __FILE__ ) );
 define( 'WP_DATA_PRESENTATION_PATH', plugin_dir_path( __FILE__ ) );

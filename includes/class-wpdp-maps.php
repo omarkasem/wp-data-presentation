@@ -68,6 +68,47 @@ final class WPDP_Maps {
         add_action('wp_ajax_nopriv_wpdp_get_country_polygons_data', array($this,'get_country_polygons_data'));
         add_action('wp_ajax_wpdp_get_country_polygons_data', array($this,'get_country_polygons_data'));
 
+
+        if(isset($_GET['test2222'])){
+
+            $wanted_countries = [
+                'Angola',
+                'Burundi',
+                'Central African Republic',
+                'Democratic Republic of Congo',
+                'Kenya',
+                'Republic of Congo',
+                'Rwanda',
+                'South Sudan',
+                'Sudan',
+                'Tanzania',
+                'Uganda',
+                'Zambia'
+            ];
+            
+            // Read the original GeoJSON file
+            $geojson_string = file_get_contents(WP_DATA_PRESENTATION_PATH.'/includes/countries.geojson');
+            $geojson = json_decode($geojson_string, true);
+            
+            // Create new feature collection
+            $new_geojson = [
+                'type' => 'FeatureCollection',
+                'features' => []
+            ];
+            
+            // Filter features for wanted countries
+            foreach ($geojson['features'] as $feature) {
+                if (in_array($feature['properties']['ADMIN'], $wanted_countries)) {
+                    $new_geojson['features'][] = $feature;
+                }
+            }
+            
+            // Save to new file
+            file_put_contents(WP_DATA_PRESENTATION_PATH.'/includes/filtered_countries.geojson', json_encode($new_geojson, JSON_PRETTY_PRINT));
+            
+            echo "Filtered GeoJSON file has been created with " . count($new_geojson['features']) . " countries.\n";
+
+        }
     }
 
     public function get_country_polygons_data(){
@@ -79,7 +120,8 @@ final class WPDP_Maps {
             'fatalities' => isset($_REQUEST['fat_val']) ? $_REQUEST['fat_val'] : [],
             'from' => isset($_REQUEST['from_val']) ? $_REQUEST['from_val'] : '',
             'to' => isset($_REQUEST['to_val']) ? $_REQUEST['to_val'] : '',
-            'actors_names' => isset($_REQUEST['actors_names_val']) ? $_REQUEST['actors_names_val'] : ''
+            'actors_names' => isset($_REQUEST['actors_names_val']) ? $_REQUEST['actors_names_val'] : '',
+            'target_civ' => isset($_REQUEST['target_civ']) ? $_REQUEST['target_civ'] : ''
         ];
 
         $merged_types = array_unique(array_merge($filters['disorder_type'],$filters['fatalities']));
@@ -363,6 +405,11 @@ final class WPDP_Maps {
             $whereSQL .= " AND (" . implode(' OR ', $conditions) . ")";
         }
         
+        if(!empty($filters['target_civ'])){
+            if($filters['target_civ'] == 'yes'){
+                $whereSQL .= " AND civilian_targeting != ''";
+            }
+        }
 
         if(!empty($filters['actors_names'])){
             $conditions = [];
@@ -405,7 +452,8 @@ final class WPDP_Maps {
             'from' => isset($_REQUEST['from_val']) ? $_REQUEST['from_val'] : '',
             'to' => isset($_REQUEST['to_val']) ? $_REQUEST['to_val'] : '',
             'actors_names' => isset($_REQUEST['actors_names_val']) ? $_REQUEST['actors_names_val'] : '',
-            'selected_country' => isset($_REQUEST['selected_country']) ? $_REQUEST['selected_country'] : ''
+            'selected_country' => isset($_REQUEST['selected_country']) ? $_REQUEST['selected_country'] : '',
+            'target_civ' => isset($_REQUEST['target_civ']) ? $_REQUEST['target_civ'] : ''
         ];
 
         $merged_types = array_unique(array_merge($filters['disorder_type'],$filters['fatalities']));

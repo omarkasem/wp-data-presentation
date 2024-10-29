@@ -126,7 +126,6 @@ final class WPDP_Tables {
             'actor_names' => isset($_REQUEST['actor_names_val']) ? $_REQUEST['actor_names_val'] : [],
             'fatalities' => isset($_REQUEST['fat_val']) ? $_REQUEST['fat_val'] : [],
             'target_civ' => isset($_REQUEST['target_civ']) ? $_REQUEST['target_civ'] : '',
-            'target_civ_fat' => isset($_REQUEST['target_civ_fat']) ? $_REQUEST['target_civ_fat'] : ''
         ];
 
         $merged_types = array_unique(array_merge( $filters['disorder_type'],$filters['fatalities']));

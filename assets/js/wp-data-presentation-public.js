@@ -89,14 +89,9 @@
       }
       
 
-      $('input[type="checkbox"].wpdp_incident_type:checked').each(function() {
-        selectedIncidents.push($(this).val());
-      });
+      selectedIncidents = self.checkedSelector('wpdp_incident_type');
 
-      $('input[type="checkbox"].wpdp_actors:checked').each(function() {
-        selectedActors.push($(this).val());
-      });
-
+      selectedActors = self.checkedSelector('wpdp_actors');
 
       selectedActorNames = $('#wpdp_search_actors').val();
 
@@ -105,6 +100,23 @@
         selectedGraphFat.push($(this).val());
       });
 
+
+    },
+
+    self.checkedSelector = function(className){
+      var totalActors = $('input[type="checkbox"].' + className).length;
+      var checkedActors = $('input[type="checkbox"].' + className + ':checked').length;
+      var selected = [];
+
+      if (totalActors === checkedActors) {
+        selected = [];
+      } else {
+        $('input[type="checkbox"].' + className + ':checked').each(function() {
+          selected.push($(this).val());
+        });
+      }
+
+      return selected;
 
     },
 
@@ -1413,247 +1425,186 @@
     }
 
     self.maps_polygons = function() {
-        const countryCoordinates = {
+      var selectedCountries = $('input[name="wpdp_country"]:radio').map(function() {
+        return this.value;
+      }).get();
 
-          "Angola": [
-            {lat: -4.437778, lng: 11.845833},
-            {lat: -5.954722, lng: 16.787778},
-            {lat: -11.937778, lng: 17.962222},
-            {lat: -15.879167, lng: 15.087778},
-            {lat: -16.987778, lng: 12.162222},
-            {lat: -12.954722, lng: 13.787778},
-            {lat: -6.437778, lng: 12.345833},
-            {lat: -4.437778, lng: 11.845833}
-          ],
-          "Burundi": [
-            {lat: -2.912222, lng: 29.245833},
-            {lat: -2.937778, lng: 30.837778},
-            {lat: -4.454722, lng: 30.062222},
-            {lat: -4.487778, lng: 29.162222},
-            {lat: -2.912222, lng: 29.245833}
-          ],
-          "Central African Republic": [
-            {lat: 9.437778, lng: 14.845833},
-            {lat: 9.954722, lng: 22.787778},
-            {lat: 5.937778, lng: 27.962222},
-            {lat: 3.879167, lng: 25.087778},
-            {lat: 3.987778, lng: 15.162222},
-            {lat: 7.954722, lng: 14.787778},
-            {lat: 9.437778, lng: 14.845833}
-          ],
-          "Democratic Republic of Congo": [
-            {lat: 5.437778, lng: 13.845833},
-            {lat: 3.954722, lng: 30.787778},
-            {lat: -5.937778, lng: 29.962222},
-            {lat: -13.879167, lng: 28.087778},
-            {lat: -12.987778, lng: 18.162222},
-            {lat: -5.954722, lng: 12.787778},
-            {lat: 5.437778, lng: 13.845833}
-          ],
-          "Kenya": [
-            {lat: 4.437778, lng: 35.845833},
-            {lat: 4.954722, lng: 41.787778},
-            {lat: -4.937778, lng: 39.962222},
-            {lat: -4.879167, lng: 35.087778},
-            {lat: -0.987778, lng: 34.162222},
-            {lat: 2.954722, lng: 34.787778},
-            {lat: 4.437778, lng: 35.845833}
-          ],
-          "Republic of Congo": [
-            {lat: 3.437778, lng: 11.845833},
-            {lat: 3.954722, lng: 17.787778},
-            {lat: -4.937778, lng: 15.962222},
-            {lat: -4.879167, lng: 11.087778},
-            {lat: 0.987778, lng: 11.162222},
-            {lat: 3.437778, lng: 11.845833}
-          ],
-          "Rwanda": [
-            {lat: -1.054722, lng: 29.362222},
-            {lat: -1.187778, lng: 30.887778},
-            {lat: -2.837778, lng: 30.837778},
-            {lat: -2.712222, lng: 29.245833},
-            {lat: -1.054722, lng: 29.362222}
-          ],
-          "South Sudan": [
-            {lat: 12.437778, lng: 24.845833},
-            {lat: 11.954722, lng: 33.787778},
-            {lat: 3.937778, lng: 35.962222},
-            {lat: 3.879167, lng: 30.087778},
-            {lat: 4.987778, lng: 23.162222},
-            {lat: 9.954722, lng: 23.787778},
-            {lat: 12.437778, lng: 24.845833}
-          ],
-          "Sudan": [
-            {lat: 22.437778, lng: 22.845833},
-            {lat: 22.954722, lng: 36.787778},
-            {lat: 12.937778, lng: 34.962222},
-            {lat: 12.879167, lng: 24.087778},
-            {lat: 15.987778, lng: 22.162222},
-            {lat: 22.437778, lng: 22.845833}
-          ],
-          "Tanzania": [
-            {lat: -1.437778, lng: 29.845833},
-            {lat: -1.954722, lng: 40.787778},
-            {lat: -11.937778, lng: 39.962222},
-            {lat: -11.879167, lng: 31.087778},
-            {lat: -2.987778, lng: 30.162222},
-            {lat: -1.437778, lng: 29.845833}
-          ],
-          "Uganda": [
-            {lat: 4.214722, lng: 31.787778},
-            {lat: 3.879167, lng: 35.037778},
-            {lat: 1.418056, lng: 34.162222},
-            {lat: -1.054722, lng: 33.987778},
-            {lat: 0.345833, lng: 29.987778},
-            {lat: 2.845833, lng: 30.887778},
-            {lat: 4.214722, lng: 31.787778}
-          ],
-          "Zambia": [
-            {lat: -8.437778, lng: 22.845833},
-            {lat: -8.954722, lng: 33.787778},
-            {lat: -17.937778, lng: 31.962222},
-            {lat: -17.879167, lng: 22.087778},
-            {lat: -12.987778, lng: 21.162222},
-            {lat: -8.437778, lng: 22.845833}
-          ]
-      
-        };
+      $.ajax({
+        url: wpdp_obj.ajax_url,
+        data: {
+          action: 'wpdp_get_country_polygons_data',
+          type_val: selectedIncidents,
+          locations_val: selectedCountries,
+          actors_val: selectedActors,
+          actors_names_val: selectedActorNames,
+          fat_val: selectedFat,
+          from_val: fromYear,
+          to_val: toYear,
+          target_civ: targetCiv
+        },
+        type: 'POST',
+        success: function(response) {
+          const eventCounts = response.data.data.map(country => country.events_count);
+          const sortedCounts = [...eventCounts].sort((a, b) => b - a);
+          const highThreshold = sortedCounts[Math.min(2, sortedCounts.length - 1)];
+          const mediumThreshold = sortedCounts[Math.min(4, sortedCounts.length - 1)];
+          
+          const thresholds = {
+            LARGE: highThreshold,
+            MEDIUM: mediumThreshold
+          };
 
-        var selectedCountries = $('input[name="wpdp_country"]:radio').map(function() {
-            return this.value;
-        }).get();
+          var map = new google.maps.Map(document.getElementById('polygons_map'), {
+            zoom: 4.1,
+            center: {lat: -1.054722, lng: 33.987778},
+            styles: self.mapsStyles(),
+            mapTypeControl: false
+          });
 
+          $('#wpdp-loader').hide();
 
-        // Get country data from server
-        $.ajax({
-            url: wpdp_obj.ajax_url,
-            data: {
-                action: 'wpdp_get_country_polygons_data',
-                type_val: selectedIncidents,
-                locations_val: selectedCountries,
-                actors_val: selectedActors,
-                actors_names_val: selectedActorNames,
-                fat_val: selectedFat,
-                from_val: fromYear,
-                to_val: toYear,
-                target_civ: targetCiv
-            },
-            type: 'POST',
-            success: function(response) {
+          // Set default styling for all features
+          map.data.setStyle({
+            fillColor: '#FFEB3B',
+            fillOpacity: 0.35,
+            strokeColor: '#000000',
+            strokeWeight: 1,
+            visible: true
+          });
 
-              // Initialize the map
-              var map = new google.maps.Map(document.getElementById('polygons_map'), {
-                zoom: 4.1,
-                center: {lat: -1.054722, lng: 33.987778}, // Centered roughly on Central Africa
-                styles: self.mapsStyles(),
-                mapTypeControl: false
+          $.getJSON(wpdp_obj.url+'/lib/filtered_countries.geojson', function(geoJson) {
+            console.log('GeoJSON loaded:', geoJson); // Debug log
 
-              });
+            map.data.addGeoJson(geoJson);
 
-                $('#wpdp-loader').hide();
+            // After adding GeoJSON, apply specific styling
+            map.data.setStyle(function(feature) {
+              const countryName = feature.getProperty('ADMIN');
+              const countryData = response.data.data.find(c => c.country === countryName);
+              
+              if (!countryData) {
+                console.log('No data for country:', countryName); // Debug log
+                return {
+                  visible: false
+                };
+              }
 
-                const countryData = response.data.data;
+              const color = self.getColorForIntensity(countryData.events_count, thresholds);
+              console.log('Country:', countryName, 'Color:', color); // Debug log
 
-                for(let country of countryData) {
-                    // Skip if we don't have coordinates for this country
-                    if (!countryCoordinates[country.country]) continue;
+              return {
+                fillColor: color,
+                fillOpacity: 0.35,
+                strokeColor: '#000000',
+                strokeWeight: 1,
+                visible: true
+              };
+            });
 
-                    // Get color based on events count
-                    const color = self.getColorForIntensity(country.events_count);
-                    
-                    // Create polygon for each country
-                    const polygon = new google.maps.Polygon({
-                        paths: countryCoordinates[country.country],
-                        strokeColor: "#FFFFFF",
-                        strokeOpacity: 2,
-                        strokeWeight: 2,
-                        fillColor: color,
-                        fillOpacity: 0.35,
-                        map: map
-                    });
+            // Add bounds fitting to ensure polygons are visible
+            var bounds = new google.maps.LatLngBounds();
+            map.data.forEach(function(feature) {
+              self.processPoints(feature.getGeometry(), bounds.extend, bounds);
+            });
+            map.fitBounds(bounds);
 
-                    // Create info window
-                    const infoWindow = new google.maps.InfoWindow();
+          }).fail(function(jqXHR, textStatus, errorThrown) {
+            console.error('Failed to load GeoJSON:', textStatus, errorThrown);
+          });
 
-                    // Add hover listeners
-                    polygon.addListener("mouseover", (e) => {
-                        polygon.setOptions({ 
-                            fillOpacity: 0.7,
-                            strokeColor: "#FF0000",
-                            strokeWeight: 2
-                        });
-                        
-                        // Add color indicator to info window
-                        const severityLabel = country.events_count >= 1000 ? 'High' : 
-                                            country.events_count >= 500 ? 'Medium' : 'Low';
-                        const severityColor = self.getColorForIntensity(country.events_count);
-                        
-                        const content = `
-                            <div class="country-info">
-                                <h3>${country.country}</h3>
-                                <p>
-                                    <span>Severity Level:</span>
-                                    <strong style="color: ${severityColor}">${severityLabel}</strong>
-                                </p>
-                                <p>
-                                    <span>Total Incidents:</span>
-                                    <strong>${country.events_count.toLocaleString()}</strong>
-                                </p>
-                                <p>
-                                    <span>Fatalities:</span>
-                                    <strong>${country.fatalities_count.toLocaleString()}</strong>
-                                </p>
-                                ${country.additional_info ? `
-                                    <div class="additional-info">
-                                        ${country.additional_info}
-                                    </div>
-                                ` : ''}
-                            </div>
-                        `;
-                        
-                        infoWindow.setContent(content);
-                        infoWindow.setPosition(e.latLng);
-                        infoWindow.open(map);
-                    });
+          const infoWindow = new google.maps.InfoWindow();
 
-                    polygon.addListener("mouseout", () => {
-                        polygon.setOptions({ 
-                            fillOpacity: 0.35,
-                            strokeColor: "#FFFFFF",
-                            strokeWeight: 1
-                        });
-                        infoWindow.close();
-                    });
-                }
-            },
-            error: function(errorThrown) {
-                console.error('Failed to load country data:', errorThrown);
+          map.data.addListener('mouseover', function(event) {
+            map.data.overrideStyle(event.feature, {
+              fillOpacity: 0.7,
+              strokeColor: "#FF0000",
+              strokeWeight: 2
+            });
+
+            const countryName = event.feature.getProperty('name');
+            const countryData = response.data.data.find(c => c.country === countryName);
+            
+            if (countryData) {
+              const severityLabel = self.getSeverityLabel(countryData.events_count, thresholds);
+              const severityColor = self.getColorForIntensity(countryData.events_count, thresholds);
+              
+              const content = `
+                <div class="country-info">
+                  <h3>${countryData.country}</h3>
+                  <p>
+                    <span>Severity Level:</span>
+                    <strong style="color: ${severityColor}">${severityLabel}</strong>
+                  </p>
+                  <p>
+                    <span>Total Incidents:</span>
+                    <strong>${countryData.events_count.toLocaleString()}</strong>
+                  </p>
+                  <p>
+                    <span>Fatalities:</span>
+                    <strong>${countryData.fatalities_count.toLocaleString()}</strong>
+                  </p>
+                  ${countryData.additional_info ? `
+                    <div class="additional-info">
+                      ${countryData.additional_info}
+                    </div>
+                  ` : ''}
+                </div>
+              `;
+              
+              infoWindow.setContent(content);
+              infoWindow.setPosition(event.latLng);
+              infoWindow.open(map);
             }
-        });
+          });
+
+          map.data.addListener('mouseout', function(event) {
+            map.data.revertStyle();
+            infoWindow.close();
+          });
+        },
+        error: function(errorThrown) {
+          console.error('Failed to load country data:', errorThrown);
+        }
+      });
     };
 
-    // Update the getColorForIntensity function
-    self.getColorForIntensity = function(count) {
-        // Define thresholds for different categories
-        const THRESHOLDS = {
-            LARGE: 1000,  // Adjust these thresholds based on your data
-            MEDIUM: 500
-        };
+    // Add this helper function to process points for bounds
+    self.processPoints = function(geometry, callback, thisArg) {
+      if (geometry instanceof google.maps.LatLng) {
+        callback.call(thisArg, geometry);
+      } else if (geometry instanceof google.maps.Data.Point) {
+        callback.call(thisArg, geometry.get());
+      } else {
+        geometry.getArray().forEach(function(g) {
+          self.processPoints(g, callback, thisArg);
+        });
+      }
+    };
 
-        // Define colors
-        const COLORS = {
-            LARGE: '#CD6155',   // Red for high count
-            MEDIUM: '#F0B27A',  // Orange for medium count
-            SMALL: '#F0B27A'    // Yellow for low count
-        };
+    self.getColorForIntensity = function(count, thresholds) {
+      const COLORS = {
+        LARGE: '#CD6155',    // Red for high count
+        MEDIUM: '#F0B27A',   // Orange for medium count
+        SMALL: '#F9E79F'     // Yellow for low count
+      };
 
-        if (count >= THRESHOLDS.LARGE) {
-            return COLORS.LARGE;
-        } else if (count >= THRESHOLDS.MEDIUM) {
-            return COLORS.MEDIUM;
-        } else {
-            return COLORS.SMALL;
-        }
+      if (count >= thresholds.LARGE) {
+        return COLORS.LARGE;
+      } else if (count >= thresholds.MEDIUM) {
+        return COLORS.MEDIUM;
+      } else {
+        return COLORS.SMALL;
+      }
+    };
+
+    self.getSeverityLabel = function(count, thresholds) {
+      if (count >= thresholds.LARGE) {
+        return 'High';
+      } else if (count >= thresholds.MEDIUM) {
+        return 'Medium';
+      } else {
+        return 'Low';
+      }
     };
 
     self.mapsChoice = function(){
