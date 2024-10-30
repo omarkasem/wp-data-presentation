@@ -708,7 +708,7 @@ final class WPDP_Shortcode {
                     </div>
 
 
-                    <div class="grp ">
+                    <div class="grp locations">
                         <div class="title">
                             LOCATION <span class="dashicons dashicons-arrow-down-alt2"></span>
                         </div>
@@ -744,7 +744,7 @@ final class WPDP_Shortcode {
                             </div>
                         <?php } ?>
                           <br>
-                 
+                            <?php echo $this->get_select_unselect_all_html();?>
                             <?php $this->printArrayAsList($filters['locations']);?>
                         </div>
                     </div>

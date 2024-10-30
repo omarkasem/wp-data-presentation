@@ -238,10 +238,20 @@
         var isChecked = !$content.find('input[type="checkbox"]').first().prop('checked');
         
         requestAnimationFrame(function() {
-          $content.find('input[type="checkbox"]').each(function(index, checkbox) {
-            checkbox.checked = isChecked;
-            checkbox.indeterminate = false;
-          });
+          console.log('ff');
+          if ($content.closest('.grp').hasClass('locations')) {
+            console.log('location');
+            $content.find('> ul > li > input[type="checkbox"]').each(function(index, checkbox) {
+              checkbox.checked = isChecked;
+              checkbox.indeterminate = false;
+            });
+          } else {
+            console.log('aaa');
+            $content.find('input[type="checkbox"]').each(function(index, checkbox) {
+              checkbox.checked = isChecked;
+              checkbox.indeterminate = false;
+            });
+          }
         });
       });
 
@@ -1521,7 +1531,7 @@
               strokeWeight: 2
             });
 
-            const countryName = event.feature.getProperty('name');
+            const countryName = event.feature.getProperty('ADMIN');
             const countryData = response.data.data.find(c => c.country === countryName);
             
             if (countryData) {
