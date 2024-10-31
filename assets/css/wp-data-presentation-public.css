@@ -267,6 +267,10 @@
   font-weight: 500;
 }
 
+.wpdp .grp.map_locations label{
+  font-size:15px;
+}
+
 .wpdp .filter_data select,.wpdp tfoot select,.wpdp .select2-container{
   width: 100%!important;
 }
@@ -429,6 +433,15 @@
   color: #666;
 }
 
+
+.wpdp .back_to_all_locations{
+  background-color: #2A285F;
+  color: #fff;
+  padding: 10px;
+  text-align: center;
+  display: inline-block;
+  margin-bottom: 15px;
+}
 
 @media only screen and (max-width: 1200px) {
 	.wpdp .con{

@@ -708,7 +708,7 @@ final class WPDP_Shortcode {
                     </div>
 
 
-                    <div class="grp locations">
+                    <div class="grp locations <?php echo (!isset($_GET['country']) && $atts['type'] === 'map' ? 'map_locations' : ''); ?>">
                         <div class="title">
                             LOCATION <span class="dashicons dashicons-arrow-down-alt2"></span>
                         </div>
@@ -716,7 +716,7 @@ final class WPDP_Shortcode {
 
                         <?php if(isset($_GET['country']) && !empty($_GET['country'])){ ?>
                             <input type="hidden" name="wpdp_search_location_country" value="<?php echo sanitize_text_field($_GET['country']); ?>">
-                            <a href="<?php echo strtok($_SERVER["REQUEST_URI"], '?'); ?>">Back to All Locations</a>
+                            <a class="back_to_all_locations" href="<?php echo strtok($_SERVER["REQUEST_URI"], '?'); ?>">Back to All Locations</a>
                         <?php } ?>
 
                         <?php if('map' !== $atts['type'] || (isset($_GET['country']) && $atts['type'] === 'map') ){ ?>
@@ -742,9 +742,13 @@ final class WPDP_Shortcode {
                                 ?>
                                 </select>
                             </div>
+                            <br>
                         <?php } ?>
-                          <br>
-                            <?php echo $this->get_select_unselect_all_html();?>
+                         
+                          <?php if('map' !== $atts['type'] || (isset($_GET['country']) && $atts['type'] === 'map') ){
+                             echo $this->get_select_unselect_all_html();
+                            }
+                            ?>
                             <?php $this->printArrayAsList($filters['locations']);?>
                         </div>
                     </div>
@@ -758,21 +762,21 @@ final class WPDP_Shortcode {
                             <div class="dates">
                                 <label for="wpdp_from">FROM</label>
                                 <input value="<?php 
-                                    if ('map' === $atts['type'] && empty($this->get_session_value('wpdp_from'))) {
-                                        echo date('d F Y', strtotime('-30 days'));
-                                    } else {
+                                    // if ('map' === $atts['type'] && empty($this->get_session_value('wpdp_from'))) {
+                                        // echo date('d F Y', strtotime('-30 days'));
+                                    // } else {
                                         echo $this->get_session_value('wpdp_from', $this->get_from_date_value($filters, $atts));
-                                    }
+                                    // }
                                 ?>" type="text" name="wpdp_from" id="wpdp_from">
                             </div>
                             <div class="dates">
                                 <label style="margin-right: 23px;" for="wpdp_to">TO</label>
                                 <input value="<?php 
-                                    if ('map' === $atts['type'] && empty($this->get_session_value('wpdp_to'))) {
-                                        echo date('d F Y');
-                                    } else {
+                                    // if ('map' === $atts['type'] && empty($this->get_session_value('wpdp_to'))) {
+                                        // echo date('d F Y');
+                                    // } else {
                                         echo $this->get_session_value('wpdp_to', $this->get_to_date_value($filters, $atts));
-                                    }
+                                    // }
                                 ?>" type="text" name="wpdp_to" id="wpdp_to">
                             </div>
                             <?php if ('graph' === $atts['type'] || '' == $atts['type']) {?>

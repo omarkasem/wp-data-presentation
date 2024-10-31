@@ -172,7 +172,6 @@
             };
           },
           processResults: function (data) {
-            console.log(data);
             return {
               results: $.map(data, function(item) {
                 return {
@@ -238,15 +237,12 @@
         var isChecked = !$content.find('input[type="checkbox"]').first().prop('checked');
         
         requestAnimationFrame(function() {
-          console.log('ff');
           if ($content.closest('.grp').hasClass('locations')) {
-            console.log('location');
             $content.find('> ul > li > input[type="checkbox"]').each(function(index, checkbox) {
               checkbox.checked = isChecked;
               checkbox.indeterminate = false;
             });
           } else {
-            console.log('aaa');
             $content.find('input[type="checkbox"]').each(function(index, checkbox) {
               checkbox.checked = isChecked;
               checkbox.indeterminate = false;
@@ -1435,6 +1431,7 @@
     }
 
     self.maps_polygons = function() {
+      $('#wpdp-loader').css('display','flex');
       var selectedCountries = $('input[name="wpdp_country"]:radio').map(function() {
         return this.value;
       }).get();
@@ -1454,6 +1451,7 @@
         },
         type: 'POST',
         success: function(response) {
+          $('#wpdp-loader').hide();
           const eventCounts = response.data.data.map(country => country.events_count);
           const sortedCounts = [...eventCounts].sort((a, b) => b - a);
           const highThreshold = sortedCounts[Math.min(2, sortedCounts.length - 1)];
@@ -1465,7 +1463,7 @@
           };
 
           var map = new google.maps.Map(document.getElementById('polygons_map'), {
-            zoom: 4.1,
+            zoom: 5.5,
             center: {lat: -1.054722, lng: 33.987778},
             styles: self.mapsStyles(),
             mapTypeControl: false
@@ -1500,7 +1498,6 @@
               }
 
               const color = self.getColorForIntensity(countryData.events_count, thresholds);
-              console.log('Country:', countryName, 'Color:', color); // Debug log
 
               return {
                 fillColor: color,
@@ -1570,6 +1567,14 @@
           map.data.addListener('mouseout', function(event) {
             map.data.revertStyle();
             infoWindow.close();
+          });
+
+          map.data.addListener('click', function(event) {
+            const countryName = event.feature.getProperty('ADMIN');
+            if (confirm(`Are you sure you want to view data for ${countryName}?`)) {
+              const currentUrl = window.location.href.split('?')[0];
+              window.location.href = `${currentUrl}?country=${encodeURIComponent(countryName)}`;
+            }
           });
         },
         error: function(errorThrown) {
