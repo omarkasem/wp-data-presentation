@@ -1462,14 +1462,35 @@
             MEDIUM: mediumThreshold
           };
 
+
+          // Add fixed info panel to map
+          const infoPanel = document.createElement('div');
+          infoPanel.id = 'map-info-panel';
+          infoPanel.style.cssText = `
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            min-width: 200px;
+            z-index: 1;
+            display: none;
+          `;
+          
+          // Add default content
+          infoPanel.innerHTML = '<p class="default-text">Hover over a country to see details</p>';
+          
           var map = new google.maps.Map(document.getElementById('polygons_map'), {
             zoom: 5.5,
             center: {lat: -1.054722, lng: 33.987778},
             styles: self.mapsStyles(),
-            mapTypeControl: false
+            mapTypeControl: false,
           });
-
-          $('#wpdp-loader').hide();
+          
+          // Add the info panel to the map
+          map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(infoPanel);
 
           // Set default styling for all features
           map.data.setStyle({
@@ -1493,7 +1514,11 @@
               if (!countryData) {
                 console.log('No data for country:', countryName); // Debug log
                 return {
-                  visible: false
+                  fillColor: '#CCCCCC', // Gray color for no data
+                  fillOpacity: 0.35,
+                  strokeColor: '#000000',
+                  strokeWeight: 1,
+                  visible: true // Changed to always be visible
                 };
               }
 
@@ -1519,8 +1544,7 @@
             console.error('Failed to load GeoJSON:', textStatus, errorThrown);
           });
 
-          const infoWindow = new google.maps.InfoWindow();
-
+          // Replace infoWindow with info panel updates
           map.data.addListener('mouseover', function(event) {
             map.data.overrideStyle(event.feature, {
               fillOpacity: 0.7,
@@ -1531,50 +1555,49 @@
             const countryName = event.feature.getProperty('ADMIN');
             const countryData = response.data.data.find(c => c.country === countryName);
             
-            if (countryData) {
+            infoPanel.style.display = 'block';
+            if (!countryData) {
+              infoPanel.innerHTML = `
+                <div class="country-info">
+                  <h3 style="margin: 0 0 10px 0; font-size: 16px;">${countryName}</h3>
+                  <p style="margin: 5px 0; color: #666;">
+                    No events were found in this region,<br> please adjust the filter options to see more data.
+                  </p>
+                </div>
+              `;
+            } else {
               const severityLabel = self.getSeverityLabel(countryData.events_count, thresholds);
               const severityColor = self.getColorForIntensity(countryData.events_count, thresholds);
               
-              const content = `
+              infoPanel.innerHTML = `
                 <div class="country-info">
-                  <h3>${countryData.country}</h3>
-                  <p>
+                  <h3 style="margin: 0 0 10px 0; font-size: 16px;">${countryData.country}</h3>
+                  <p style="margin: 5px 0;">
                     <span>Severity Level:</span>
                     <strong style="color: ${severityColor}">${severityLabel}</strong>
                   </p>
-                  <p>
+                  <p style="margin: 5px 0;">
                     <span>Total Incidents:</span>
                     <strong>${countryData.events_count.toLocaleString()}</strong>
                   </p>
-                  <p>
+                  <p style="margin: 5px 0;">
                     <span>Fatalities:</span>
                     <strong>${countryData.fatalities_count.toLocaleString()}</strong>
                   </p>
-                  ${countryData.additional_info ? `
-                    <div class="additional-info">
-                      ${countryData.additional_info}
-                    </div>
-                  ` : ''}
                 </div>
               `;
-              
-              infoWindow.setContent(content);
-              infoWindow.setPosition(event.latLng);
-              infoWindow.open(map);
             }
           });
 
           map.data.addListener('mouseout', function(event) {
             map.data.revertStyle();
-            infoWindow.close();
+            infoPanel.style.display = 'none';
           });
 
           map.data.addListener('click', function(event) {
             const countryName = event.feature.getProperty('ADMIN');
-            if (confirm(`Are you sure you want to view data for ${countryName}?`)) {
-              const currentUrl = window.location.href.split('?')[0];
-              window.location.href = `${currentUrl}?country=${encodeURIComponent(countryName)}`;
-            }
+            const currentUrl = window.location.href.split('?')[0];
+            window.location.href = `${currentUrl}?country=${encodeURIComponent(countryName)}`;
           });
         },
         error: function(errorThrown) {

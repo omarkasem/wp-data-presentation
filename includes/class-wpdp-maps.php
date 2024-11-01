@@ -143,7 +143,7 @@ final class WPDP_Maps {
             $date_format = WPDP_Shortcode::get_date_format($date_sample);
             $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'inter2'");
             $actor_column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'actor2'");
-            list($whereSQL, $localQueryArgs) = $this->build_where_clause($filters, $queryArgs, $date_format, $column_exists, $actor_column_exists,true);
+            list($whereSQL, $queryArgs) = $this->build_where_clause($filters, $queryArgs, $date_format, $column_exists, $actor_column_exists,true);
 
             $query = "SELECT 
             SUM(fatalities) as fatalities_count,
@@ -169,7 +169,7 @@ final class WPDP_Maps {
         $transient_key = md5($final_query . serialize($queryArgs));
         $data = get_transient('wpdp_cache_'.$transient_key);
         if(empty($data) || WP_DATA_PRESENTATION_DISABLE_CACHE){
-            $data = $wpdb->get_results($wpdb->prepare($final_query, $localQueryArgs), ARRAY_A);
+            $data = $wpdb->get_results($wpdb->prepare($final_query, $queryArgs), ARRAY_A);
             set_transient('wpdp_cache_'.$transient_key, $data);
         }
 
@@ -254,7 +254,7 @@ final class WPDP_Maps {
             $date_format = WPDP_Shortcode::get_date_format($date_sample);
             $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'inter2'");
             $actor_column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'actor2'");
-            list($whereSQL, $localQueryArgs) = $this->build_where_clause($filters, $queryArgs, $date_format, $column_exists, $actor_column_exists);
+            list($whereSQL, $queryArgs) = $this->build_where_clause($filters, $queryArgs, $date_format, $column_exists, $actor_column_exists);
 
             if($actor_column_exists){
                 $types[] = 'actor2';
@@ -294,10 +294,10 @@ final class WPDP_Maps {
         LIMIT 5000
         ";
 
-        $transient_key = md5($final_query); 
+        $transient_key = md5($final_query . serialize($queryArgs));
         $data = get_transient('wpdp_cache_'.$transient_key);
         if(empty($data) || WP_DATA_PRESENTATION_DISABLE_CACHE){
-            $data = $wpdb->get_results($wpdb->prepare($final_query, $localQueryArgs), ARRAY_A);
+            $data = $wpdb->get_results($wpdb->prepare($final_query, $queryArgs), ARRAY_A);
             set_transient('wpdp_cache_'.$transient_key, $data);
         }
 
