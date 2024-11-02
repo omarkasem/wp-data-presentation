@@ -19,6 +19,8 @@ final class WPDP_Shortcode {
 
     public $shortcode_atts = [];
 
+    public $search_location_country = '';
+
     /**
      * Get instance of the class
      *
@@ -45,13 +47,10 @@ final class WPDP_Shortcode {
     private function __construct() {
         $this->_add_hooks();
         // Start the session if it hasn't been started yet
-        if (session_status() == PHP_SESSION_NONE) {
+        if (session_status() == PHP_SESSION_NONE && !headers_sent()) {
             session_start();
         }
-        // Remove all saved session values
-
-        // session_destroy();
-
+        $this->search_location_country = $this->get_session_value('wpdp_search_location_country');
 
     }
 
@@ -75,6 +74,9 @@ final class WPDP_Shortcode {
 
         add_action('wp_ajax_search_actor_names', array($this, 'search_actor_names'));
         add_action('wp_ajax_nopriv_search_actor_names', array($this, 'search_actor_names'));
+
+        add_action('wp_ajax_get_locations_html', array($this, 'get_locations_html'));
+        add_action('wp_ajax_nopriv_get_locations_html', array($this, 'get_locations_html'));
 
         if(isset($_GET['test3'])){
             session_start();
@@ -119,8 +121,8 @@ final class WPDP_Shortcode {
                 continue;
             }
 
-            if(isset($_REQUEST['country']) && !empty($_REQUEST['country'])){
-                $country = sanitize_text_field($_REQUEST['country']);
+            if($this->search_location_country != ''){
+                $country = sanitize_text_field($this->search_location_country);
 
                 $query = "SELECT DISTINCT country, admin1, admin2, admin3, location FROM {$table_name} 
                           WHERE country = '{$country}' 
@@ -243,9 +245,11 @@ final class WPDP_Shortcode {
     }
     
 
-
     public static function get_filters() {
         $atts = self::get_instance()->shortcode_atts;
+        if(empty($atts) && isset($_POST['atts'])){
+            $atts = json_decode(stripslashes($_POST['atts']), true);
+        }
 
         $posts = get_posts(array(
             'post_type'      => 'wp-data-presentation',
@@ -283,8 +287,8 @@ final class WPDP_Shortcode {
                 $years = array_merge($years, $db_years);
             }
 
-            if(isset($_GET['country']) && $atts['type'] == 'map'){
-                $country = sanitize_text_field($_GET['country']);
+            if(self::get_instance()->search_location_country != '' && (isset($atts['type']) && $atts['type'] === 'map')){
+                $country = sanitize_text_field(self::get_instance()->search_location_country);
                 $db_locations = $wpdb->get_results("SELECT DISTINCT admin1,admin2,admin3,location FROM {$table_name} WHERE country = '{$country}'", ARRAY_A);
                 
                 foreach ($db_locations as $location) {
@@ -315,7 +319,7 @@ final class WPDP_Shortcode {
                     $ordered_locations = $locations;
 
                 }
-            }elseif(!isset($_GET['country']) && $atts['type'] == 'map'){
+            }elseif(!self::get_instance()->search_location_country && (isset($atts['type']) && $atts['type'] === 'map')){
                 $locs = $wpdb->get_results("SELECT DISTINCT country FROM {$table_name} ORDER BY country ASC", ARRAY_A);
                 foreach($locs as $loc){
                     $ordered_locations[$loc['country'].'__country'] = $loc['country'];
@@ -412,7 +416,7 @@ final class WPDP_Shortcode {
 
     function printArrayAsList($locations, $level = 0, $parent_key = false) {
         $input_type = 'checkbox';
-        if($this->shortcode_atts['type'] === 'map' && !isset($_GET['country']) && empty($_GET['country'])){
+        if(!self::get_instance()->search_location_country){
             $input_type = 'radio';
         }
         echo '<ul>';
@@ -462,6 +466,10 @@ final class WPDP_Shortcode {
             'to'   => '',
         ), $atts);
 
+        if($atts['type'] !== 'map'){
+            $this->search_location_country = '';
+        }
+
         $this->shortcode_atts = $atts;
 
         ob_start();
@@ -474,6 +482,12 @@ final class WPDP_Shortcode {
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME . 'public');
         wp_enqueue_style(WP_DATA_PRESENTATION_NAME . 'jquery-ui');
         wp_enqueue_style('dashicons');
+
+        ?>
+        <script>
+            var wpdp_shortcode_atts = <?php echo wp_json_encode($atts); ?>;
+        </script>
+        <?php
 
         ?>
 
@@ -607,6 +621,14 @@ final class WPDP_Shortcode {
         }, $unique_actors);
     }
 
+    function get_locations_html(){
+        $search_location_country = $_POST['search_location_country'];
+        $this->search_location_country = $search_location_country;
+        $locations = $this->get_filters()['locations'];
+        $this->printArrayAsList($locations);
+        wp_die();
+    }
+
     function get_html_filter($filters, $atts) {
         ?>
         <div class="filter_data" style="display:none;">
@@ -707,20 +729,26 @@ final class WPDP_Shortcode {
                         </div>
                     </div>
 
+                    <?php  if($this->search_location_country == '' && (isset($atts['type']) && $atts['type'] === 'map')){ ?>
+                        <style>
+                            .wpdp .content .wpdp_maps_only{
+                                display: none;
+                            }
+                        </style>
+                    <?php } ?>
 
-                    <div class="grp locations <?php echo (!isset($_GET['country']) && $atts['type'] === 'map' ? 'map_locations' : ''); ?>">
+                    <div class="grp locations">
                         <div class="title">
                             LOCATION <span class="dashicons dashicons-arrow-down-alt2"></span>
                         </div>
                         <div class="content">
-
-                        <?php if(isset($_GET['country']) && !empty($_GET['country'])){ ?>
-                            <input type="hidden" name="wpdp_search_location_country" value="<?php echo sanitize_text_field($_GET['country']); ?>">
-                            <a class="back_to_all_locations" href="<?php echo strtok($_SERVER["REQUEST_URI"], '?'); ?>">Back to All Locations</a>
-                        <?php } ?>
-
-                        <?php if('map' !== $atts['type'] || (isset($_GET['country']) && $atts['type'] === 'map') ){ ?>
-                            <div>
+                            <?php if($atts['type'] === 'map'){ ?>
+                                <input type="hidden" name="wpdp_search_location_country" value="<?php echo $this->search_location_country; ?>">
+                                <a class="view_countries wpdp_maps_only" href="#">View Countries</a>
+                       
+                            <?php } ?>
+                            
+                            <div class="wpdp_search_location wpdp_maps_only">
                                 <select name="wpdp_search_location" id="wpdp_search_location" multiple="multiple">
                                 <?php
                                 $selected_locations = $this->get_session_value('wpdp_search_location', []);
@@ -741,15 +769,12 @@ final class WPDP_Shortcode {
                                 }
                                 ?>
                                 </select>
+                                <br>
+                                <?php echo $this->get_select_unselect_all_html(); ?>
                             </div>
-                            <br>
-                        <?php } ?>
-                         
-                          <?php if('map' !== $atts['type'] || (isset($_GET['country']) && $atts['type'] === 'map') ){
-                             echo $this->get_select_unselect_all_html();
-                            }
-                            ?>
-                            <?php $this->printArrayAsList($filters['locations']);?>
+                            <div class="checkboxes_locations">
+                                <?php $this->printArrayAsList($filters['locations']);?>
+                            </div>
                         </div>
                     </div>
 
@@ -917,7 +942,7 @@ final class WPDP_Shortcode {
         return $hierarchy;
     }
 
-    private function get_session_value($key, $default = '') {
+    public function get_session_value($key, $default = '') {
         return isset($_SESSION['wpdp_'.$key]) ? $_SESSION['wpdp_'.$key] : $default;
     }
 

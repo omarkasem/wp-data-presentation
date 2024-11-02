@@ -231,26 +231,40 @@
       });
 
       // Select/Unselect All
-      $('.filter_data').on('click', 'li a.select_unselect_all', function(e) {
+      $(document).on('click', 'li a.select_unselect_all', function(e) {
         e.preventDefault();
         var $content = $(this).closest('.content');
-        var isChecked = !$content.find('input[type="checkbox"]').first().prop('checked');
         
         requestAnimationFrame(function() {
+          console.log($content);
           if ($content.closest('.grp').hasClass('locations')) {
-            $content.find('> ul > li > input[type="checkbox"]').each(function(index, checkbox) {
-              checkbox.checked = isChecked;
+            var checkboxes = $content.find('> ul > li > input[type="checkbox"]');
+            if(!checkboxes.length){
+              checkboxes = $content.find('.checkboxes_locations > ul > li > input[type="checkbox"]');
+            } 
+            console.log(checkboxes);
+            checkboxes.each(function(index, checkbox) {
+              checkbox.checked = !checkbox.checked;
               checkbox.indeterminate = false;
             });
           } else {
             $content.find('input[type="checkbox"]').each(function(index, checkbox) {
-              checkbox.checked = isChecked;
+              checkbox.checked = !checkbox.checked;
               checkbox.indeterminate = false;
             });
           }
         });
       });
 
+      // Selected country hidden field
+      $(document).on('change', 'input[name="wpdp_country"]:radio', function() {
+        $('input[name="wpdp_search_location_country"]').val($(this).val());
+      });
+
+      // View countries button
+      $('.view_countries').on('click', function() {
+        $('input[name="wpdp_search_location_country"]').val('').parents('form').submit();
+      });
 
     };
 
@@ -1027,7 +1041,7 @@
       }
 
 
-      $('.expandable > .exp_click').on('click', function(event) {
+      $(document).on('click', '.expandable > .exp_click', function(event) {
         event.stopPropagation();
         $(this).parent().toggleClass('expanded');
         $(this).find(".dashicons").toggleClass("dashicons-arrow-down-alt2 dashicons-arrow-up-alt2");
@@ -1114,13 +1128,6 @@
 
     self.filterAction = function(){
 
-      var selectedCountry = $('input[name="wpdp_country"]:checked').val();
-      if (selectedCountry) {
-        var currentUrl = window.location.href.split('?')[0];
-        window.location.href = currentUrl + '?country=' + selectedCountry;
-        return;
-      }
-
       self.setDefaultFilters();
 
       if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
@@ -1130,10 +1137,45 @@
       self.graphChange();
 
       if (typeof google === 'object' && typeof google.maps === 'object') {
-
-        if($('input[name="wpdp_country"]:radio').length > 0){
+        if($('input[name="wpdp_search_location_country"]').length > 0 && $('input[name="wpdp_search_location_country"]').val() == ''){
+          $('#wpdp_map').hide();
+          $('#polygons_map').show();
+          $('.wpdp_maps_only').hide();
           self.maps_polygons();
+          var $filterSpan = $('.wpdp .filter span');
+          if (!$filterSpan.hasClass('fa-arrow-left')) {
+            $filterSpan.addClass('fa-arrow-left');
+          }
+
+          console.log(wpdp_shortcode_atts);
+          $('.wpdp .filter').trigger('click');
+          $.ajax({
+            url: wpdp_obj.ajax_url,
+            type: 'POST',
+            data: {action: 'get_locations_html','search_location_country':'','atts':wpdp_shortcode_atts},
+            success: function(response){
+              $('.checkboxes_locations').html(response);
+            }
+          });
+          
         }else{
+          $('.wpdp_maps_only').show();
+          $('#polygons_map').hide();
+          $('#wpdp_map').show();
+          var $filterSpan = $('.wpdp .filter span');
+          if (!$filterSpan.hasClass('fa-arrow-left')) {
+            $filterSpan.addClass('fa-arrow-left');
+          }
+          $('.wpdp .filter').trigger('click');
+          $.ajax({
+            url: wpdp_obj.ajax_url,
+            type: 'POST',
+            data: {action: 'get_locations_html','search_location_country':$('input[name="wpdp_search_location_country"]').val(),'atts':wpdp_shortcode_atts},
+            success: function(response){
+              $('.checkboxes_locations').html(response);
+            }
+          });
+
           for(let i=0; i<global_markers.length; i++){
             global_markers[i].setMap(null);
           }
@@ -1596,8 +1638,8 @@
 
           map.data.addListener('click', function(event) {
             const countryName = event.feature.getProperty('ADMIN');
-            const currentUrl = window.location.href.split('?')[0];
-            window.location.href = `${currentUrl}?country=${encodeURIComponent(countryName)}`;
+            $('input[name="wpdp_country"][value="' + countryName + '"]:radio').prop('checked', true);
+            $('input[name="wpdp_search_location_country"]').val(countryName).parents('form').submit();
           });
         },
         error: function(errorThrown) {

@@ -291,7 +291,7 @@ final class WPDP_Maps {
         $final_query = "
         SELECT DISTINCT t.*
         FROM ({$union_query}) AS t
-        LIMIT 5000
+        LIMIT 100
         ";
 
         $transient_key = md5($final_query . serialize($queryArgs));
@@ -446,17 +446,18 @@ final class WPDP_Maps {
 
     }
 
+    public function get_session_value($key, $default = '') {
+        return isset($_SESSION['wpdp_'.$key]) ? $_SESSION['wpdp_'.$key] : $default;
+    }
+
+
     public static function shortcode_output($atts){
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'google-maps-cluster');
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'google-maps-api');
-        
     ?>
         <div class="wpdp_filter_content maps">
-            <?php if(isset($_REQUEST['country']) && !empty($_REQUEST['country'])): ?>
-                <div id="wpdp_map"></div>
-                <?php else: ?>
-                <div id="polygons_map"></div>
-            <?php endif; ?>
+            <div <?php if(self::get_instance()->get_session_value('wpdp_search_location_country') == '' ){ echo 'style="display:none;"'; } ?> id="wpdp_map"></div>
+            <div <?php if(self::get_instance()->get_session_value('wpdp_search_location_country') != '' ){ echo 'style="display:none;"'; } ?>  id="polygons_map"></div>
         </div>
     <?php }
 
