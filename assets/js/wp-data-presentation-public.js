@@ -227,11 +227,42 @@
         $(this).parent().find('li input[type="checkbox"]').prop('checked', this.checked).change();
       });
 
-      // Reset
-      $('#filter_form').on('reset', function() {
-        $(this).find('input[type="checkbox"]').prop('indeterminate', false);
+      // Reset - Updated version
+      $('#filter_form').on('reset', function(e) {
+        // Prevent the default reset behavior
+        e.preventDefault();
+        
+        // Clear checkboxes and their indeterminate state
+        $(this).find('input[type="checkbox"]')
+          .prop('checked', false)
+          .prop('indeterminate', false);
+        
+        // Clear radio buttons
+        $(this).find('input[type="radio"]').prop('checked', false);
+        
+        // Clear select2 fields
+        $('#wpdp_search_location').val('').trigger('change');
+        $('#wpdp_search_actors').val('').trigger('change');
+        
+        // Clear regular select fields
+        $(this).find('select').val('').trigger('change');
+        
+        // Hide no data message
         $('.filter_data .no_data').hide();
-        $('#wpdp_search_location').val('').change();
+
+        // Force clear all checkboxes including nested ones
+        $('.filter_data input[type="checkbox"]').each(function() {
+          $(this)
+            .prop('checked', false)
+            .prop('indeterminate', false)
+            .trigger('change');
+        });
+        
+        // Force recheck indeterminate states
+        self.checkfForIndeterminate();
+
+        // Trigger form change to update any dependent elements
+        $(this).trigger('change');
       });
 
       // Select/Unselect All
@@ -240,23 +271,25 @@
         var $content = $(this).closest('.content');
         
         requestAnimationFrame(function() {
-          console.log($content);
+          var checkboxes;
           if ($content.closest('.grp').hasClass('locations')) {
-            var checkboxes = $content.find('> ul > li > input[type="checkbox"]');
+            checkboxes = $content.find('> ul > li > input[type="checkbox"]');
             if(!checkboxes.length){
               checkboxes = $content.find('.checkboxes_locations > ul > li > input[type="checkbox"]');
-            } 
-            console.log(checkboxes);
-            checkboxes.each(function(index, checkbox) {
-              checkbox.checked = !checkbox.checked;
-              checkbox.indeterminate = false;
-            });
+            }
           } else {
-            $content.find('input[type="checkbox"]').each(function(index, checkbox) {
-              checkbox.checked = !checkbox.checked;
-              checkbox.indeterminate = false;
-            });
+            checkboxes = $content.find('input[type="checkbox"]');
           }
+
+          // Count total and checked checkboxes
+          var totalChecked = checkboxes.filter(':checked').length;
+          var shouldCheck = totalChecked < checkboxes.length;
+
+          // Set all checkboxes to either checked or unchecked
+          checkboxes.each(function(index, checkbox) {
+            checkbox.checked = shouldCheck;
+            checkbox.indeterminate = false;
+          });
         });
       });
 
@@ -299,6 +332,7 @@
           //     $('#wpdp_to').datepicker('setDate', endDate);
           //   }
           // }
+          $('#wpdp_from').addClass('changed');
           $('.filter_data .no_data').hide();
         },
         beforeShow: function (input, inst) {
@@ -335,6 +369,7 @@
           //     $('#wpdp_from').datepicker('setDate', startDate);
           //   }
           // }
+          $('#wpdp_to').addClass('changed');
           $('.filter_data .no_data').hide();
         },
         beforeShow: function (input, inst) {
@@ -444,7 +479,7 @@
     
       return {
         lat: totalLat / count,
-        lng: totalLng / count
+        lng: (totalLng / count) + 12
       };
     },
 
@@ -1088,7 +1123,7 @@
               if (center) {
                 self.main_map.setCenter(new google.maps.LatLng(
                   center.lat(),
-                  center.lng() - 8 // Adjust this value to shift more/less left
+                  center.lng() - 12 // Adjust this value to shift more/less left
                 ));
               }
             }
@@ -1119,7 +1154,7 @@
                   if (center) {
                     self.main_map.setCenter(new google.maps.LatLng(
                       center.lat(),
-                      center.lng() + 8 // Adjust this value to shift more/less right
+                      center.lng() + 12 // Adjust this value to shift more/less right
                     ));
                   }
                 }
@@ -1160,7 +1195,13 @@
                 }
             } else {
                 if ($this.val() !== '') {
-                    filterData[$this.attr('name')] = $this.val();
+                  if($this.attr('name') == 'wpdp_from' && !$('#wpdp_from').hasClass('changed')){
+                    return true;
+                  }
+                  if($this.attr('name') == 'wpdp_to' && !$('#wpdp_to').hasClass('changed')){
+                    return true;
+                  }
+                  filterData[$this.attr('name')] = $this.val();
                 }
             }
         });
@@ -1568,7 +1609,7 @@
           infoPanel.style.cssText = `
             position: absolute;
             bottom: 40px;
-            right: 290px;
+            right: 310px;
             background: white;
             padding: 15px;
             border-radius: 4px;
