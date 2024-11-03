@@ -29,6 +29,10 @@
     };
 
     self.init = function(){
+      self.currentMapType = $('input[name="wpdp_search_location_country"]').length > 0 ? 
+      ($('input[name="wpdp_search_location_country"]').val() == '' ? 'polygons' : 'points') : 'points';
+      
+
       self.setDefaultFilters();
       self.dataTables();
       self.graphChange();
@@ -1077,10 +1081,16 @@
           $('.wpdp .con').animate({marginLeft:'-270px'},1).hide().removeClass('active');
           $('.wpdp .filter span').attr('class','fas fa-sliders-h');
           $('.wpdp_filter_content').animate({marginLeft:'0',width:'100%'},200);
+          $('#map-info-panel').css('right','60px');
         }else{
           $('.wpdp .con').animate({marginLeft:'0'},200).show().addClass('active');
           $(this).find('span').attr('class','fas fa-arrow-left');
-          $('.wpdp_filter_content').animate({marginLeft:'270px',width:'80%'},200);
+          $('#map-info-panel').css('right','290px');
+          if ($('.wpdp_filter_content').hasClass('maps')) {
+              $('.wpdp_filter_content').animate({marginLeft:'270px',width:'100%'},200);
+          } else {
+              $('.wpdp_filter_content').animate({marginLeft:'270px',width:'80%'},200);
+          }
         }
       });
     
@@ -1137,49 +1147,54 @@
       self.graphChange();
 
       if (typeof google === 'object' && typeof google.maps === 'object') {
-        if($('input[name="wpdp_search_location_country"]').length > 0 && $('input[name="wpdp_search_location_country"]').val() == ''){
-          $('#wpdp_map').hide();
-          $('#polygons_map').show();
-          $('.wpdp_maps_only').hide();
-          self.maps_polygons();
-
-          $('.checkboxes_locations').html('Loading Locations...');
-          $.ajax({
-            url: wpdp_obj.ajax_url,
-            type: 'POST',
-            data: {action: 'get_locations_html','search_location_country':'','atts':wpdp_shortcode_atts},
-            success: function(response){
-              $('.checkboxes_locations').html(response);
-            }
-          });
-          
-        }else{
-          $('.wpdp_maps_only').show().css('display','inline-block');
-          $('#polygons_map').hide();
-          $('#wpdp_map').show();
-
-          $('.checkboxes_locations').html('Loading Locations...');
-          $.ajax({
-            url: wpdp_obj.ajax_url,
-            type: 'POST',
-            data: {action: 'get_locations_html','search_location_country':$('input[name="wpdp_search_location_country"]').val(),'atts':wpdp_shortcode_atts},
-            success: function(response){
-              $('.checkboxes_locations').html(response);
-            }
-          });
-
-          for(let i=0; i<global_markers.length; i++){
-            global_markers[i].setMap(null);
-          }
-          if(markerCluster){
-            markerCluster.clearMarkers();
-          }
-          global_markers = [];
-          self.maps();
-        }
+        self.mapChange();
       }
 
 
+    },
+
+    self.mapChange = function(){
+      let newMapType = $('input[name="wpdp_search_location_country"]').length > 0 ? 
+      ($('input[name="wpdp_search_location_country"]').val() == '' ? 'polygons' : 'points') : 'points';
+  
+
+      // Only run AJAX if map type has changed
+      if (newMapType !== self.currentMapType) {
+        $('.checkboxes_locations').html('Loading Locations...');
+        $.ajax({
+          url: wpdp_obj.ajax_url,
+          type: 'POST',
+          data: {
+            action: 'get_locations_html',
+            'search_location_country': newMapType === 'polygons' ? '' : $('input[name="wpdp_search_location_country"]').val(),
+            'atts': wpdp_shortcode_atts
+          },
+          success: function(response){
+            $('.checkboxes_locations').html(response);
+          }
+        });
+        self.currentMapType = newMapType;
+      }
+
+      if(newMapType === 'polygons') {
+        $('#wpdp_map').hide();
+        $('#polygons_map').show();
+        $('.wpdp_maps_only').hide();
+        self.maps_polygons();
+      } else {
+        $('.wpdp_maps_only').show().css('display','inline-block');
+        $('#polygons_map').hide();
+        $('#wpdp_map').show();
+
+        for(let i=0; i<global_markers.length; i++){
+          global_markers[i].setMap(null);
+        }
+        if(markerCluster){
+          markerCluster.clearMarkers();
+        }
+        global_markers = [];
+        self.maps();
+      }
     },
       
     self.graphChange = function(){
@@ -1501,6 +1516,9 @@
           const infoPanel = document.createElement('div');
           infoPanel.id = 'map-info-panel';
           infoPanel.style.cssText = `
+            position: absolute;
+            bottom: 0;
+            right: 290px;
             background: white;
             padding: 15px;
             border-radius: 4px;
@@ -1508,9 +1526,6 @@
             min-width: 200px;
             z-index: 1;
             display: none;
-            float: right; /* Add this */
-            clear: both;  /* Add this */
-            margin-right: 310px;
           `;
           
           // Add default content
@@ -1518,13 +1533,11 @@
           
           var map = new google.maps.Map(document.getElementById('polygons_map'), {
             zoom: 5.5,
-            center: {lat: -1.054722, lng: 33.987778},
             styles: self.mapsStyles(),
             mapTypeControl: false,
           });
-          
-          // Add the info panel to the map
-          map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(infoPanel);
+          // Change how we add the info panel to the map
+          document.getElementById('polygons_map').appendChild(infoPanel);
 
           // Set default styling for all features
           map.data.setStyle({
@@ -1572,6 +1585,15 @@
               self.processPoints(feature.getGeometry(), bounds.extend, bounds);
             });
             map.fitBounds(bounds);
+
+            // To shift the center after bounds are set, add this:
+            google.maps.event.addListenerOnce(map, 'bounds_changed', function() {
+              var center = map.getCenter();
+              map.setCenter(new google.maps.LatLng(
+                center.lat(),
+                center.lng() + 25  // Adjust this value to shift more/less
+              ));
+            });
 
           }).fail(function(jqXHR, textStatus, errorThrown) {
             console.error('Failed to load GeoJSON:', textStatus, errorThrown);

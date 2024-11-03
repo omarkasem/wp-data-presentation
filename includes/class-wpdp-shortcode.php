@@ -435,6 +435,9 @@ final class WPDP_Shortcode {
                 $checkbox_name = 'wpdp_'.sanitize_title($key_val[0]);
                 $is_checked = $this->get_session_value($checkbox_name) === $input_val ? 'checked' : '';
 
+                if($this->get_session_value('wpdp_search_location_country') != '' && $this->get_session_value('wpdp_search_location_country') === $key_val[0]){
+                    $is_checked = 'checked';
+                }
 
                 echo '<li class="expandable">';
                 echo '<input type="checkbox" class="wpdp_filter_checkbox wpdp_location" name="' . $checkbox_name . '" value="' . $input_val . '" ' . $is_checked . '>';
@@ -448,6 +451,12 @@ final class WPDP_Shortcode {
                 if($input_type === 'radio'){
                     $checkbox_name = 'wpdp_country';
                 }
+
+                if($this->get_session_value('wpdp_search_location_country') != '' && $this->get_session_value('wpdp_search_location_country') === $value){
+                    $is_checked = 'checked';
+                }
+
+
                 echo '<li>';
                 echo '<input id="'.$value.'" type="'.$input_type.'" class="wpdp_filter_checkbox wpdp_location" name="' . $checkbox_name . '" value="' . $value . '" ' . $is_checked . '>';
                 echo '<label class="'.$input_type.'1" for="'.$value.'">'.$value.'</label>';

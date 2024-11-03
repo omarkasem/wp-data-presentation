@@ -434,11 +434,6 @@
 
 
 .wpdp .view_countries{
-  background-color: #2A285F;
-  color: #fff;
-  padding: 10px;
-  text-align: center;
-  display: inline-block;
   margin-bottom: 15px;
 }
 #map-info-panel {
@@ -461,6 +456,21 @@
 #map-info-panel .country-info span {
   color: #666;
 }
+
+.wpdp_search_location.wpdp_maps_only {
+  width: 100%;
+}
+
+
+a.select_unselect_all {
+  text-align: right;
+  display: block;
+  width: 100%;
+  font-size: 12px;
+  padding: 10px 0px;
+}
+
+
 @media only screen and (max-width: 1200px) {
 	.wpdp .con{
     display:none;
