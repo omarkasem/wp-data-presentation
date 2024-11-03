@@ -240,6 +240,8 @@ final class WPDP_Tables {
 
             $union_queries[] = $wpdb->prepare($query, $queryArgs);
         }
+
+        
         if (empty($union_queries)) {
             return ['data' => [], 'count' => 0];
         }

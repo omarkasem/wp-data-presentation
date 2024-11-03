@@ -154,7 +154,7 @@ final class WPDP_Maps {
             FROM {$table_name} {$whereSQL}
             GROUP BY country";
 
-            $union_queries[] = $query;
+            $union_queries[] = $wpdb->prepare($query, $queryArgs);
 
         }
         $union_query = implode(' UNION ALL ', $union_queries);
@@ -168,10 +168,10 @@ final class WPDP_Maps {
         GROUP BY country
         ORDER BY events_count DESC";
 
-        $transient_key = md5($final_query . serialize($queryArgs));
+        $transient_key = md5($final_query);
         $data = get_transient('wpdp_cache_'.$transient_key);
         if(empty($data) || WP_DATA_PRESENTATION_DISABLE_CACHE){
-            $data = $wpdb->get_results($wpdb->prepare($final_query, $queryArgs), ARRAY_A);
+            $data = $wpdb->get_results($final_query, ARRAY_A);
             set_transient('wpdp_cache_'.$transient_key, $data);
         }
 
