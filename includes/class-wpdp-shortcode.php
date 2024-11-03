@@ -450,7 +450,7 @@ final class WPDP_Shortcode {
                 }
                 echo '<li>';
                 echo '<input id="'.$value.'" type="'.$input_type.'" class="wpdp_filter_checkbox wpdp_location" name="' . $checkbox_name . '" value="' . $value . '" ' . $is_checked . '>';
-                echo '<label for="'.$value.'">'.$value.'</label>';
+                echo '<label class="'.$input_type.'1" for="'.$value.'">'.$value.'</label>';
             }
     
             echo '</li>';
@@ -744,7 +744,7 @@ final class WPDP_Shortcode {
                         <div class="content">
                             <?php if($atts['type'] === 'map'){ ?>
                                 <input type="hidden" name="wpdp_search_location_country" value="<?php echo $this->search_location_country; ?>">
-                                <a class="view_countries wpdp_maps_only" href="#">View Countries</a>
+                                <a class="view_countries wpdp_maps_only" href="#"><span class="dashicons dashicons-arrow-left-alt2"></span> View Countries</a>
                        
                             <?php } ?>
                             

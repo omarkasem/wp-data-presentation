@@ -1142,13 +1142,8 @@
           $('#polygons_map').show();
           $('.wpdp_maps_only').hide();
           self.maps_polygons();
-          var $filterSpan = $('.wpdp .filter span');
-          if (!$filterSpan.hasClass('fa-arrow-left')) {
-            $filterSpan.addClass('fa-arrow-left');
-          }
 
-          console.log(wpdp_shortcode_atts);
-          $('.wpdp .filter').trigger('click');
+          $('.checkboxes_locations').html('Loading Locations...');
           $.ajax({
             url: wpdp_obj.ajax_url,
             type: 'POST',
@@ -1159,14 +1154,11 @@
           });
           
         }else{
-          $('.wpdp_maps_only').show();
+          $('.wpdp_maps_only').show().css('display','inline-block');
           $('#polygons_map').hide();
           $('#wpdp_map').show();
-          var $filterSpan = $('.wpdp .filter span');
-          if (!$filterSpan.hasClass('fa-arrow-left')) {
-            $filterSpan.addClass('fa-arrow-left');
-          }
-          $('.wpdp .filter').trigger('click');
+
+          $('.checkboxes_locations').html('Loading Locations...');
           $.ajax({
             url: wpdp_obj.ajax_url,
             type: 'POST',
@@ -1509,9 +1501,6 @@
           const infoPanel = document.createElement('div');
           infoPanel.id = 'map-info-panel';
           infoPanel.style.cssText = `
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
             background: white;
             padding: 15px;
             border-radius: 4px;
@@ -1519,6 +1508,9 @@
             min-width: 200px;
             z-index: 1;
             display: none;
+            float: right; /* Add this */
+            clear: both;  /* Add this */
+            margin-right: 310px;
           `;
           
           // Add default content
@@ -1532,7 +1524,7 @@
           });
           
           // Add the info panel to the map
-          map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(infoPanel);
+          map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(infoPanel);
 
           // Set default styling for all features
           map.data.setStyle({
@@ -1543,8 +1535,7 @@
             visible: true
           });
 
-          $.getJSON(wpdp_obj.url+'/lib/filtered_countries.geojson', function(geoJson) {
-            console.log('GeoJSON loaded:', geoJson); // Debug log
+          $.getJSON(wpdp_obj.url+'/lib/filtered_countries2.geojson', function(geoJson) {
 
             map.data.addGeoJson(geoJson);
 

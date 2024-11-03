@@ -70,6 +70,8 @@ final class WPDP_Maps {
 
     }
 
+
+
     public function get_country_polygons_data(){
         
         $filters = [
@@ -291,7 +293,7 @@ final class WPDP_Maps {
         $final_query = "
         SELECT DISTINCT t.*
         FROM ({$union_query}) AS t
-        LIMIT 100
+        LIMIT 5000
         ";
 
         $transient_key = md5($final_query . serialize($queryArgs));
