@@ -50,7 +50,23 @@ final class WPDP_Shortcode {
         if (session_status() == PHP_SESSION_NONE && !headers_sent()) {
             session_start();
         }
-        $this->search_location_country = $this->get_session_value('wpdp_search_location_country');
+
+        $selected_country = $this->get_session_value('wpdp_search_location_country');
+        $number = 0;
+        if(empty($selected_country) && !empty(get_option('wpdp_countries'))){
+            foreach(get_option('wpdp_countries') as $country){
+                $country = str_replace(' ','-',strtolower($country));
+                if(isset($_SESSION['wpdp_wpdp_'.$country]) && !empty($_SESSION['wpdp_wpdp_'.$country]) ){
+                    $number++;
+                    $session_country = explode('__', $_SESSION['wpdp_wpdp_'.$country]);
+                    $selected_country = $session_country[0];
+                }
+            }
+        } 
+        if($number > 1){
+            $selected_country = '';
+        }
+        $this->search_location_country = $selected_country;
 
     }
 
@@ -265,6 +281,7 @@ final class WPDP_Shortcode {
         global $wpdb;
         $years             = [];
         $ordered_locations = [];
+        $countries = [];
         foreach ($posts as $id) {
             $table_name   = $wpdb->prefix. 'wpdp_data_' . $id;
             $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
@@ -323,6 +340,7 @@ final class WPDP_Shortcode {
                 $locs = $wpdb->get_results("SELECT DISTINCT country FROM {$table_name} ORDER BY country ASC", ARRAY_A);
                 foreach($locs as $loc){
                     $ordered_locations[$loc['country'].'__country'] = $loc['country'];
+                    $countries[] = $loc['country'];
                 }
             }else{
                 $db_locations = $wpdb->get_results("SELECT DISTINCT country,admin1,admin2,admin3,location FROM {$table_name}", ARRAY_A);
@@ -364,6 +382,10 @@ final class WPDP_Shortcode {
             }
         }
 
+        if(!empty($countries)){
+            $countries = array_unique($countries);
+            update_option('wpdp_countries', $countries);
+        }
 
         usort($years, function ($a, $b) {
             return strtotime($a) - strtotime($b);
@@ -796,21 +818,21 @@ final class WPDP_Shortcode {
                             <div class="dates">
                                 <label for="wpdp_from">FROM</label>
                                 <input value="<?php 
-                                    // if ('map' === $atts['type'] && empty($this->get_session_value('wpdp_from'))) {
-                                        // echo date('d F Y', strtotime('-30 days'));
-                                    // } else {
+                                    if ('map' === $atts['type'] && empty($this->get_session_value('wpdp_from'))) {
+                                        echo date('d F Y', strtotime('-30 days'));
+                                    } else {
                                         echo $this->get_session_value('wpdp_from', $this->get_from_date_value($filters, $atts));
-                                    // }
+                                    }
                                 ?>" type="text" name="wpdp_from" id="wpdp_from">
                             </div>
                             <div class="dates">
                                 <label style="margin-right: 23px;" for="wpdp_to">TO</label>
                                 <input value="<?php 
-                                    // if ('map' === $atts['type'] && empty($this->get_session_value('wpdp_to'))) {
-                                        // echo date('d F Y');
-                                    // } else {
+                                    if ('map' === $atts['type'] && empty($this->get_session_value('wpdp_to'))) {
+                                        echo date('d F Y');
+                                    } else {
                                         echo $this->get_session_value('wpdp_to', $this->get_to_date_value($filters, $atts));
-                                    // }
+                                    }
                                 ?>" type="text" name="wpdp_to" id="wpdp_to">
                             </div>
                             <?php if ('graph' === $atts['type'] || '' == $atts['type']) {?>

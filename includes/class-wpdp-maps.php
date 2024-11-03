@@ -131,7 +131,6 @@ final class WPDP_Maps {
         // $filters = $this->format_dates_to_one_year($filters);
         global $wpdb;
         $data = [];
-        $queryArgs = [];
         $union_queries = [];
 
         foreach($posts as $id){
@@ -145,7 +144,7 @@ final class WPDP_Maps {
             $date_format = WPDP_Shortcode::get_date_format($date_sample);
             $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'inter2'");
             $actor_column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'actor2'");
-            list($whereSQL, $queryArgs) = $this->build_where_clause($filters, $queryArgs, $date_format, $column_exists, $actor_column_exists,true);
+            list($whereSQL, $queryArgs) = $this->build_where_clause($filters, $date_format, $column_exists, $actor_column_exists,true);
 
             $query = "SELECT 
             SUM(fatalities) as fatalities_count,
@@ -242,10 +241,10 @@ final class WPDP_Maps {
         // $filters = $this->format_dates_to_one_year($filters);
         global $wpdb;
         $data = [];
-        $queryArgs = [];
         $union_queries = [];
 
         foreach($posts as $id){
+
             $table_name = $wpdb->prefix. 'wpdp_data_'.$id;
             $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
             if(!$table_exists){
@@ -256,7 +255,7 @@ final class WPDP_Maps {
             $date_format = WPDP_Shortcode::get_date_format($date_sample);
             $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'inter2'");
             $actor_column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'actor2'");
-            list($whereSQL, $queryArgs) = $this->build_where_clause($filters, $queryArgs, $date_format, $column_exists, $actor_column_exists);
+            list($whereSQL, $queryArgs) = $this->build_where_clause($filters, $date_format, $column_exists, $actor_column_exists);
 
             if($actor_column_exists){
                 $types[] = 'actor2';
@@ -285,7 +284,7 @@ final class WPDP_Maps {
             ".implode(', ', $types)." 
              FROM {$table_name} {$whereSQL}";
 
-            $union_queries[] = $query;
+            $union_queries[] = $wpdb->prepare($query, $queryArgs);
 
         }
         $union_query = implode(' UNION ALL ', $union_queries);
@@ -296,10 +295,10 @@ final class WPDP_Maps {
         LIMIT 5000
         ";
 
-        $transient_key = md5($final_query . serialize($queryArgs));
+        $transient_key = md5($final_query);
         $data = get_transient('wpdp_cache_'.$transient_key);
         if(empty($data) || WP_DATA_PRESENTATION_DISABLE_CACHE){
-            $data = $wpdb->get_results($wpdb->prepare($final_query, $queryArgs), ARRAY_A);
+            $data = $wpdb->get_results($final_query, ARRAY_A);
             set_transient('wpdp_cache_'.$transient_key, $data);
         }
 
@@ -308,8 +307,9 @@ final class WPDP_Maps {
 
     }
 
-    private function build_where_clause($filters, &$queryArgs, $date_format, $column_exists, $actor_column_exists, $polygons = false) {
+    private function build_where_clause($filters, $date_format, $column_exists, $actor_column_exists, $polygons = false) {
         $whereSQL = ' WHERE 1=1 ';
+        $queryArgs = [];
 
         if(!empty($filters['locations']) && !$polygons){
             $whereSQL .= ' AND (';
@@ -341,7 +341,7 @@ final class WPDP_Maps {
                 $sub_conditions = [];
                 foreach ($value_parts as $part) {
                     list($val, $col) = explode('__', $part);
-                    $sub_conditions[] = "$col = %s".(in_array($value,$filters['fatalities']) ? ' AND fatalities > 0' : '');
+                    $sub_conditions[] = "$col = %s";
                     $queryArgs[] = $val;
                 }
                 $conditions[] = '(' . implode(' AND ', $sub_conditions) . ')';
@@ -458,8 +458,8 @@ final class WPDP_Maps {
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'google-maps-api');
     ?>
         <div class="wpdp_filter_content maps">
-            <div <?php if(self::get_instance()->get_session_value('wpdp_search_location_country') == '' ){ echo 'style="display:none;"'; } ?> id="wpdp_map"></div>
-            <div <?php if(self::get_instance()->get_session_value('wpdp_search_location_country') != '' ){ echo 'style="display:none;"'; } ?>  id="polygons_map"></div>
+            <div <?php if(WPDP_Shortcode::get_instance()->search_location_country == '' ){ echo 'style="display:none;"'; } ?> id="wpdp_map"></div>
+            <div <?php if(WPDP_Shortcode::get_instance()->search_location_country != '' ){ echo 'style="display:none;"'; } ?>  id="polygons_map"></div>
         </div>
     <?php }
 

@@ -1078,16 +1078,63 @@
         e.stopPropagation();
 
         if($(this).find('span').hasClass('fa-arrow-left')){
+          // Closing filter menu
           $('.wpdp .con').animate({marginLeft:'-270px'},1).hide().removeClass('active');
           $('.wpdp .filter span').attr('class','fas fa-sliders-h');
-          $('.wpdp_filter_content').animate({marginLeft:'0',width:'100%'},200);
+          $('.wpdp_filter_content').animate({marginLeft:'0',width:'100%'},200, function() {
+            // After animation, shift center point left to compensate for closed menu
+            if (self.main_map) {
+              var center = self.main_map.getCenter();
+              if (center) {
+                self.main_map.setCenter(new google.maps.LatLng(
+                  center.lat(),
+                  center.lng() - 8 // Adjust this value to shift more/less left
+                ));
+              }
+            }
+
+
+            if (self.poly_map) {
+              var center = self.poly_map.getCenter();
+              if (center) {
+                self.poly_map.setCenter(new google.maps.LatLng(
+                  center.lat(),
+                  center.lng() - 28 // Adjust this value to shift more/less left
+                ));
+              }
+            }
+
+          });
           $('#map-info-panel').css('right','60px');
-        }else{
+        } else {
+          // Opening filter menu
           $('.wpdp .con').animate({marginLeft:'0'},200).show().addClass('active');
           $(this).find('span').attr('class','fas fa-arrow-left');
           $('#map-info-panel').css('right','290px');
           if ($('.wpdp_filter_content').hasClass('maps')) {
-              $('.wpdp_filter_content').animate({marginLeft:'270px',width:'100%'},200);
+              $('.wpdp_filter_content').animate({marginLeft:'270px',width:'100%'},200, function() {
+                // After animation, shift center point right to compensate for opened menu
+                if (self.main_map) {
+                  var center = self.main_map.getCenter();
+                  if (center) {
+                    self.main_map.setCenter(new google.maps.LatLng(
+                      center.lat(),
+                      center.lng() + 8 // Adjust this value to shift more/less right
+                    ));
+                  }
+                }
+
+                if (self.poly_map) {
+                  var center = self.poly_map.getCenter();
+                  if (center) {
+                    self.poly_map.setCenter(new google.maps.LatLng(
+                      center.lat(),
+                      center.lng() + 28 // Adjust this value to shift more/less right
+                    ));
+                  }
+                }
+
+              });
           } else {
               $('.wpdp_filter_content').animate({marginLeft:'270px',width:'80%'},200);
           }
@@ -1503,21 +1550,24 @@
           $('#wpdp-loader').hide();
           const eventCounts = response.data.data.map(country => country.events_count);
           const sortedCounts = [...eventCounts].sort((a, b) => b - a);
-          const highThreshold = sortedCounts[Math.min(2, sortedCounts.length - 1)];
-          const mediumThreshold = sortedCounts[Math.min(4, sortedCounts.length - 1)];
+          
+          // Calculate thresholds using quartiles instead of fixed positions
+          const highThreshold = sortedCounts[Math.floor(sortedCounts.length * 0.75)]; // 75th percentile
+          const mediumThreshold = sortedCounts[Math.floor(sortedCounts.length * 0.25)]; // 25th percentile
           
           const thresholds = {
-            LARGE: highThreshold,
-            MEDIUM: mediumThreshold
+            LARGE: highThreshold || 0,
+            MEDIUM: mediumThreshold || 0
           };
 
+          console.log(highThreshold,mediumThreshold);
 
           // Add fixed info panel to map
           const infoPanel = document.createElement('div');
           infoPanel.id = 'map-info-panel';
           infoPanel.style.cssText = `
             position: absolute;
-            bottom: 0;
+            bottom: 40px;
             right: 290px;
             background: white;
             padding: 15px;
@@ -1531,7 +1581,7 @@
           // Add default content
           infoPanel.innerHTML = '<p class="default-text">Hover over a country to see details</p>';
           
-          var map = new google.maps.Map(document.getElementById('polygons_map'), {
+          self.poly_map = new google.maps.Map(document.getElementById('polygons_map'), {
             zoom: 5.5,
             styles: self.mapsStyles(),
             mapTypeControl: false,
@@ -1540,7 +1590,7 @@
           document.getElementById('polygons_map').appendChild(infoPanel);
 
           // Set default styling for all features
-          map.data.setStyle({
+          self.poly_map.data.setStyle({
             fillColor: '#FFEB3B',
             fillOpacity: 0.35,
             strokeColor: '#000000',
@@ -1550,10 +1600,10 @@
 
           $.getJSON(wpdp_obj.url+'/lib/filtered_countries2.geojson', function(geoJson) {
 
-            map.data.addGeoJson(geoJson);
+            self.poly_map.data.addGeoJson(geoJson);
 
             // After adding GeoJSON, apply specific styling
-            map.data.setStyle(function(feature) {
+            self.poly_map.data.setStyle(function(feature) {
               const countryName = feature.getProperty('ADMIN');
               const countryData = response.data.data.find(c => c.country === countryName);
               
@@ -1581,15 +1631,15 @@
 
             // Add bounds fitting to ensure polygons are visible
             var bounds = new google.maps.LatLngBounds();
-            map.data.forEach(function(feature) {
+            self.poly_map.data.forEach(function(feature) {
               self.processPoints(feature.getGeometry(), bounds.extend, bounds);
             });
-            map.fitBounds(bounds);
+            self.poly_map.fitBounds(bounds);
 
             // To shift the center after bounds are set, add this:
-            google.maps.event.addListenerOnce(map, 'bounds_changed', function() {
-              var center = map.getCenter();
-              map.setCenter(new google.maps.LatLng(
+            google.maps.event.addListenerOnce(self.poly_map, 'bounds_changed', function() {
+              var center = self.poly_map.getCenter();
+              self.poly_map.setCenter(new google.maps.LatLng(
                 center.lat(),
                 center.lng() + 25  // Adjust this value to shift more/less
               ));
@@ -1600,8 +1650,8 @@
           });
 
           // Replace infoWindow with info panel updates
-          map.data.addListener('mouseover', function(event) {
-            map.data.overrideStyle(event.feature, {
+          self.poly_map.data.addListener('mouseover', function(event) {
+            self.poly_map.data.overrideStyle(event.feature, {
               fillOpacity: 0.7,
               strokeColor: "#FF0000",
               strokeWeight: 2
@@ -1644,12 +1694,12 @@
             }
           });
 
-          map.data.addListener('mouseout', function(event) {
-            map.data.revertStyle();
+          self.poly_map.data.addListener('mouseout', function(event) {
+            self.poly_map.data.revertStyle();
             infoPanel.style.display = 'none';
           });
 
-          map.data.addListener('click', function(event) {
+          self.poly_map.data.addListener('click', function(event) {
             const countryName = event.feature.getProperty('ADMIN');
             $('input[name="wpdp_country"][value="' + countryName + '"]:radio').prop('checked', true);
             $('input[name="wpdp_search_location_country"]').val(countryName).parents('form').submit();
@@ -1680,6 +1730,13 @@
         MEDIUM: '#F0B27A',   // Orange for medium count
         SMALL: '#F9E79F'     // Yellow for low count
       };
+
+      // Add minimum threshold to prevent very low counts from being marked as high
+      const MIN_THRESHOLD = 5; // Adjust this value based on your needs
+
+      if (count < MIN_THRESHOLD) {
+        return COLORS.SMALL;
+      }
 
       if (count >= thresholds.LARGE) {
         return COLORS.LARGE;
