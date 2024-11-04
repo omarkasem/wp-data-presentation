@@ -471,6 +471,13 @@ a.select_unselect_all {
   padding: 10px 0px;
 }
 
+@media only screen and (max-width: 600px) {
+	#wpdp_datatable_wrapper{
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
+
+	}
+}
 
 @media only screen and (max-width: 1200px) {
 	.wpdp .con{

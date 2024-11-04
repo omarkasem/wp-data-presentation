@@ -476,10 +476,16 @@
         totalLat += parseFloat(loc.latitude);
         totalLng += parseFloat(loc.longitude);
       });
-    
+      
+      var lat = (totalLng / count);
+
+      if($('.wpdp .filter').find('span').hasClass('fa-arrow-left')){
+        lat = lat + 12;
+      }
+
       return {
         lat: totalLat / count,
-        lng: (totalLng / count) + 12
+        lng: lat
       };
     },
 
@@ -1680,9 +1686,13 @@
             // To shift the center after bounds are set, add this:
             google.maps.event.addListenerOnce(self.poly_map, 'bounds_changed', function() {
               var center = self.poly_map.getCenter();
+              var lng = center.lng();
+              if($('.wpdp .filter').find('span').hasClass('fa-arrow-left')){
+                lng = lng + 25;
+              }
               self.poly_map.setCenter(new google.maps.LatLng(
                 center.lat(),
-                center.lng() + 25  // Adjust this value to shift more/less
+                lng
               ));
             });
 
