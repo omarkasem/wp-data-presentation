@@ -50,11 +50,10 @@ final class WPDP_Shortcode {
         if (session_status() == PHP_SESSION_NONE && !headers_sent()) {
             session_start();
         }
-
-        $selected_country = $this->get_session_value('search_location_country');
+        $selected_country = $this->get_session_value('wpdp_search_location_country');
         $number = 0;
         if(empty($selected_country) && !empty(get_option('wpdp_countries'))){
-            foreach(get_option('wpdp_countries') as $country){
+            foreach(get_option('wpdp_countries') as $key => $country){
                 $country = str_replace(' ','-',strtolower($country));
                 if(isset($_SESSION['wpdp_session']['wpdp_'.$country]) && !empty($_SESSION['wpdp_session']['wpdp_'.$country]) ){
                     $number++;
@@ -62,10 +61,12 @@ final class WPDP_Shortcode {
                     $selected_country = $session_country[0];
                 }
             }
-        } 
+        }
+    
         if($number > 1){
             $selected_country = '';
         }
+
         $this->search_location_country = $selected_country;
 
     }
@@ -279,110 +280,111 @@ final class WPDP_Shortcode {
 
         $arr_type = ARRAY_A;
         global $wpdb;
-        $years             = [];
+        $years = [];
         $ordered_locations = [];
         $countries = [];
+        
+        // Build combined queries
+        $union_queries = [];
+        $years_queries = [];
+        $table_names = [];
+        
         foreach ($posts as $id) {
-            $table_name   = $wpdb->prefix. 'wpdp_data_' . $id;
-            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
-            if (!$table_exists) {
-                continue;
-            }
-
-            $whereSQL = ' WHERE 1=1 ';
-            if (isset($atts['from']) && '' != $atts['from']) {
-                $whereSQL .= " AND STR_TO_DATE(event_date, '%d %M %Y') >= STR_TO_DATE('{$atts['from']}', '%d %M %Y')";
-            }
-
-            if (isset($atts['to']) && '' != $atts['to']) {
-                $whereSQL .= " AND STR_TO_DATE(event_date, '%d %M %Y') <= STR_TO_DATE('{$atts['to']}', '%d %M %Y')";
-            }
-
-            $db_years = $wpdb->get_col("SELECT DISTINCT event_date FROM {$table_name} {$whereSQL}");
-
-            if (!empty($db_years)) {
-                $years = array_merge($years, $db_years);
-            }
-
-            if(self::get_instance()->search_location_country != '' && (isset($atts['type']) && $atts['type'] === 'map')){
-                $country = sanitize_text_field(self::get_instance()->search_location_country);
-                $db_locations = $wpdb->get_results("SELECT DISTINCT admin1,admin2,admin3,location FROM {$table_name} WHERE country = '{$country}'", ARRAY_A);
+            $table_name = $wpdb->prefix . 'wpdp_data_' . $id;
+            if ($wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name) {
+                $table_names[] = $table_name;
                 
-                foreach ($db_locations as $location) {
-                    $admin1   = $location['admin1'].'__admin1';
-                    $admin2   = $location['admin2'].'__admin2';
-                    $admin3   = $location['admin3'].'__admin3';
-                    $location = $location['location'].'__location';
-
-                    if (!empty($admin1)) {
-                        $locations[$admin1] = $locations[$admin1] ?? [];
-                        $currentLevel       = &$locations[$admin1];
-
-                        if (!empty($admin2) && $admin1 != $admin2) {
-                            $currentLevel[$admin2] = $currentLevel[$admin2] ?? [];
-                            $currentLevel          = &$currentLevel[$admin2];
-                        }
-
-                        if (!empty($admin3) && $admin2 != $admin3) {
-                            $currentLevel[$admin3] = $currentLevel[$admin3] ?? [];
-                            $currentLevel          = &$currentLevel[$admin3];
-                        }
-
-                        if (!empty($location)) {
-                            $currentLevel[] = $location;
-                        }
-                    }
-
-                    $ordered_locations = $locations;
-
-                }
-            }elseif(!self::get_instance()->search_location_country && (isset($atts['type']) && $atts['type'] === 'map')){
-                $locs = $wpdb->get_results("SELECT DISTINCT country FROM {$table_name} ORDER BY country ASC", ARRAY_A);
-                foreach($locs as $loc){
-                    $ordered_locations[$loc['country'].'__country'] = $loc['country'];
-                    $countries[] = $loc['country'];
-                }
-            }else{
-                $db_locations = $wpdb->get_results("SELECT DISTINCT country,admin1,admin2,admin3,location FROM {$table_name}", ARRAY_A);
+                // Add years query
+                $years_queries[] = "SELECT DISTINCT event_date FROM {$table_name}";
                 
-                foreach ($db_locations as $location) {
-                    $country  = $location['country'].'__country';
-                    $admin1   = $location['admin1'].'__admin1';
-                    $admin2   = $location['admin2'].'__admin2';
-                    $admin3   = $location['admin3'].'__admin3';
-                    $location = $location['location'].'__location';
-
-                    if (!empty($country)) {
-                        $locations[$country] = $locations[$country] ?? [];
-                        $currentLevel       = &$locations[$country];
-
-                        if (!empty($admin1) && $country != $admin1) {
-                            $currentLevel[$admin1] = $currentLevel[$admin1] ?? [];
-                            $currentLevel          = &$currentLevel[$admin1];
-                        }
-
-                        if (!empty($admin2) && $admin1 != $admin2) {
-                            $currentLevel[$admin2] = $currentLevel[$admin2] ?? [];
-                            $currentLevel          = &$currentLevel[$admin2];
-                        }
-
-                        if (!empty($admin3) && $admin2 != $admin3) {
-                            $currentLevel[$admin3] = $currentLevel[$admin3] ?? [];
-                            $currentLevel          = &$currentLevel[$admin3];
-                        }
-
-                        if (!empty($location)) {
-                            $currentLevel[] = $location;
-                        }
-                    }
-
-                    $ordered_locations = $locations;
-
+                // Add location queries
+                if (self::get_instance()->search_location_country != '' && (isset($atts['type']) && $atts['type'] === 'map')) {
+                    $country = sanitize_text_field(self::get_instance()->search_location_country);
+                    $union_queries[] = $wpdb->prepare(
+                        "SELECT DISTINCT admin1, admin2, admin3, location, %s as country 
+                        FROM {$table_name} 
+                        WHERE country = %s",
+                        $country,
+                        $country
+                    );
+                } elseif (!self::get_instance()->search_location_country && (isset($atts['type']) && $atts['type'] === 'map')) {
+                    $union_queries[] = "SELECT DISTINCT country, NULL as admin1, NULL as admin2, NULL as admin3, NULL as location 
+                                      FROM {$table_name}";
+                } else {
+                    $union_queries[] = "SELECT DISTINCT country, admin1, admin2, admin3, location 
+                                      FROM {$table_name}";
                 }
             }
         }
 
-        if(!empty($countries)){
+        if (empty($union_queries)) {
+            return ['types' => $inc_type, 'years' => $years, 'locations' => []];
+        }
+
+        // Execute years query
+        if (!empty($years_queries)) {
+            $years_query = implode(' UNION ', $years_queries);
+            $dates = $wpdb->get_col($years_query);
+            if (!empty($dates)) {
+                $years = array_unique($dates);
+            }
+        }
+
+        // Execute locations query
+        $query = implode(' UNION ', $union_queries) . ' ORDER BY country, admin1, admin2, admin3, location';
+        $db_locations = $wpdb->get_results($query, ARRAY_A);
+
+        // Process results
+        if (self::get_instance()->search_location_country != '' && (isset($atts['type']) && $atts['type'] === 'map')) {
+            // Process filtered country results
+            foreach ($db_locations as $location) {
+                $key_parts = [];
+                foreach (['admin1', 'admin2', 'admin3', 'location'] as $level) {
+                    if (!empty($location[$level])) {
+                        $key = $location[$level] . '__' . $level;
+                        $key_parts[] = $key;
+                        
+                        $current = &$ordered_locations;
+                        foreach ($key_parts as $part) {
+                            if (!isset($current[$part])) {
+                                $current[$part] = [];
+                            }
+                            $current = &$current[$part];
+                        }
+                        unset($current);
+                    }
+                }
+            }
+        } elseif (!self::get_instance()->search_location_country && (isset($atts['type']) && $atts['type'] === 'map')) {
+            // Process countries only
+            foreach ($db_locations as $loc) {
+                $country_key = $loc['country'] . '__country';
+                $ordered_locations[$country_key] = [];
+                $countries[] = $loc['country'];
+            }
+        } else {
+            // Process full hierarchy
+            foreach ($db_locations as $location) {
+                $key_parts = [];
+                foreach (['country', 'admin1', 'admin2', 'admin3', 'location'] as $level) {
+                    if (!empty($location[$level])) {
+                        $key = $location[$level] . '__' . ($level === 'country' ? 'country' : $level);
+                        $key_parts[] = $key;
+                        
+                        $current = &$ordered_locations;
+                        foreach ($key_parts as $part) {
+                            if (!isset($current[$part])) {
+                                $current[$part] = [];
+                            }
+                            $current = &$current[$part];
+                        }
+                        unset($current);
+                    }
+                }
+            }
+        }
+
+        if (!empty($countries)) {
             $countries = array_unique($countries);
             update_option('wpdp_countries', $countries);
         }
@@ -401,24 +403,22 @@ final class WPDP_Shortcode {
                     }
                     $incident_type = $value3['type'].'_type';
 
-
                     if(!empty($value3[$incident_type])){
                         $inc_type[$value3['text']] = $value3[$incident_type];
                     }
                 }
             }
         }
+
         if(!empty($ordered_locations)){
             $ordered_locations = self::sort_locations_array($ordered_locations);
         }
 
-        $filters = array(
+        return array(
             'types'     => $inc_type,
             'years'     => $years,
             'locations' => $ordered_locations,
         );
-
-        return $filters;
     }
 
 
@@ -437,53 +437,56 @@ final class WPDP_Shortcode {
     }
 
     function printArrayAsList($locations, $level = 0, $parent_key = false) {
-        $input_type = 'checkbox';
-        if(!self::get_instance()->search_location_country){
-            $input_type = 'radio';
-        }
+        $input_type = !self::get_instance()->search_location_country ? 'radio' : 'checkbox';
+
         echo '<ul>';
         foreach ($locations as $key => $value) {
-   
-            if(empty($value)){
-                continue;
+
+            $key_parts = explode('__', $key);
+            $location_name = $key_parts[0];
+            $input_val = $parent_key !== false ? $parent_key . ' + ' . $key : $key;
+            $checkbox_name = 'wpdp_' . sanitize_title($location_name);
+            
+            $is_checked = '';
+            if (self::get_instance()->search_location_country !== '' && 
+                self::get_instance()->search_location_country === $key_parts[0]) {
+                $is_checked = 'checked';
+            } elseif ($this->get_session_value($checkbox_name) === $input_val) {
+                $is_checked = 'checked';
             }
-    
-            if (is_array($value)) {
-                $key_val = explode('__', $key);
-                $input_val = $key;
-                if ($parent_key !== false) {
-                    $input_val = $parent_key . ' + ' . $key;
-                }
-                $checkbox_name = 'wpdp_'.sanitize_title($key_val[0]);
-                $is_checked = $this->get_session_value($checkbox_name) === $input_val ? 'checked' : '';
 
-                if($this->get_session_value('search_location_country') != '' && $this->get_session_value('search_location_country') === $key_val[0]){
-                    $is_checked = 'checked';
-                }
-
-                echo '<li class="expandable">';
-                echo '<input type="checkbox" class="wpdp_filter_checkbox wpdp_location" name="' . $checkbox_name . '" value="' . $input_val . '" ' . $is_checked . '>';
-                echo '<div class="exp_click"><span for="' . $key . '">' . $key_val[0] . '</span>';
+            echo '<li' . (is_array($value) ? ' class="expandable"' : '') . '>';
+            
+            if (is_array($value) && !empty($value)) {
+                echo sprintf(
+                    '<input type="checkbox" class="wpdp_filter_checkbox wpdp_location" name="%s" value="%s" %s>',
+                    $checkbox_name,
+                    $input_val,
+                    $is_checked
+                );
+                echo '<div class="exp_click"><span>' . $location_name . '</span>';
                 echo '<span class="dashicons dashicons-arrow-up-alt2 arrow"></span></div>';
                 $this->printArrayAsList($value, $level + 1, $input_val);
             } else {
-
-                $checkbox_name = 'wpdp_'.sanitize_title($value);
-                $is_checked = $this->get_session_value($checkbox_name) === $value ? 'checked' : '';
-                if($input_type === 'radio'){
+                if ($input_type === 'radio') {
                     $checkbox_name = 'wpdp_country';
                 }
-
-                if($this->get_session_value('search_location_country') != '' && $this->get_session_value('search_location_country') === $value){
-                    $is_checked = 'checked';
-                }
-
-
-                echo '<li>';
-                echo '<input id="'.$value.'" type="'.$input_type.'" class="wpdp_filter_checkbox wpdp_location" name="' . $checkbox_name . '" value="' . $value . '" ' . $is_checked . '>';
-                echo '<label class="'.$input_type.'1" for="'.$value.'">'.$value.'</label>';
+                echo sprintf(
+                    '<input id="%s" type="%s" class="wpdp_filter_checkbox wpdp_location" name="%s" value="%s" %s>',
+                    $key,
+                    $input_type,
+                    $checkbox_name,
+                    $key,
+                    $is_checked
+                );
+                echo sprintf(
+                    '<label class="%s1" for="%s">%s</label>',
+                    $input_type,
+                    $key,
+                    $location_name
+                );
             }
-    
+            
             echo '</li>';
         }
         echo '</ul>';
@@ -497,9 +500,6 @@ final class WPDP_Shortcode {
             'to'   => '',
         ), $atts);
 
-        if($atts['type'] !== 'map'){
-            $this->search_location_country = '';
-        }
 
         $this->shortcode_atts = $atts;
 
@@ -796,7 +796,8 @@ final class WPDP_Shortcode {
                                 <?php echo $this->get_select_unselect_all_html(); ?>
                             </div>
                             <div class="checkboxes_locations">
-                                <?php $this->printArrayAsList($filters['locations']);?>
+
+                                <?php  $this->printArrayAsList($filters['locations']);?>
                             </div>
                         </div>
                     </div>
@@ -976,6 +977,9 @@ final class WPDP_Shortcode {
 
         if(!empty($_SESSION['wpdp_session'])){
             foreach($_SESSION['wpdp_session'] as $key => $value){
+                if($key === 'wpdp_from' || $key === 'wpdp_to'){
+                    continue;
+                }
                 unset($_SESSION['wpdp_session'][$key]);
             }
         }

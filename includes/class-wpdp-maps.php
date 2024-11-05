@@ -147,11 +147,10 @@ final class WPDP_Maps {
             list($whereSQL, $queryArgs) = $this->build_where_clause($filters, $date_format, $column_exists, $actor_column_exists,true);
 
             $query = "SELECT 
-            SUM(fatalities) as fatalities_count,
-            COUNT(*) as events_count,
-            country 
-            FROM {$table_name} {$whereSQL}
-            GROUP BY country";
+                event_id_cnty,
+                fatalities as fatalities_count,
+                country 
+                FROM {$table_name} {$whereSQL}";
 
             $union_queries[] = $wpdb->prepare($query, $queryArgs);
 
@@ -162,8 +161,14 @@ final class WPDP_Maps {
         SELECT 
             country,
             SUM(fatalities_count) as fatalities_count,
-            SUM(events_count) as events_count
-        FROM ({$union_query}) AS t
+            COUNT(*) as events_count
+        FROM (
+            SELECT 
+                country,
+                fatalities_count
+            FROM ({$union_query}) AS raw
+            GROUP BY event_id_cnty, country
+        ) AS t
         GROUP BY country
         ORDER BY events_count DESC";
 
@@ -289,9 +294,11 @@ final class WPDP_Maps {
         }
         $union_query = implode(' UNION ALL ', $union_queries);
 
+
         $final_query = "
-        SELECT DISTINCT t.*
+        SELECT t.*
         FROM ({$union_query}) AS t
+        GROUP BY event_id_cnty
         LIMIT 5000
         ";
 
@@ -307,18 +314,6 @@ final class WPDP_Maps {
 
     }
 
-// Helper function to parse filter values
-function parseFilterValues($filterArray) {
-    $values_by_column = [];
-    foreach ($filterArray as $value) {
-        $value_parts = explode('+', $value);
-        foreach ($value_parts as $part) {
-            list($val, $col) = explode('__', $part);
-            $values_by_column[$col][] = $val;
-        }
-    }
-    return $values_by_column;
-}
 
 
     private function build_where_clause($filters, $date_format, $column_exists, $actor_column_exists, $polygons = false) {
@@ -448,6 +443,7 @@ function parseFilterValues($filterArray) {
             $whereSQL .= " AND STR_TO_DATE(event_date, '{$mysql_date_format}') <= STR_TO_DATE(%s, '{$mysql_date_format}')";
             $queryArgs[] = date($date_format['php'], strtotime($filters['to']));
         }
+        
         return array(
             $whereSQL,
             $queryArgs
@@ -500,7 +496,7 @@ function parseFilterValues($filterArray) {
     }
 
     public function get_session_value($key, $default = '') {
-        return isset($_SESSION['wpdp_'.$key]) ? $_SESSION['wpdp_'.$key] : $default;
+        return isset($_SESSION['wpdp_session'][$key]) ? $_SESSION['wpdp_session'][$key] : $default;
     }
 
 

@@ -242,27 +242,30 @@ final class WPDP_Tables {
         }
 
         
-        // if (empty($union_queries)) {
+        if (empty($union_queries)) {
             return ['data' => [], 'count' => 0];
-        // }
+        }
 
-        $union_query = implode(' UNION ', $union_queries);
-
+        // Wrap the UNION query in a derived table and apply GROUP BY once
+        $base_query = "SELECT DISTINCT t.* FROM (" . implode(' UNION ALL ', $union_queries) . ") AS t";
+        
+        // Use a single derived table for both count and data
+        $derived_table = "({$base_query}) AS filtered";
+        
+        // Count query using the derived table
+        $count_query = "SELECT COUNT(*) FROM {$derived_table} GROUP BY event_id_cnty";
+        
+        // Final data query using the same derived table
         $order_by = $columnName === 'event_date' ? 'date_column_standard' : $columnName;
-
         $final_query = "
-        SELECT t.*
-        FROM ({$union_query}) AS t
-        GROUP BY t.event_id_cnty
-        ORDER BY {$order_by} {$orderDir}
-        LIMIT {$start}, {$length}
+            SELECT *
+            FROM {$derived_table}
+            GROUP BY event_id_cnty
+            ORDER BY {$order_by} {$orderDir}
+            LIMIT {$start}, {$length}
         ";
 
-        $count_query = "
-        SELECT COUNT(DISTINCT event_id_cnty)
-        FROM ({$union_query}) AS t
-        ";
-
+        // Cache handling
         $transient_key = md5($final_query); 
         $data = get_transient('wpdp_cache_'.$transient_key);
         if(empty($data) || WP_DATA_PRESENTATION_DISABLE_CACHE){
@@ -273,7 +276,7 @@ final class WPDP_Tables {
         $transient_key = md5($count_query); 
         $count = get_transient('wpdp_cache_'.$transient_key);
         if(empty($count) || WP_DATA_PRESENTATION_DISABLE_CACHE){
-            $count = $wpdb->get_var($count_query);
+            $count = $wpdb->get_var("SELECT COUNT(*) FROM ({$count_query}) AS cnt");
             set_transient('wpdp_cache_'.$transient_key, $count);
         }
 

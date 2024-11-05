@@ -1590,6 +1590,7 @@
     }
 
     self.maps_polygons = function() {
+
       $('#wpdp-loader').css('display','flex');
       var selectedCountries = $('input[name="wpdp_country"]:radio').map(function() {
         return this.value;
