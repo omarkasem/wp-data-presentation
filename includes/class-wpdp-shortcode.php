@@ -51,14 +51,14 @@ final class WPDP_Shortcode {
             session_start();
         }
 
-        $selected_country = $this->get_session_value('wpdp_search_location_country');
+        $selected_country = $this->get_session_value('search_location_country');
         $number = 0;
         if(empty($selected_country) && !empty(get_option('wpdp_countries'))){
             foreach(get_option('wpdp_countries') as $country){
                 $country = str_replace(' ','-',strtolower($country));
-                if(isset($_SESSION['wpdp_wpdp_'.$country]) && !empty($_SESSION['wpdp_wpdp_'.$country]) ){
+                if(isset($_SESSION['wpdp_session']['wpdp_'.$country]) && !empty($_SESSION['wpdp_session']['wpdp_'.$country]) ){
                     $number++;
-                    $session_country = explode('__', $_SESSION['wpdp_wpdp_'.$country]);
+                    $session_country = explode('__', $_SESSION['wpdp_session']['wpdp_'.$country]);
                     $selected_country = $session_country[0];
                 }
             }
@@ -457,7 +457,7 @@ final class WPDP_Shortcode {
                 $checkbox_name = 'wpdp_'.sanitize_title($key_val[0]);
                 $is_checked = $this->get_session_value($checkbox_name) === $input_val ? 'checked' : '';
 
-                if($this->get_session_value('wpdp_search_location_country') != '' && $this->get_session_value('wpdp_search_location_country') === $key_val[0]){
+                if($this->get_session_value('search_location_country') != '' && $this->get_session_value('search_location_country') === $key_val[0]){
                     $is_checked = 'checked';
                 }
 
@@ -474,7 +474,7 @@ final class WPDP_Shortcode {
                     $checkbox_name = 'wpdp_country';
                 }
 
-                if($this->get_session_value('wpdp_search_location_country') != '' && $this->get_session_value('wpdp_search_location_country') === $value){
+                if($this->get_session_value('search_location_country') != '' && $this->get_session_value('search_location_country') === $value){
                     $is_checked = 'checked';
                 }
 
@@ -556,11 +556,7 @@ final class WPDP_Shortcode {
         if (isset($this->shortcode_atts['from']) && '' != $this->shortcode_atts['from']) {
             return $this->shortcode_atts['from'];
         } else {
-            // if ('map' === $atts['type']) {
-                return date('d F Y', strtotime(end($filters['years']) . ' -1 year'));
-            // } else {
-            //     echo date('d F Y', strtotime($filters['years'][0]));
-            // }
+            return date('d F Y');
         }
     }
 
@@ -568,11 +564,7 @@ final class WPDP_Shortcode {
         if (isset($this->shortcode_atts['from']) && '' != $this->shortcode_atts['from']) {
             return $this->shortcode_atts['from'];
         } else {
-            // if ('map' === $atts['type']) {
-            //     echo date('d F Y');
-            // } else {
-                return date('d F Y', strtotime(end($filters['years'])));
-            // }
+            return date('d F Y');
         }
     }
 
@@ -716,7 +708,7 @@ final class WPDP_Shortcode {
                             <div>
                                 <select name="wpdp_search_actors" id="wpdp_search_actors" multiple="multiple">
                                 <?php
-                                $selected_actors = $this->get_session_value('wpdp_search_actors', []);
+                                $selected_actors = $this->get_session_value('search_actors', []);
 
                                 if (!empty($selected_actors)) {
                                     foreach ($selected_actors as $actor) {
@@ -782,7 +774,7 @@ final class WPDP_Shortcode {
                             <div class="wpdp_search_location wpdp_maps_only">
                                 <select name="wpdp_search_location" id="wpdp_search_location" multiple="multiple">
                                 <?php
-                                $selected_locations = $this->get_session_value('wpdp_search_location', []);
+                                $selected_locations = $this->get_session_value('search_location', []);
 
                                 if (!empty($selected_locations)) {
                                     foreach ($selected_locations as $location) {
@@ -840,10 +832,10 @@ final class WPDP_Shortcode {
                                 <label for="wpdp_date_timeframe">Timeframe</label>
                                 <select name="wpdp_date_timeframe" id="wpdp_date_timeframe">
                                     <option value="">Graph Timeframe</option>
-                                    <option value="yearly" <?php selected($this->get_session_value('wpdp_date_timeframe'), 'yearly'); ?>>Yearly</option>
-                                    <option value="monthly" <?php selected($this->get_session_value('wpdp_date_timeframe'), 'monthly'); ?>>Monthly</option>
-                                    <option value="weekly" <?php selected($this->get_session_value('wpdp_date_timeframe'), 'weekly'); ?>>Weekly</option>
-                                    <option value="daily" <?php selected($this->get_session_value('wpdp_date_timeframe'), 'daily'); ?>>Daily</option>
+                                    <option value="yearly" <?php selected($this->get_session_value('date_timeframe'), 'yearly'); ?>>Yearly</option>
+                                    <option value="monthly" <?php selected($this->get_session_value('date_timeframe'), 'monthly'); ?>>Monthly</option>
+                                    <option value="weekly" <?php selected($this->get_session_value('date_timeframe'), 'weekly'); ?>>Weekly</option>
+                                    <option value="daily" <?php selected($this->get_session_value('date_timeframe'), 'daily'); ?>>Daily</option>
                                 </select>
                             </div>
                             <?php } ?>
@@ -974,7 +966,7 @@ final class WPDP_Shortcode {
     }
 
     public function get_session_value($key, $default = '') {
-        return isset($_SESSION['wpdp_'.$key]) ? $_SESSION['wpdp_'.$key] : $default;
+        return isset($_SESSION['wpdp_session'][$key]) ? $_SESSION['wpdp_session'][$key] : $default;
     }
 
     public function save_filter_choices() {
@@ -982,16 +974,16 @@ final class WPDP_Shortcode {
             wp_send_json_error('No filter data received');
         }
 
-        foreach ($_SESSION as $key => $value) {
-            if (strpos($key, 'wpdp_') === 0) {
-                unset($_SESSION[$key]);
+        if(!empty($_SESSION['wpdp_session'])){
+            foreach($_SESSION['wpdp_session'] as $key => $value){
+                unset($_SESSION['wpdp_session'][$key]);
             }
         }
 
         $filter_data = $_POST['filter_data'];
 
         foreach ($filter_data as $key => $value) {
-            $_SESSION['wpdp_'.$key] = $value;
+            $_SESSION['wpdp_session'][$key] = $value;
         }
 
         wp_send_json_success('Filter choices saved');

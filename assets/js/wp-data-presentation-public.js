@@ -232,6 +232,22 @@
         // Prevent the default reset behavior
         e.preventDefault();
         
+        // Set default dates based on map existence
+        var maxDate = new Date();
+        var defaultFromDate = new Date();
+        if (typeof google === 'object' && typeof google.maps === 'object') {
+          // If maps exist, set from date to 1 month ago
+          defaultFromDate.setMonth(defaultFromDate.getMonth() - 1);
+        } else {
+          // If no maps, set from date to 1 year ago
+          defaultFromDate.setFullYear(defaultFromDate.getFullYear() - 1);
+        }
+
+        // Set the datepicker values
+        $('#wpdp_from').datepicker('setDate', defaultFromDate);
+        $('#wpdp_to').datepicker('setDate', maxDate);
+
+
         // Clear checkboxes and their indeterminate state
         $(this).find('input[type="checkbox"]')
           .prop('checked', false)
@@ -429,7 +445,7 @@
     self.maps = function(){
 
       var selectedCountry = $('input[name="wpdp_search_location_country"]').length ? $('input[name="wpdp_search_location_country"]').val() : '';
-
+      console.log(selectedIncidents);
       $('#wpdp-loader').css('display','flex');
       self.setDefaultFilters();
       $.ajax({

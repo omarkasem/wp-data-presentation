@@ -86,7 +86,7 @@ final class WPDP_Maps {
         ];
 
         $merged_types = array_unique(array_merge($filters['disorder_type'],$filters['fatalities']));
-        $filters['disorder_type'] = $merged_types;
+        $filters['merged_types'] = $merged_types;
 
         $types = [
             'event_date',
@@ -307,6 +307,20 @@ final class WPDP_Maps {
 
     }
 
+// Helper function to parse filter values
+function parseFilterValues($filterArray) {
+    $values_by_column = [];
+    foreach ($filterArray as $value) {
+        $value_parts = explode('+', $value);
+        foreach ($value_parts as $part) {
+            list($val, $col) = explode('__', $part);
+            $values_by_column[$col][] = $val;
+        }
+    }
+    return $values_by_column;
+}
+
+
     private function build_where_clause($filters, $date_format, $column_exists, $actor_column_exists, $polygons = false) {
         $whereSQL = ' WHERE 1=1 ';
         $queryArgs = [];
@@ -333,20 +347,57 @@ final class WPDP_Maps {
             $queryArgs[] = sanitize_text_field($filters['selected_country']);
         }
 
-
         if(!empty($filters['disorder_type'])){
-            $conditions = [];
+            $values_by_column = [];
             foreach ($filters['disorder_type'] as $value) {
                 $value_parts = explode('+', $value);
-                $sub_conditions = [];
                 foreach ($value_parts as $part) {
                     list($val, $col) = explode('__', $part);
-                    $sub_conditions[] = "$col = %s";
-                    $queryArgs[] = $val;
+                    $values_by_column[$col][] = $val;
                 }
-                $conditions[] = '(' . implode(' AND ', $sub_conditions) . ')';
             }
-            $whereSQL .= " AND (" . implode(' OR ', $conditions) . ")";
+            
+            $conditions = [];
+            foreach ($values_by_column as $column => $values) {
+                $placeholders = array_fill(0, count($values), '%s');
+                $conditions[] = "$column IN (" . implode(',', $placeholders) . ")";
+                $queryArgs = array_merge($queryArgs, $values);
+            }
+            $whereSQL .= " AND ((" . implode(' OR ', $conditions);
+            if(empty($filters['fatalities'])){
+                $whereSQL .=  "))";
+            }else{
+                $whereSQL .=  ")";
+            }
+        }
+
+        if(!empty($filters['fatalities'])){
+            $values_by_column = [];
+            foreach ($filters['fatalities'] as $value) {
+                $value_parts = explode('+', $value);
+                foreach ($value_parts as $part) {
+                    list($val, $col) = explode('__', $part);
+                    $values_by_column[$col][] = $val;
+                }
+            }
+            
+            $conditions = [];
+            foreach ($values_by_column as $column => $values) {
+                $placeholders = array_fill(0, count($values), '%s');
+                $conditions[] = "$column IN (" . implode(',', $placeholders) . ")";
+                $queryArgs = array_merge($queryArgs, $values);
+            }
+
+            if(empty($filters['disorder_type'])){
+                $whereSQL .= " AND ( fatalities > 0  AND (";
+            }else{
+                $whereSQL .= " OR ( fatalities > 0  AND (";
+            }
+
+            $whereSQL .= implode(' OR ', $conditions) . "))";
+            if(!empty($filters['disorder_type'])){
+                $whereSQL .= ")";
+            }
         }
 
 
@@ -418,7 +469,7 @@ final class WPDP_Maps {
         ];
 
         $merged_types = array_unique(array_merge($filters['disorder_type'],$filters['fatalities']));
-        $filters['disorder_type'] = $merged_types;
+        $filters['merged_types'] = $merged_types;
 
         $types = [
             'event_date',
