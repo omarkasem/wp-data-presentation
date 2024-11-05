@@ -61,6 +61,11 @@ final class WPDP_Shortcode {
                     $selected_country = $session_country[0];
                 }
             }
+        }else{
+            if(!empty($selected_country)){
+                $selected_country = explode('__', $selected_country);
+                $selected_country = $selected_country[0];
+            }
         }
     
         if($number > 1){
@@ -94,6 +99,9 @@ final class WPDP_Shortcode {
 
         add_action('wp_ajax_get_locations_html', array($this, 'get_locations_html'));
         add_action('wp_ajax_nopriv_get_locations_html', array($this, 'get_locations_html'));
+
+        add_action('wp_ajax_get_location_level', array($this, 'get_location_level'));
+        add_action('wp_ajax_nopriv_get_location_level', array($this, 'get_location_level'));
 
         if(isset($_GET['test3'])){
             session_start();
@@ -363,23 +371,11 @@ final class WPDP_Shortcode {
                 $countries[] = $loc['country'];
             }
         } else {
-            // Process full hierarchy
+            // Only process top level (countries or admin1 depending on context)
             foreach ($db_locations as $location) {
-                $key_parts = [];
-                foreach (['country', 'admin1', 'admin2', 'admin3', 'location'] as $level) {
-                    if (!empty($location[$level])) {
-                        $key = $location[$level] . '__' . ($level === 'country' ? 'country' : $level);
-                        $key_parts[] = $key;
-                        
-                        $current = &$ordered_locations;
-                        foreach ($key_parts as $part) {
-                            if (!isset($current[$part])) {
-                                $current[$part] = [];
-                            }
-                            $current = &$current[$part];
-                        }
-                        unset($current);
-                    }
+                if (!empty($location['country'])) {
+                    $key = $location['country'] . '__country';
+                    $ordered_locations[$key] = [];
                 }
             }
         }
@@ -437,13 +433,18 @@ final class WPDP_Shortcode {
     }
 
     function printArrayAsList($locations, $level = 0, $parent_key = false) {
-        $input_type = !self::get_instance()->search_location_country ? 'radio' : 'checkbox';
+        $atts = self::get_instance()->shortcode_atts;
+        if(empty($atts) && isset($_POST['atts'])){
+            $atts = json_decode(stripslashes($_POST['atts']), true);
+        }
+
+        $input_type = (!self::get_instance()->search_location_country &&  $atts['type'] === 'map') ? 'radio' : 'checkbox';
 
         echo '<ul>';
         foreach ($locations as $key => $value) {
-
             $key_parts = explode('__', $key);
             $location_name = $key_parts[0];
+            $location_type = $key_parts[1];
             $input_val = $parent_key !== false ? $parent_key . ' + ' . $key : $key;
             $checkbox_name = 'wpdp_' . sanitize_title($location_name);
             
@@ -455,30 +456,50 @@ final class WPDP_Shortcode {
                 $is_checked = 'checked';
             }
 
-            echo '<li' . (is_array($value) ? ' class="expandable"' : '') . '>';
+            // Determine if this level can have children
+            $can_have_children = false;
+            switch ($location_type) {
+                case 'country':
+                    $can_have_children = true;
+                    break;
+                case 'admin1':
+                    $can_have_children = true;
+                    break;
+                case 'admin2':
+                    $can_have_children = true;
+                    break;
+                case 'admin3':
+                    $can_have_children = true;
+                    break;
+                default:
+                    $can_have_children = false;
+            }
+
+            echo '<li' . ($can_have_children ? ' class="expandable"' : '') . '>';
             
-            if (is_array($value) && !empty($value)) {
-                echo sprintf(
-                    '<input type="checkbox" class="wpdp_filter_checkbox wpdp_location" name="%s" value="%s" %s>',
-                    $checkbox_name,
-                    $input_val,
-                    $is_checked
-                );
-                echo '<div class="exp_click"><span>' . $location_name . '</span>';
-                echo '<span class="dashicons dashicons-arrow-up-alt2 arrow"></span></div>';
-                $this->printArrayAsList($value, $level + 1, $input_val);
-            } else {
-                if ($input_type === 'radio') {
-                    $checkbox_name = 'wpdp_country';
+            if ($input_type === 'radio') {
+                $checkbox_name = 'wpdp_country';
+            }
+            
+            echo sprintf(
+                '<input id="%s" type="%s" class="wpdp_filter_checkbox wpdp_location" name="%s" value="%s" %s>',
+                $key,
+                $input_type,
+                $checkbox_name,
+                $input_val,
+                $is_checked
+            );
+
+            if ($can_have_children) {
+                echo '<div class="exp_click">';
+                if($input_type === 'checkbox'){
+                    echo '<span>' . $location_name . '</span>';
+                    echo '<span class="dashicons dashicons-arrow-down-alt2 arrow"></span>';
+                }else{
+                    echo '<label for="' . $key . '">' . $location_name . '</label>';
                 }
-                echo sprintf(
-                    '<input id="%s" type="%s" class="wpdp_filter_checkbox wpdp_location" name="%s" value="%s" %s>',
-                    $key,
-                    $input_type,
-                    $checkbox_name,
-                    $key,
-                    $is_checked
-                );
+                echo '</div>';
+            } else {
                 echo sprintf(
                     '<label class="%s1" for="%s">%s</label>',
                     $input_type,
@@ -995,6 +1016,109 @@ final class WPDP_Shortcode {
         }
 
         wp_send_json_success('Filter choices saved');
+    }
+
+    public function get_location_level() {
+        if (!isset($_POST['parent_key'])) {
+            wp_send_json_error('Missing parent key');
+        }
+
+        $parent_key = sanitize_text_field($_POST['parent_key']);
+        $parent_parts = explode('+',$parent_key);
+        foreach($parent_parts as $parent_part){
+            $parts = explode('__', $parent_part);
+            $parent_value = trim($parts[0]);
+            $parent_type = $parts[1];
+        }
+
+        global $wpdb;
+        $locations = [];
+        
+        // Define the hierarchy of levels
+        $level_hierarchy = [
+            'country' => ['admin1', 'admin2', 'admin3', 'location'],
+            'admin1' => ['admin2', 'admin3', 'location'],
+            'admin2' => ['admin3', 'location'],
+            'admin3' => ['location']
+        ];
+
+        // Get the starting level based on parent type
+        $current_level_index = array_search($parent_type, array_keys($level_hierarchy));
+        if ($current_level_index === false) {
+            wp_send_json_error('Invalid parent type');
+        }
+
+        // Try each remaining level until we find results
+        $levels_to_try = $level_hierarchy[$parent_type];
+        $found_level = null;
+        
+        foreach ($levels_to_try as $column) {
+            $locations = [];
+            
+            $posts = get_posts(array(
+                'post_type' => 'wp-data-presentation',
+                'posts_per_page' => -1,
+                'fields' => 'ids',
+            ));
+
+            foreach ($posts as $id) {
+                $table_name = $wpdb->prefix . 'wpdp_data_' . $id;
+                if ($wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name) {
+                    $query = $wpdb->prepare(
+                        "SELECT DISTINCT {$column} FROM {$table_name} WHERE {$parent_type} = %s AND {$column} IS NOT NULL AND {$column} != ''",
+                        $parent_value
+                    );
+
+                    $results = $wpdb->get_col($query);
+                    $locations = array_merge($locations, $results);
+                }
+            }
+
+            $locations = array_unique($locations);
+            sort($locations);
+
+            // If we found locations at this level, break the loop
+            if (!empty($locations)) {
+                $found_level = $column;
+                break;
+            }
+        }
+
+        // If no locations were found at any level
+        if (empty($locations)) {
+            wp_send_json_success('<ul><li>No locations found</li></ul>');
+        }
+
+        // Generate HTML for the found level
+        ob_start();
+        echo '<ul>';
+        foreach ($locations as $location) {
+            if (trim($location) === '') {
+                continue;
+            }
+
+            $key = $location . '__' . $found_level;
+            $checkbox_name = 'wpdp_' . sanitize_title($location);
+            $input_value = $parent_key . ' + ' . $key;
+            $is_checked = $this->get_session_value($checkbox_name) === $input_value ? 'checked="checked"' : '';
+
+            $has_children = $found_level !== 'location';
+
+            echo '<li' . ($has_children ? ' class="expandable"' : '') . '>';
+            echo '<input type="checkbox" class="wpdp_filter_checkbox wpdp_location" name="' . $checkbox_name . '" value="' . $input_value . '" ' . $is_checked . '>';
+            
+            if ($has_children) {
+                echo '<div class="exp_click"><span>' . $location . '</span>';
+                echo '<span class="dashicons dashicons-arrow-down-alt2 arrow"></span></div>';
+            } else {
+                echo '<label for="' . $checkbox_name . '">' . $location . '</label>';
+            }
+            
+            echo '</li>';
+        }
+        echo '</ul>';
+        
+        wp_send_json_success(ob_get_clean());
     }
 
 }

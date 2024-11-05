@@ -83,6 +83,7 @@
 
       $('input[type="checkbox"].wpdp_location:checked').each(function() {
         var isChildChecked = $(this).closest('ul').parent().children('input[type="checkbox"].wpdp_location:checked').length > 0;
+        console.log(isChildChecked);
         if (!isChildChecked) {
           selectedLocations.push($(this).val());
         }
@@ -91,7 +92,6 @@
       if($('#wpdp_search_location').val() && $('#wpdp_search_location').val().length > 0){
         selectedLocations = selectedLocations.concat($('#wpdp_search_location').val());
       }
-      
 
       selectedIncidents = self.checkedSelector('wpdp_incident_type');
 
@@ -289,7 +289,7 @@
         requestAnimationFrame(function() {
           var checkboxes;
           if ($content.closest('.grp').hasClass('locations')) {
-            checkboxes = $content.find('> ul > li > input[type="checkbox"]');
+            checkboxes = $content.find('li input[type="checkbox"]');
             if(!checkboxes.length){
               checkboxes = $content.find('.checkboxes_locations > ul > li > input[type="checkbox"]');
             }
@@ -1082,16 +1082,6 @@
       }
 
 
-      $(document).on('click', '.expandable > .exp_click', function(event) {
-        event.stopPropagation();
-        $(this).parent().toggleClass('expanded');
-        $(this).find(".dashicons").toggleClass("dashicons-arrow-down-alt2 dashicons-arrow-up-alt2");
-      });
-
-      $('.filter_data li:not(:has(li))').find('.dashicons').remove();
-
-
-
       $(document).click(function(e) {
         if ($('#wpdp_from').datepicker('widget').is(':visible') ||
             $(e.target).closest('.select2-container').length) {
@@ -1811,6 +1801,55 @@
         self.maps();
       }
     }
+
+    // Add this new function to handle lazy loading of location levels
+    self.loadLocationLevel = function(parentElement, parentKey) {
+      $.ajax({
+        url: wpdp_obj.ajax_url,
+        type: 'POST',
+        data: {
+          action: 'get_location_level',
+          parent_key: parentKey,
+          country: $('input[name="wpdp_search_location_country"]').length ? $('input[name="wpdp_search_location_country"]').val() : ''
+        },
+        beforeSend: function() {
+          $('.checkboxes_locations').css('opacity','0.5').css('pointer-events', 'none');
+        },
+        success: function(response) {
+          if (response.success) {
+            parentElement.find('> ul').remove();
+            parentElement.append(response.data);
+          } else {
+            parentElement.find('> ul').html('<li>No data found</li>');
+          }
+          $('.checkboxes_locations').css('opacity','1').css('pointer-events', 'auto');
+        },
+        error: function() {
+          parentElement.find('> ul').html('<li>Error loading data</li>');
+        }
+      });
+    };
+
+    // Modify the expandable click handler
+    $(document).on('click', '.exp_click', function(e) {
+      if ($(this).prev().is(':radio')) {
+        return;
+      }
+      var $li = $(this).closest('li');
+      var $arrow = $(this).find('.arrow');
+      
+      if (!$li.hasClass('loaded')) {
+        // Get the parent location key
+        var parentKey = $li.find('> input').val();
+        // Load child locations
+        self.loadLocationLevel($li, parentKey);
+        
+        $li.addClass('loaded');
+      }
+      
+      $li.toggleClass('expanded');
+      $arrow.toggleClass('dashicons-arrow-down-alt2 dashicons-arrow-up-alt2');
+    });
 
     $( self.init );
 
