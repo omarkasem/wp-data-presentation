@@ -83,7 +83,7 @@
 
       $('input[type="checkbox"].wpdp_location:checked').each(function() {
         var isChildChecked = $(this).closest('ul').parent().children('input[type="checkbox"].wpdp_location:checked').length > 0;
-        console.log(isChildChecked);
+
         if (!isChildChecked) {
           selectedLocations.push($(this).val());
         }
@@ -112,13 +112,17 @@
       var checkedActors = $('input[type="checkbox"].' + className + ':checked').length;
       var selected = [];
 
-      if (totalActors === checkedActors) {
-        selected = [];
-      } else {
-        $('input[type="checkbox"].' + className + ':checked').each(function() {
-          selected.push($(this).val());
-        });
-      }
+      // if (totalActors === checkedActors) {
+      //   selected = [];
+      // } else {
+      //   $('input[type="checkbox"].' + className + ':checked').each(function() {
+      //     selected.push($(this).val());
+      //   });
+      // }
+
+      $('input[type="checkbox"].' + className + ':checked').each(function() {
+        selected.push($(this).val());
+      });
 
       return selected;
 
@@ -247,14 +251,12 @@
         $('#wpdp_from').datepicker('setDate', defaultFromDate);
         $('#wpdp_to').datepicker('setDate', maxDate);
 
-
-        // Clear checkboxes and their indeterminate state
-        $(this).find('input[type="checkbox"]')
-          .prop('checked', false)
-          .prop('indeterminate', false);
+        // First uncheck all checkboxes
+        $(this).find('input[type="checkbox"]').prop('checked', false);
         
-        // Clear radio buttons
-        $(this).find('input[type="radio"]').prop('checked', false);
+        // Then check only top-level checkboxes (direct children of first_one class)
+        $('.first_one > li > input[type="checkbox"]').prop('checked', true);
+
         
         // Clear select2 fields
         $('#wpdp_search_location').val('').trigger('change');
@@ -266,13 +268,6 @@
         // Hide no data message
         $('.filter_data .no_data').hide();
 
-        // Force clear all checkboxes including nested ones
-        $('.filter_data input[type="checkbox"]').each(function() {
-          $(this)
-            .prop('checked', false)
-            .prop('indeterminate', false)
-            .trigger('change');
-        });
         
         // Force recheck indeterminate states
         self.checkfForIndeterminate();
@@ -789,7 +784,6 @@
     self.dataTables = function(){
       if ($.fn.DataTable && $('#wpdp_datatable').length > 0) {
         $('#wpdp-loader').css('display','flex');
-        
         self.table = $('#wpdp_datatable').DataTable({
             ajax: {
               "url": wpdp_obj.ajax_url,
@@ -1081,6 +1075,8 @@
         $('.wpdp .filter span').removeClass('fa-arrow-left').addClass('fa-sliders-h');
       }
 
+      $('.filter_data .grp:not(.locations) li:not(:has(li))').find('.dashicons').remove();
+
 
       $(document).click(function(e) {
         if ($('#wpdp_from').datepicker('widget').is(':visible') ||
@@ -1309,10 +1305,39 @@
         type: 'POST',
         success: function(response) {
 
-          if(!response.data || response.data.length <= 0){
-            $('#wpdp-loader').hide();
-            $('.filter_data .no_data').show();
-            return;
+          // Check if all datasets are empty
+          const hasIncidentData = Object.keys(response.data.data).some(key => response.data.data[key].length > 0);
+          const hasFatalityData = Object.keys(response.data.data_fat).some(key => response.data.data_fat[key].length > 0);
+          const hasActorData = Object.keys(response.data.data_actors).some(key => response.data.data_actors[key].length > 0);
+
+          // Hide loader
+          $('#wpdp-loader').hide();
+
+          // Handle incidents graph
+          if (!hasIncidentData) {
+            $('#wpdp_chart').addClass('wpdp_force_hide').removeClass('wpdp_force_show');
+            $('#wpdp_chart').after('<div class="no-chart-data-message" style="text-align: center; padding: 20px;">No incidents found. Please adjust the filter options to see more data.</div>');
+          } else {
+            $('#wpdp_chart').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
+            $('.no-chart-data-message').remove();
+          }
+
+          // Handle fatalities graph
+          if (!hasFatalityData) {
+            $('#wpdp_chart_fat').removeClass('wpdp_force_show').addClass('wpdp_force_hide');
+            $('#wpdp_chart_fat').after('<div class="no-fat-data-message" style="text-align: center; padding: 20px;">No fatalities found. Please adjust the filter options to see more data.</div>');
+          } else {
+            $('#wpdp_chart_fat').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
+            $('.no-fat-data-message').remove();
+          }
+
+          // Handle actors graph
+          if (!hasActorData) {
+            $('#wpdp_chart_bar_chart').removeClass('wpdp_force_show').addClass('wpdp_force_hide');
+            $('#wpdp_chart_bar_chart').after('<div class="no-actors-data-message" style="text-align: center; padding: 20px;">No actors found. Please adjust the filter options to see more data.</div>');
+          } else {
+            $('#wpdp_chart_bar_chart').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
+            $('.no-actors-data-message').remove();
           }
 
           self.chartInit(response.data.data,response.data.data_fat,response.data.data_actors,response.data.chart_sql);
@@ -1835,16 +1860,18 @@
       if ($(this).prev().is(':radio')) {
         return;
       }
+
       var $li = $(this).closest('li');
       var $arrow = $(this).find('.arrow');
-      
-      if (!$li.hasClass('loaded')) {
-        // Get the parent location key
-        var parentKey = $li.find('> input').val();
-        // Load child locations
-        self.loadLocationLevel($li, parentKey);
-        
-        $li.addClass('loaded');
+      if($(this).parents('.grp').hasClass('locations')){
+        if (!$li.hasClass('loaded')) {
+          // Get the parent location key
+          var parentKey = $li.find('> input').val();
+          // Load child locations
+          self.loadLocationLevel($li, parentKey);
+          
+          $li.addClass('loaded');
+        }
       }
       
       $li.toggleClass('expanded');

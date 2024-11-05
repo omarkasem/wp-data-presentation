@@ -700,6 +700,25 @@ final class WPDP_Shortcode {
                     </div>
 
 
+                    <div class="grp fatalities ">
+
+                        <div class="title">
+                            FATALITIES <span class="dashicons dashicons-arrow-down-alt2"></span>
+                        </div>
+                        <div class="content">
+                            <?php echo $this->get_select_unselect_all_html();?>
+                            <?php 
+                                $filter = get_field('fatalities_filter','option');
+                                foreach($filter as $filt){
+                                    $hierarchy = $this->buildHierarchy($filt['filter']);
+                                    echo $this->generateHierarchy($hierarchy,'fat');
+                                }
+                            ?>
+
+                        </div>
+                    </div>
+
+
                     <div class="grp actors">
 
                         <div class="title">
@@ -744,23 +763,6 @@ final class WPDP_Shortcode {
                     </div>
 
 
-                    <div class="grp fatalities ">
-
-                        <div class="title">
-                            FATALITIES <span class="dashicons dashicons-arrow-down-alt2"></span>
-                        </div>
-                        <div class="content">
-                            <?php echo $this->get_select_unselect_all_html();?>
-                            <?php 
-                                $filter = get_field('fatalities_filter','option');
-                                foreach($filter as $filt){
-                                    $hierarchy = $this->buildHierarchy($filt['filter']);
-                                    echo $this->generateHierarchy($hierarchy,'fat');
-                                }
-                            ?>
-
-                        </div>
-                    </div>
 
                     <div class="grp civ_targeting ">
 
@@ -887,7 +889,7 @@ final class WPDP_Shortcode {
 
                     <div class="no_data" style="display:none;">No data found, please adjust filters</div>
                     <input type="submit" value="Apply Filters">
-                    <div class="wpdp_clear"><input type="reset" value="Clear Filters"></div>
+                    <div class="wpdp_clear"><input type="reset" value="Reset Filters"></div>
                 </form>
             </div>
         </div>

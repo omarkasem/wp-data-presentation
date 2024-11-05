@@ -309,60 +309,60 @@ final class WPDP_Tables {
         }
 
 
-        if(!empty($filters['disorder_type'])){
-            $values_by_column = [];
-            foreach ($filters['disorder_type'] as $value) {
-                $value_parts = explode('+', $value);
-                foreach ($value_parts as $part) {
-                    list($val, $col) = explode('__', $part);
-                    $values_by_column[$col][] = $val;
+        if(!empty($filters['disorder_type']) || !empty($filters['fatalities'])) {
+            $whereSQL .= " AND (";
+            $conditions_added = false;
+
+            // Disorder type conditions
+            if(!empty($filters['disorder_type'])) {
+                $values_by_column = [];
+                foreach ($filters['disorder_type'] as $value) {
+                    $value_parts = explode('+', $value);
+                    foreach ($value_parts as $part) {
+                        list($val, $col) = explode('__', $part);
+                        $values_by_column[$col][] = $val;
+                    }
                 }
+                
+                $conditions = [];
+                foreach ($values_by_column as $column => $values) {
+                    $placeholders = array_fill(0, count($values), '%s');
+                    $conditions[] = "$column IN (" . implode(',', $placeholders) . ")";
+                    $queryArgs = array_merge($queryArgs, $values);
+                }
+                $whereSQL .= "(" . implode(' OR ', $conditions) . ")";
+                $conditions_added = true;
             }
-            
-            $conditions = [];
-            foreach ($values_by_column as $column => $values) {
-                $placeholders = array_fill(0, count($values), '%s');
-                $conditions[] = "$column IN (" . implode(',', $placeholders) . ")";
-                $queryArgs = array_merge($queryArgs, $values);
+
+            // Fatalities conditions
+            if(!empty($filters['fatalities'])) {
+                if($conditions_added) {
+                    $whereSQL .= " OR ";
+                }
+                $values_by_column = [];
+                foreach ($filters['fatalities'] as $value) {
+                    $value_parts = explode('+', $value);
+                    foreach ($value_parts as $part) {
+                        list($val, $col) = explode('__', $part);
+                        $values_by_column[$col][] = $val;
+                    }
+                }
+                
+                $conditions = [];
+                foreach ($values_by_column as $column => $values) {
+                    $placeholders = array_fill(0, count($values), '%s');
+                    $conditions[] = "$column IN (" . implode(',', $placeholders) . ")";
+                    $queryArgs = array_merge($queryArgs, $values);
+                }
+
+                $whereSQL .= "( fatalities > 0 AND (" . implode(' OR ', $conditions) . "))";
             }
-            $whereSQL .= " AND ((" . implode(' OR ', $conditions);
-            if(empty($filters['fatalities'])){
-                $whereSQL .=  "))";
-            }else{
-                $whereSQL .=  ")";
-            }
+
+            $whereSQL .= ")";
         }
 
-        if(!empty($filters['fatalities'])){
-            $values_by_column = [];
-            foreach ($filters['fatalities'] as $value) {
-                $value_parts = explode('+', $value);
-                foreach ($value_parts as $part) {
-                    list($val, $col) = explode('__', $part);
-                    $values_by_column[$col][] = $val;
-                }
-            }
-            
-            $conditions = [];
-            foreach ($values_by_column as $column => $values) {
-                $placeholders = array_fill(0, count($values), '%s');
-                $conditions[] = "$column IN (" . implode(',', $placeholders) . ")";
-                $queryArgs = array_merge($queryArgs, $values);
-            }
-
-            if(empty($filters['disorder_type'])){
-                $whereSQL .= " AND ( fatalities > 0  AND (";
-            }else{
-                $whereSQL .= " OR ( fatalities > 0  AND (";
-            }
-
-            $whereSQL .= implode(' OR ', $conditions) . "))";
-            if(!empty($filters['disorder_type'])){
-                $whereSQL .= ")";
-            }
-        }
-
-        if(!empty($filters['actors'])){
+        // Actors conditions (separate with AND)
+        if(!empty($filters['actors'])) {
             $actor_values = [];
             foreach ($filters['actors'] as $value) {
                 $actor_values = array_merge($actor_values, explode('+', $value));

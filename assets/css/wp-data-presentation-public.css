@@ -463,6 +463,14 @@
 }
 
 
+.wpdp_force_show{
+  display:block!important;
+}
+
+.wpdp_force_hide{
+  display:none!important;
+}
+
 a.select_unselect_all {
   text-align: right;
   display: block;

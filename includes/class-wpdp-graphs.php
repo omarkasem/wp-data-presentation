@@ -201,20 +201,7 @@ final class WPDP_Graphs {
             $whereSQL .= " AND STR_TO_DATE(event_date, '$mysql_date_format') <= STR_TO_DATE('{$filter_format_to}', '$mysql_date_format')";
         }
 
-        if(!empty($filters['actors']) && $include_actors && count($filters['actors']) !== 8){
-            $actor_values = array();
-            foreach ($filters['actors'] as $value) {
-                $value_parts = explode('+', $value);
-                $actor_values = array_merge($actor_values, $value_parts);
-            }
-            $actor_values = array_unique($actor_values);
-            
-            $whereSQL .= " AND (inter1 IN ('" . implode("','", $actor_values) . "')";
-            if($column_exists){
-                $whereSQL .= " OR inter2 IN ('" . implode("','", $actor_values) . "')";
-            }
-            $whereSQL .= ")";
-        }
+
 
         if(!empty($filters['actor_names'])){
             $conditions = [];
@@ -239,68 +226,69 @@ final class WPDP_Graphs {
         }
 
 
-        if(!empty($filters['disorder_type']) && !$include_actors){
-            $values_by_column = [];
-            foreach ($filters['disorder_type'] as $value) {
-                $value_parts = explode('+', $value);
-                foreach ($value_parts as $part) {
-                    list($val, $col) = explode('__', $part);
-                    $values_by_column[$col][] = $val;
+        if(!empty($filters['disorder_type']) || !empty($filters['fatalities'])) {
+            $whereSQL .= " AND (";
+            $conditions_added = false;
+
+            // Disorder type conditions
+            if(!empty($filters['disorder_type'])) {
+                $values_by_column = [];
+                foreach ($filters['disorder_type'] as $value) {
+                    $value_parts = explode('+', $value);
+                    foreach ($value_parts as $part) {
+                        list($val, $col) = explode('__', $part);
+                        $values_by_column[$col][] = "'" . esc_sql($val) . "'";
+                    }
                 }
+                
+                $conditions = [];
+                foreach ($values_by_column as $column => $values) {
+                    $conditions[] = "$column IN (" . implode(',', $values) . ")";
+                }
+                $whereSQL .= "(" . implode(' OR ', $conditions) . ")";
+                $conditions_added = true;
             }
-            
-            $conditions = [];
-            foreach ($values_by_column as $column => $values) {
-                $conditions[] = "$column IN ('" . implode("','", $values) . "')";
+
+            // Fatalities conditions
+            if(!empty($filters['fatalities'])) {
+                if($conditions_added) {
+                    $whereSQL .= " OR ";
+                }
+                $values_by_column = [];
+                foreach ($filters['fatalities'] as $value) {
+                    $value_parts = explode('+', $value);
+                    foreach ($value_parts as $part) {
+                        list($val, $col) = explode('__', $part);
+                        $values_by_column[$col][] = "'" . esc_sql($val) . "'";
+                    }
+                }
+                
+                $conditions = [];
+                foreach ($values_by_column as $column => $values) {
+                    $conditions[] = "$column IN (" . implode(',', $values) . ")";
+                }
+                $whereSQL .= "( fatalities > 0 AND (" . implode(' OR ', $conditions) . "))";
             }
-            $whereSQL .= " AND ((" . implode(' OR ', $conditions);
-            if(empty($filters['fatalities'])){
-                $whereSQL .=  "))";
-            }else{
-                $whereSQL .=  ")";
-            }
+
+            $whereSQL .= ")";
         }
 
-        if(!empty($filters['fatalities']) && !$include_actors){
-            $values_by_column = [];
-            foreach ($filters['fatalities'] as $value) {
-                $value_parts = explode('+', $value);
-                foreach ($value_parts as $part) {
-                    list($val, $col) = explode('__', $part);
-                    $values_by_column[$col][] = $val;
-                }
+        if(!empty($filters['actors'])) {
+            $actor_values = [];
+            foreach ($filters['actors'] as $value) {
+                $actor_values = array_merge($actor_values, array_map(function($v) {
+                    return "'" . esc_sql($v) . "'";
+                }, explode('+', $value)));
             }
+            $actor_values = array_unique($actor_values);
+            $whereSQL .= " AND (inter1 IN (" . implode(',', $actor_values) . ")";
             
-            $conditions = [];
-            foreach ($values_by_column as $column => $values) {
-                $conditions[] = "$column IN ('" . implode("','", $values) . "')";
+            if($column_exists){
+                $whereSQL .= " OR inter2 IN (" . implode(',', $actor_values) . ")";
             }
-
-            if(empty($filters['disorder_type'])){
-                $whereSQL .= " AND ( fatalities > 0  AND (";
-            }else{
-                $whereSQL .= " OR ( fatalities > 0  AND (";
-            }
-
-            $whereSQL .= implode(' OR ', $conditions) . "))";
-            if(!empty($filters['disorder_type'])){
-                $whereSQL .= ")";
-            }
+            $whereSQL .= ")";
         }
-
-        // if(!empty($filters['merged_types']) && !$include_actors){
-        //     $conditions = [];
-        //     foreach ($filters['merged_types'] as $value) {
-        //         $value_parts = explode('+', $value);
-        //         $sub_conditions = [];
-        //         foreach ($value_parts as $part) {
-        //             list($val, $col) = explode('__', $part);
-        //             $sub_conditions[] = "$col = '{$val}'";
-        //         }
-        //         $conditions[] = '(' . implode(' AND ', $sub_conditions) . ')';
-        //     }
-        //     $whereSQL .= " AND (" . implode(' OR ', $conditions) . ")";
-        // }
+ 
 
         if(!empty($filters['locations'])){
             $whereSQL .= ' AND (';
@@ -468,6 +456,7 @@ final class WPDP_Graphs {
         }
 
         $inter_labels = [
+            0 => 'No recorded actors',
             1 => "State Forces",
             2 => "Rebel Groups",
             3 => "Political Militias",
@@ -494,7 +483,7 @@ final class WPDP_Graphs {
             }
             $new_where = " AND (".implode(' OR ', $conditions).")";
 
-            foreach($sql_parts_actors as $key => $sql){
+            foreach($sql_parts as $key => $sql){
                 $new_sql[]= $sql.' '.$new_where  . ' GROUP BY year_week';
             }
             $query = "
