@@ -811,8 +811,12 @@ final class WPDP_Shortcode {
                             <div class="dates">
                                 <label for="wpdp_from">FROM</label>
                                 <input value="<?php 
-                                    if ('map' === $atts['type'] && empty($this->get_session_value('wpdp_from'))) {
-                                        echo date('d F Y', strtotime('-30 days'));
+                                    if (empty($this->get_session_value('wpdp_from'))) {
+                                        if('map' === $atts['type']){
+                                            echo date('d F Y', strtotime('-30 days'));
+                                        }else{
+                                            echo date('d F Y', strtotime('-1 year'));
+                                        }
                                     } else {
                                         echo $this->get_session_value('wpdp_from', $this->get_from_date_value($filters, $atts));
                                     }
@@ -821,7 +825,7 @@ final class WPDP_Shortcode {
                             <div class="dates">
                                 <label style="margin-right: 23px;" for="wpdp_to">TO</label>
                                 <input value="<?php 
-                                    if ('map' === $atts['type'] && empty($this->get_session_value('wpdp_to'))) {
+                                    if (empty($this->get_session_value('wpdp_to'))) {
                                         echo date('d F Y');
                                     } else {
                                         echo $this->get_session_value('wpdp_to', $this->get_to_date_value($filters, $atts));

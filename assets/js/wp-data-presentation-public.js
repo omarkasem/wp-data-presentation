@@ -445,7 +445,7 @@
     self.maps = function(){
 
       var selectedCountry = $('input[name="wpdp_search_location_country"]').length ? $('input[name="wpdp_search_location_country"]').val() : '';
-      console.log(selectedIncidents);
+
       $('#wpdp-loader').css('display','flex');
       self.setDefaultFilters();
       $.ajax({
@@ -1624,7 +1624,6 @@
             MEDIUM: mediumThreshold || 0
           };
 
-          console.log(highThreshold,mediumThreshold);
 
           // Add fixed info panel to map
           const infoPanel = document.createElement('div');

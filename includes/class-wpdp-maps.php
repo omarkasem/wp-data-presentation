@@ -443,7 +443,7 @@ final class WPDP_Maps {
             $whereSQL .= " AND STR_TO_DATE(event_date, '{$mysql_date_format}') <= STR_TO_DATE(%s, '{$mysql_date_format}')";
             $queryArgs[] = date($date_format['php'], strtotime($filters['to']));
         }
-        
+            
         return array(
             $whereSQL,
             $queryArgs
