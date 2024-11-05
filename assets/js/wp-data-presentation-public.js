@@ -338,16 +338,6 @@
         changeYear: true,
         yearRange: "c-100:c+100",
         onSelect: function(selectedDate) {
-          // if($('.content.filter_maps').length > 0){
-          //   var endDate = new Date(selectedDate);
-          //   endDate.setDate(endDate.getDate() + 1);
-          //   endDate.setFullYear(endDate.getFullYear() + 1);
-      
-          //   var currentToDate = $('#wpdp_to').datepicker('getDate');
-          //   if (currentToDate < new Date(selectedDate) || currentToDate > endDate) {
-          //     $('#wpdp_to').datepicker('setDate', endDate);
-          //   }
-          // }
           $('#wpdp_from').addClass('changed');
           $('.filter_data .no_data').hide();
         },
@@ -375,16 +365,6 @@
         changeYear: true,
         yearRange: "c-100:c+100",
         onSelect: function(selectedDate) {
-          // if($('.content.filter_maps').length > 0){
-          //   var startDate = new Date(selectedDate);
-          //   startDate.setDate(startDate.getDate() - 1);
-          //   startDate.setFullYear(startDate.getFullYear() - 1);
-      
-          //   var currentFromDate = $('#wpdp_from').datepicker('getDate');
-          //   if (currentFromDate > new Date(selectedDate) || currentFromDate < startDate) {
-          //     $('#wpdp_from').datepicker('setDate', startDate);
-          //   }
-          // }
           $('#wpdp_to').addClass('changed');
           $('.filter_data .no_data').hide();
         },

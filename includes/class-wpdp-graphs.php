@@ -201,8 +201,7 @@ final class WPDP_Graphs {
             $whereSQL .= " AND STR_TO_DATE(event_date, '$mysql_date_format') <= STR_TO_DATE('{$filter_format_to}', '$mysql_date_format')";
         }
 
-
-        if(!empty($filters['actors']) && $include_actors){
+        if(!empty($filters['actors']) && $include_actors && count($filters['actors']) !== 8){
             $actor_values = array();
             foreach ($filters['actors'] as $value) {
                 $value_parts = explode('+', $value);
@@ -233,7 +232,6 @@ final class WPDP_Graphs {
         }
 
 
-
         if(!empty($filters['target_civ'])){
             if($filters['target_civ'] == 'yes'){
                 $whereSQL .= " AND (civilian_targeting != '') ";
@@ -241,19 +239,68 @@ final class WPDP_Graphs {
         }
 
 
-        if(!empty($filters['merged_types']) && !$include_actors){
-            $conditions = [];
-            foreach ($filters['merged_types'] as $value) {
+        if(!empty($filters['disorder_type']) && !$include_actors){
+            $values_by_column = [];
+            foreach ($filters['disorder_type'] as $value) {
                 $value_parts = explode('+', $value);
-                $sub_conditions = [];
                 foreach ($value_parts as $part) {
                     list($val, $col) = explode('__', $part);
-                    $sub_conditions[] = "$col = '{$val}'";
+                    $values_by_column[$col][] = $val;
                 }
-                $conditions[] = '(' . implode(' AND ', $sub_conditions) . ')';
             }
-            $whereSQL .= " AND (" . implode(' OR ', $conditions) . ")";
+            
+            $conditions = [];
+            foreach ($values_by_column as $column => $values) {
+                $conditions[] = "$column IN ('" . implode("','", $values) . "')";
+            }
+            $whereSQL .= " AND ((" . implode(' OR ', $conditions);
+            if(empty($filters['fatalities'])){
+                $whereSQL .=  "))";
+            }else{
+                $whereSQL .=  ")";
+            }
         }
+
+        if(!empty($filters['fatalities']) && !$include_actors){
+            $values_by_column = [];
+            foreach ($filters['fatalities'] as $value) {
+                $value_parts = explode('+', $value);
+                foreach ($value_parts as $part) {
+                    list($val, $col) = explode('__', $part);
+                    $values_by_column[$col][] = $val;
+                }
+            }
+            
+            $conditions = [];
+            foreach ($values_by_column as $column => $values) {
+                $conditions[] = "$column IN ('" . implode("','", $values) . "')";
+            }
+
+            if(empty($filters['disorder_type'])){
+                $whereSQL .= " AND ( fatalities > 0  AND (";
+            }else{
+                $whereSQL .= " OR ( fatalities > 0  AND (";
+            }
+
+            $whereSQL .= implode(' OR ', $conditions) . "))";
+            if(!empty($filters['disorder_type'])){
+                $whereSQL .= ")";
+            }
+        }
+
+        // if(!empty($filters['merged_types']) && !$include_actors){
+        //     $conditions = [];
+        //     foreach ($filters['merged_types'] as $value) {
+        //         $value_parts = explode('+', $value);
+        //         $sub_conditions = [];
+        //         foreach ($value_parts as $part) {
+        //             list($val, $col) = explode('__', $part);
+        //             $sub_conditions[] = "$col = '{$val}'";
+        //         }
+        //         $conditions[] = '(' . implode(' AND ', $sub_conditions) . ')';
+        //     }
+        //     $whereSQL .= " AND (" . implode(' OR ', $conditions) . ")";
+        // }
 
         if(!empty($filters['locations'])){
             $whereSQL .= ' AND (';
@@ -432,7 +479,6 @@ final class WPDP_Graphs {
         ];
 
         $data_actors = [];
-
         foreach($filters['actors'] as $type){
             $new_sql = [];
             $conditions = [];
