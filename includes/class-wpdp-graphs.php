@@ -383,45 +383,52 @@ final class WPDP_Graphs {
                     $interval = 1;
                 }
                 elseif($filters['timeframe'] == 'daily'){
-                // Auto timeframe based on date range
-                if($days <= 30) { // Up to 1 month
-                    $sql_type = 'DAY';
-                    $chart_sql = 'day';
-                    $interval = 1;
-                }
-                elseif($days <= 60) { // Up to 2 months
-                    $sql_type = 'DAY';
-                    $chart_sql = 'day';
-                    $interval = 2;
-                }
-                elseif($days <= 90) { // Up to 3 months
-                    $sql_type = 'DAY';
-                    $chart_sql = 'day';
-                    $interval = 3;
-                }
-                elseif($days <= 150) { // Up to 5 months
-                    $sql_type = 'DAY';
-                    $chart_sql = 'day';
-                    $interval = 5;
-                }
-                elseif($days <= 180) { // Up to 6 months
-                    $sql_type = 'DAY';
-                    $chart_sql = 'day';
-                    $interval = 6;
-                }
-                elseif($days <= 210) { // Up to 7 months
-                    $sql_type = 'WEEK';
-                    $chart_sql = 'week';
-                    $interval = 1;
-                }
-                else { // More than 7 months
-                    $sql_type = 'MONTH';
-                    $chart_sql = 'month';
-                    $interval = 1;
-                }
+                    // Auto timeframe based on date range
+                    if($days <= 30) { // Up to 1 month
+                        $sql_type = 'DAY';
+                        $chart_sql = 'day';
+                        $interval = 1;
+                    }
+                    elseif($days <= 60) { // Up to 2 months
+                        $sql_type = 'DAY';
+                        $chart_sql = 'day';
+                        $interval = 2;
+                    }
+                    elseif($days <= 90) { // Up to 3 months
+                        $sql_type = 'DAY';
+                        $chart_sql = 'day';
+                        $interval = 3;
+                    }
+                    elseif($days <= 150) { // Up to 5 months
+                        $sql_type = 'DAY';
+                        $chart_sql = 'day';
+                        $interval = 5;
+                    }
+                    elseif($days <= 180) { // Up to 6 months
+                        $sql_type = 'DAY';
+                        $chart_sql = 'day';
+                        $interval = 6;
+                    }
+                    elseif($days <= 270) { 
+                        $sql_type = 'YEARWEEK';
+                        $chart_sql = 'week';
+                        $interval = 1;
+                    }elseif($days <= 730) { 
+                        $sql_type = 'MONTH';
+                        $chart_sql = 'month';
+                        $interval = 1;
+                    }elseif($days <= 2190) { 
+                        $sql_type = 'QUARTER';
+                        $chart_sql = 'quarter';
+                        $interval = 1;
+                    }
+                    else {
+                        $sql_type = 'YEAR';
+                        $chart_sql = 'year';
+                        $interval = 1;
+                    }
                 }
             }else{
-                // Auto timeframe based on date range
                 if($days <= 30) { // Up to 1 month
                     $sql_type = 'DAY';
                     $chart_sql = 'day';
@@ -447,14 +454,27 @@ final class WPDP_Graphs {
                     $chart_sql = 'day';
                     $interval = 6;
                 }
-                elseif($days <= 210) { // Up to 7 months
+                elseif($days <= 270) { 
                     $sql_type = 'WEEK';
                     $chart_sql = 'week';
                     $interval = 1;
                 }
-                else { // More than 7 months
+                elseif($days <= 270) { 
+                    $sql_type = 'WEEK';
+                    $chart_sql = 'week';
+                    $interval = 1;
+                }elseif($days <= 730) { 
                     $sql_type = 'MONTH';
                     $chart_sql = 'month';
+                    $interval = 1;
+                }elseif($days <= 2190) { 
+                    $sql_type = 'QUARTER';
+                    $chart_sql = 'quarter';
+                    $interval = 1;
+                }
+                else {
+                    $sql_type = 'YEAR';
+                    $chart_sql = 'year';
                     $interval = 1;
                 }
             }
@@ -464,6 +484,7 @@ final class WPDP_Graphs {
             'sql_type' => $sql_type,
             'chart_sql' => $chart_sql,
             'interval' => $interval,
+            'days' => $days
         );
     }
 
@@ -487,7 +508,7 @@ final class WPDP_Graphs {
         $chart_sql = $sql_type_info['chart_sql'];
         $sql_type = $sql_type_info['sql_type'];
         $intervals = $sql_type_info['interval'];
-        
+        $days = $sql_type_info['days'];
         $column_exists_arr = [];
    
         $inter_labels = [
@@ -541,6 +562,7 @@ final class WPDP_Graphs {
                 WHEN '{$sql_type}' = 'YEARWEEK' THEN DATE_FORMAT(STR_TO_DATE(CONCAT(YEARWEEK(STR_TO_DATE(event_date, '$mysql_date_format')), ' Sunday'), '%X%V %W'), '%Y-%m-%d')
                 WHEN '{$sql_type}' = 'MONTH' THEN DATE_FORMAT(STR_TO_DATE(event_date, '$mysql_date_format'), '%Y-%m-01')
                 WHEN '{$sql_type}' = 'YEAR' THEN DATE_FORMAT(STR_TO_DATE(event_date, '$mysql_date_format'), '%Y-01-01')
+                WHEN '{$sql_type}' = 'QUARTER' THEN CONCAT(YEAR(STR_TO_DATE(event_date, '$mysql_date_format')), '-', LPAD(QUARTER(STR_TO_DATE(event_date, '$mysql_date_format')) * 3 - 2, 2, '0'), '-01')
                 ELSE DATE_FORMAT(STR_TO_DATE(event_date, '$mysql_date_format'), '%Y-%m-%d')
             END as sql_date
             FROM {$table_name} {$whereSQL} 
@@ -555,48 +577,51 @@ final class WPDP_Graphs {
             }
 
             if(!empty($results)){
+                // Calculate grouping interval if days > 150
+                $group_interval = ($days < 270) ? ceil($days / 60) : 1;
+                
                 foreach($results as $res){
-
                     foreach($filters['merged_types'] as $type){
                         $type = explode('__',$type);
                         $value = $type[0];
                         $type = $type[1];
-    
+
+                        // Get the date index for grouping
+                        $date_timestamp = strtotime($res['sql_date']);
+                        $start_timestamp = strtotime($filters['from'] ?: $res['sql_date']);
+                        $days_diff = floor(($date_timestamp - $start_timestamp) / (60 * 60 * 24));
+                        $group_index = floor($days_diff / $group_interval);
+                        $group_date = date('Y-m-d', strtotime($filters['from'] ?: $res['sql_date']) + ($group_index * $group_interval * 24 * 60 * 60));
+
+                        // Handle disorder_type aggregation
                         if($type === 'disorder_type' && $res['disorder_type'] === $value){
-    
-                            if(isset( $agg[$res['disorder_type'] ][$res['sql_date']] )){
-                                $agg[$res['disorder_type']][$res['sql_date']]['fatalities_count'] += $res['fatalities_count'];
-                                $agg[$res['disorder_type']][$res['sql_date']]['events_count'] += $res['events_count'];
+                            if(isset($agg[$res['disorder_type']][$group_date])){
+                                $agg[$res['disorder_type']][$group_date]['fatalities_count'] += $res['fatalities_count'];
+                                $agg[$res['disorder_type']][$group_date]['events_count'] += $res['events_count'];
                             }else{
-                                $agg[$res['disorder_type']][$res['sql_date']] = $res;
+                                $agg[$res['disorder_type']][$group_date] = array_merge($res, ['sql_date' => $group_date]);
                             }
-    
                         }
-    
-    
+
+                        // Handle event_type aggregation
                         if($type === 'event_type' && $res['event_type'] === $value){
-    
-                            if(isset( $agg[$res['event_type'] ][$res['sql_date']] )){
-                                $agg[$res['event_type']][$res['sql_date']]['fatalities_count'] += $res['fatalities_count'];
-                                $agg[$res['event_type']][$res['sql_date']]['events_count'] += $res['events_count'];
+                            if(isset($agg[$res['event_type']][$group_date])){
+                                $agg[$res['event_type']][$group_date]['fatalities_count'] += $res['fatalities_count'];
+                                $agg[$res['event_type']][$group_date]['events_count'] += $res['events_count'];
                             }else{
-                                $agg[$res['event_type']][$res['sql_date']] = $res;
+                                $agg[$res['event_type']][$group_date] = array_merge($res, ['sql_date' => $group_date]);
                             }
-    
                         }
-    
+
+                        // Handle sub_event_type aggregation
                         if($type === 'sub_event_type' && $res['sub_event_type'] === $value){
-    
-                            if(isset( $agg[$res['sub_event_type'] ][$res['sql_date']] )){
-                                $agg[$res['sub_event_type']][$res['sql_date']]['fatalities_count'] += $res['fatalities_count'];
-                                $agg[$res['sub_event_type']][$res['sql_date']]['events_count'] += $res['events_count'];
+                            if(isset($agg[$res['sub_event_type']][$group_date])){
+                                $agg[$res['sub_event_type']][$group_date]['fatalities_count'] += $res['fatalities_count'];
+                                $agg[$res['sub_event_type']][$group_date]['events_count'] += $res['events_count'];
                             }else{
-                                $agg[$res['sub_event_type']][$res['sql_date']] = $res;
+                                $agg[$res['sub_event_type']][$group_date] = array_merge($res, ['sql_date' => $group_date]);
                             }
-    
                         }
-    
-    
                     }
                 }
             }
@@ -613,6 +638,7 @@ final class WPDP_Graphs {
                 WHEN '{$sql_type}' = 'YEARWEEK' THEN DATE_FORMAT(STR_TO_DATE(CONCAT(YEARWEEK(STR_TO_DATE(event_date, '$mysql_date_format')), ' Sunday'), '%X%V %W'), '%Y-%m-%d')
                 WHEN '{$sql_type}' = 'MONTH' THEN DATE_FORMAT(STR_TO_DATE(event_date, '$mysql_date_format'), '%Y-%m-01')
                 WHEN '{$sql_type}' = 'YEAR' THEN DATE_FORMAT(STR_TO_DATE(event_date, '$mysql_date_format'), '%Y-01-01')
+                WHEN '{$sql_type}' = 'QUARTER' THEN CONCAT(YEAR(STR_TO_DATE(event_date, '$mysql_date_format')), '-', LPAD(QUARTER(STR_TO_DATE(event_date, '$mysql_date_format')) * 3 - 2, 2, '0'), '-01')
                 ELSE DATE_FORMAT(STR_TO_DATE(event_date, '$mysql_date_format'), '%Y-%m-%d')
             END as sql_date
             FROM {$table_name} {$whereSQL} 
@@ -631,13 +657,20 @@ final class WPDP_Graphs {
 
                     foreach($filters['actors'] as $value){
     
+                        // Get the date index for grouping
+                        $date_timestamp = strtotime($res['sql_date']);
+                        $start_timestamp = strtotime($filters['from'] ?: $res['sql_date']);
+                        $days_diff = floor(($date_timestamp - $start_timestamp) / (60 * 60 * 24));
+                        $group_index = floor($days_diff / $group_interval);
+                        $group_date = date('Y-m-d', strtotime($filters['from'] ?: $res['sql_date']) + ($group_index * $group_interval * 24 * 60 * 60));
+
                         if( $res['inter1'] === $value || (isset($res['inter2']) && $res['inter2'] === $value) ){
                             $text_value = (isset($inter_labels[$value])) ? $inter_labels[$value] : $value;
 
-                            if(isset( $data_actors[$text_value] [$res['sql_date']] )){
-                                $data_actors[$text_value][$res['sql_date']]['events_count'] += $res['events_count'];
+                            if(isset( $data_actors[$text_value] [$group_date] )){
+                                $data_actors[$text_value][$group_date]['events_count'] += $res['events_count'];
                             }else{
-                                $data_actors[$text_value][$res['sql_date']] = $res;
+                                $data_actors[$text_value][$group_date] = $res;
                             }
     
                         }

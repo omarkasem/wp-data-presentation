@@ -1570,17 +1570,23 @@
       let ctx_bar = document.getElementById('wpdp_chart_bar_chart').getContext('2d');
       let title_text_fat = title_text.replace('Events', 'Events by Fatalities');
       let title_text_actors = title_text.replace('Events', 'Events by Actors');
-
+      console.log(datasets);
       self.graphFun(ctx, datasets, title_text, chart_sql, intervals, false);
-      self.graphFunBar(ctx_fat, datasets_fat, title_text_fat, chart_sql, true);
-      self.graphFunBar(ctx_bar, datasets_actors, title_text_actors, chart_sql, false);
+      self.graphFunBar(ctx_fat, datasets_fat, title_text_fat,intervals, chart_sql, true);
+      self.graphFunBar(ctx_bar, datasets_actors, title_text_actors,intervals, chart_sql, false);
     }
 
-    self.graphFunBar = function(ctx,datasets,title_text,chart_sql,is_fat){
+    self.graphFunBar = function(ctx,datasets,title_text,intervals,chart_sql,is_fat){
       var chartVar = 'myChartBar';
       if(is_fat){
         chartVar = 'myChartBarFat';
       }
+
+      // Add check for mobile screen width
+      const isMobile = window.innerWidth <= 768;
+      const maxTicksLimit = isMobile ? 15 : 30;
+
+
       datasets.forEach(function(dataset) {
         dataset.backgroundColor = dataset.borderColor;
         delete dataset.borderColor;
@@ -1606,6 +1612,10 @@
                 },
                 stacked: true,
                 bounds: 'ticks',
+                ticks:{
+                  maxTicksLimit: maxTicksLimit, // Use dynamic value based on screen width
+                  stepSize: intervals 
+                }
               },
               y: {
                 type: 'linear',
