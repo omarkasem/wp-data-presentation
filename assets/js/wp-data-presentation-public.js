@@ -1305,40 +1305,48 @@
         type: 'POST',
         success: function(response) {
 
-          // // Check if all datasets are empty
-          // const hasIncidentData = Object.keys(response.data.data).some(key => response.data.data[key].length > 0);
-          // const hasFatalityData = Object.keys(response.data.data_fat).some(key => response.data.data_fat[key].length > 0);
-          // const hasActorData = Object.keys(response.data.data_actors).some(key => response.data.data_actors[key].length > 0);
+          // Check if all datasets are empty
+          const hasIncidentData = Object.keys(response.data.data).some(key => 
+            Object.keys(response.data.data[key]).some(date => response.data.data[key][date].events_count > 0)
+          );
+          
+          const hasFatalityData = Object.keys(response.data.data_fat).some(key =>
+            Object.keys(response.data.data_fat[key]).some(date => response.data.data_fat[key][date].events_count > 0)
+          );
+          
+          const hasActorData = Object.keys(response.data.data_actors).some(key =>
+            Object.keys(response.data.data_actors[key]).some(date => response.data.data_actors[key][date].events_count > 0)
+          );
 
-          // // Hide loader
-          // $('#wpdp-loader').hide();
+          // Hide loader
+          $('#wpdp-loader').hide();
 
-          // // Handle incidents graph
-          // if (!hasIncidentData) {
-          //   $('#wpdp_chart').addClass('wpdp_force_hide').removeClass('wpdp_force_show');
-          //   $('#wpdp_chart').after('<div class="no-chart-data-message" style="text-align: center; padding: 20px;">No incidents found. Please adjust the filter options to see more data.</div>');
-          // } else {
-          //   $('#wpdp_chart').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
-          //   $('.no-chart-data-message').remove();
-          // }
+          // Handle incidents graph
+          if (!hasIncidentData) {
+            $('#wpdp_chart').addClass('wpdp_force_hide').removeClass('wpdp_force_show');
+            $('#wpdp_chart').after('<div class="no-chart-data-message" style="text-align: center; padding: 20px;">No incidents found. Please adjust the filter options to see more data.</div>');
+          } else {
+            $('#wpdp_chart').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
+            $('.no-chart-data-message').remove();
+          }
 
-          // // Handle fatalities graph
-          // if (!hasFatalityData) {
-          //   $('#wpdp_chart_fat').removeClass('wpdp_force_show').addClass('wpdp_force_hide');
-          //   $('#wpdp_chart_fat').after('<div class="no-fat-data-message" style="text-align: center; padding: 20px;">No fatalities found. Please adjust the filter options to see more data.</div>');
-          // } else {
-          //   $('#wpdp_chart_fat').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
-          //   $('.no-fat-data-message').remove();
-          // }
+          // Handle fatalities graph
+          if (!hasFatalityData) {
+            $('#wpdp_chart_fat').removeClass('wpdp_force_show').addClass('wpdp_force_hide');
+            $('#wpdp_chart_fat').after('<div class="no-fat-data-message" style="text-align: center; padding: 20px;">No fatalities found. Please adjust the filter options to see more data.</div>');
+          } else {
+            $('#wpdp_chart_fat').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
+            $('.no-fat-data-message').remove();
+          }
 
-          // // Handle actors graph
-          // if (!hasActorData) {
-          //   $('#wpdp_chart_bar_chart').removeClass('wpdp_force_show').addClass('wpdp_force_hide');
-          //   $('#wpdp_chart_bar_chart').after('<div class="no-actors-data-message" style="text-align: center; padding: 20px;">No actors found. Please adjust the filter options to see more data.</div>');
-          // } else {
-          //   $('#wpdp_chart_bar_chart').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
-          //   $('.no-actors-data-message').remove();
-          // }
+          // Handle actors graph
+          if (!hasActorData) {
+            $('#wpdp_chart_bar_chart').removeClass('wpdp_force_show').addClass('wpdp_force_hide');
+            $('#wpdp_chart_bar_chart').after('<div class="no-actors-data-message" style="text-align: center; padding: 20px;">No actors found. Please adjust the filter options to see more data.</div>');
+          } else {
+            $('#wpdp_chart_bar_chart').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
+            $('.no-actors-data-message').remove();
+          }
           // console.log(response.data);
           self.chartInit(response.data.data,response.data.data_fat,response.data.data_actors,response.data.chart_sql);
           $('#wpdp-loader').hide();
@@ -1353,7 +1361,7 @@
       });
     }
 
-    self.chartInit = function(data,data_fat,data_actors,chart_sql){
+    self.chartInit = function(data, data_fat, data_actors, chart_sql) {
       var datasets = [];
       var datasets_fat = [];
       var datasets_actors = [];
@@ -1398,6 +1406,7 @@
         }
         datasets.push(dataset);
       }
+
 
       i =0;
       for(let label in data_actors){i++;
@@ -1462,9 +1471,9 @@
       if(selectedLocations.length > 0){
         title_text = 'Events in ';
         let countries = new Set();
-        $.each(selectedLocations,function(index,value){
+        $.each(selectedLocations, function(index, value) {
           value = value.split('+');
-          $.each(value,function(index,value){
+          $.each(value, function(index, value) {
             if(value.indexOf('country') > 0){
               value = value.split('__');
               countries.add(value[0]);
@@ -1487,9 +1496,9 @@
       let title_text_fat = title_text.replace('Events', 'Events by Fatalities');
       let title_text_actors = title_text.replace('Events', 'Events by Actors');
 
-      self.graphFun(ctx,datasets,title_text,chart_sql,false);
-      self.graphFunBar(ctx_fat,datasets_fat,title_text_fat,chart_sql,true);
-      self.graphFunBar(ctx_bar,datasets_actors,title_text_actors,chart_sql,false);
+      self.graphFun(ctx, datasets, title_text, chart_sql, false);
+      self.graphFunBar(ctx_fat, datasets_fat, title_text_fat, chart_sql, true);
+      self.graphFunBar(ctx_bar, datasets_actors, title_text_actors, chart_sql, false);
     }
 
     self.graphFunBar = function(ctx,datasets,title_text,chart_sql,is_fat){
@@ -1506,9 +1515,8 @@
         data: {datasets:datasets},
         options: {
           responsive: true,
-            maintainAspectRatio: false, // Changed to false
-            height: 400, // Explicit height
-
+          maintainAspectRatio: false, // Changed to false
+          height: 400, // Explicit height
           plugins: {
               title: {
                   display: true,
@@ -1545,6 +1553,7 @@
         type: 'line',
         data: {datasets:datasets},
         options: {
+          spanGaps: true,
           responsive: true,
             maintainAspectRatio: false, // Changed to false
             height: 400, // Explicit height
@@ -1573,6 +1582,64 @@
         }
       });
     }
+
+
+    // self.graphFun = function(ctx, datasets, title_text, chart_sql, is_fat) {
+    //   var chartVar = 'myChart';
+    //   if(is_fat) {
+    //     chartVar = 'myChartFat';
+    //   }
+      
+    //   window[chartVar] = new Chart(ctx, {
+    //     type: 'line',
+    //     data: {datasets: datasets},
+    //     options: {
+    //       responsive: true,
+    //       maintainAspectRatio: false,
+    //       height: 400,
+    //       plugins: {
+    //         title: {
+    //           display: true,
+    //           text: title_text
+    //         },
+    //       },
+    //       scales: {
+    //         x: {
+    //           type: 'time',
+    //           time: {
+    //             unit: chart_sql,
+    //             parser: 'yyyy-MM-dd',
+    //             displayFormats: {
+    //               day: 'MMM d',
+    //               week: 'MMM d',
+    //               month: 'MMM yyyy',
+    //               quarter: 'MMM yyyy',
+    //               year: 'yyyy'
+    //             }
+    //           },
+    //           distribution: 'series',
+    //           ticks: {
+    //             source: 'data'
+    //           }
+    //         },
+    //         y: {
+    //           type: 'linear',
+    //           display: true,
+    //           beginAtZero: true
+    //         }
+    //       },
+    //       elements: {
+    //         line: {
+    //           tension: 0.4,
+    //           spanGaps: true
+    //         },
+    //         point: {
+    //           radius: 3
+    //         }
+    //       }
+    //     }
+    //   });
+    // }
 
     self.maps_polygons = function() {
 
