@@ -78,7 +78,7 @@ class WPDP_Db_Table {
 
         // Check if the table has any data
         $table_name = $this->table_name;
-        $check_query = $wpdb->prepare("SELECT COUNT(*) FROM {$table_name}");
+        $check_query = "SELECT COUNT(*) FROM {$table_name}";
         $table_has_data = $wpdb->get_var($check_query);
 
         if ($table_has_data > 0) {

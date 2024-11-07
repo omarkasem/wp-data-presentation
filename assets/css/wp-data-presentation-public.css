@@ -479,6 +479,24 @@ a.select_unselect_all {
   padding: 10px 0px;
 }
 
+.wpdp .last_updated_chart .tippy-icon{
+  margin-top: 3px;
+}
+
+.wpdp .last_updated_chart{
+  float: right;
+  margin-top: -15px;
+  margin-bottom: 15px;
+  position: relative;
+  z-index: 99999;
+  top: 13px;
+  display:none;
+}
+
+.wpdp_filter_content.table-responsive hr{
+  clear:both;
+}
+
 @media only screen and (max-width: 600px) {
 	#wpdp_datatable_wrapper{
 		overflow-x: auto;

@@ -1318,37 +1318,67 @@
             Object.keys(response.data.data_actors[key]).some(date => response.data.data_actors[key][date].events_count > 0)
           );
 
+
+          // Check if toYear falls in the last month
+          const toYearDate = new Date(toYear);
+          const currentDate = new Date();
+          const oneMonthAgo = new Date();
+          oneMonthAgo.setMonth(currentDate.getMonth() - 1);
+          const daysDifference = Math.floor((currentDate - toYearDate) / (1000 * 60 * 60 * 24));
+          const isInLastMonth = toYearDate >= oneMonthAgo && toYearDate <= currentDate;
+
           // Hide loader
           $('#wpdp-loader').hide();
 
           // Handle incidents graph
           if (!hasIncidentData) {
-            $('#wpdp_chart').addClass('wpdp_force_hide').removeClass('wpdp_force_show');
+            $('#wpdp_chart,.last_updated_chart.chart').addClass('wpdp_force_hide').removeClass('wpdp_force_show');
             $('#wpdp_chart').after('<div class="no-chart-data-message" style="text-align: center; padding: 20px;">No incidents found. Please adjust the filter options to see more data.</div>');
           } else {
             $('#wpdp_chart').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
+            
+            if(isInLastMonth){
+              console.log('fgg');
+                $('.last_updated_chart.chart').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
+            }
+
             $('.no-chart-data-message').remove();
           }
 
           // Handle fatalities graph
           if (!hasFatalityData) {
-            $('#wpdp_chart_fat').removeClass('wpdp_force_show').addClass('wpdp_force_hide');
+            $('#wpdp_chart_fat,.last_updated_chart.chart_fat').removeClass('wpdp_force_show').addClass('wpdp_force_hide');
             $('#wpdp_chart_fat').after('<div class="no-fat-data-message" style="text-align: center; padding: 20px;">No fatalities found. Please adjust the filter options to see more data.</div>');
           } else {
             $('#wpdp_chart_fat').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
+
+            if(isInLastMonth){
+              $('.last_updated_chart.chart_fat').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
+            }
+
+
             $('.no-fat-data-message').remove();
           }
 
           // Handle actors graph
           if (!hasActorData) {
-            $('#wpdp_chart_bar_chart').removeClass('wpdp_force_show').addClass('wpdp_force_hide');
+            $('#wpdp_chart_bar_chart,.last_updated_chart.chart_bar').removeClass('wpdp_force_show').addClass('wpdp_force_hide');
             $('#wpdp_chart_bar_chart').after('<div class="no-actors-data-message" style="text-align: center; padding: 20px;">No actors found. Please adjust the filter options to see more data.</div>');
           } else {
             $('#wpdp_chart_bar_chart').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
+
+            if(isInLastMonth){
+              $('.last_updated_chart.chart_bar').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
+            }
+
             $('.no-actors-data-message').remove();
           }
-          // console.log(response.data);
-          self.chartInit(response.data.data,response.data.data_fat,response.data.data_actors,response.data.chart_sql);
+
+          if(!isInLastMonth){
+            response.data.latest_date = 0;
+          }
+
+          self.chartInit(response.data.data,response.data.data_fat,response.data.data_actors,response.data.chart_sql,response.data.latest_date);
           $('#wpdp-loader').hide();
 
           if(response.data.count == 0){
@@ -1361,7 +1391,7 @@
       });
     }
 
-    self.chartInit = function(data, data_fat, data_actors, chart_sql) {
+    self.chartInit = function(data, data_fat, data_actors, chart_sql, latest_date) {
       var datasets = [];
       var datasets_fat = [];
       var datasets_actors = [];
@@ -1449,6 +1479,51 @@
 
         datasets_fat.push(dataset_fat);
       }
+
+      // Add this function to sort datasets by date
+      const sortDatasetsByDate = (datasets) => {
+        datasets.forEach(dataset => {
+          dataset.data.sort((a, b) => new Date(a.x) - new Date(b.x));
+        });
+        return datasets;
+      };
+
+      // Sort all datasets before creating charts
+      datasets = sortDatasetsByDate(datasets);
+      datasets_fat = sortDatasetsByDate(datasets_fat);
+      datasets_actors = sortDatasetsByDate(datasets_actors);
+
+      // Info icon
+      if (datasets && datasets[0] && datasets[0].data.length > 0 && latest_date != 0) {
+        tippy('.last_updated_chart.chart .tippy-icon', {
+          trigger: 'click',
+          hideOnClick: true,
+          touch: true,
+          content: 'This date is the last data entry for this chart, according to the filters set. The last data entry from all available data in the database is: ' + latest_date
+        });
+        $('.last_updated_chart_date').text(moment(datasets[0].data[datasets[0].data.length-1].x).format('Do MMM YYYY'));
+      }
+
+      if (datasets_fat && datasets_fat[0] && datasets_fat[0].data.length > 0 && latest_date != 0) {
+        tippy('.last_updated_chart.chart_fat .tippy-icon', {
+          trigger: 'click',
+          hideOnClick: true,
+          touch: true,
+          content: 'This date is the last data entry for this chart, according to the filters set. The last data entry from all available data in the database is: ' + latest_date
+        });
+        $('.last_updated_chart_date_fat').text(moment(datasets_fat[0].data[datasets_fat[0].data.length-1].x).format('Do MMM YYYY'));
+      }
+
+      if (datasets_actors && datasets_actors[0] && datasets_actors[0].data.length > 0 && latest_date != 0) {
+        tippy('.last_updated_chart.chart_bar .tippy-icon', {
+          trigger: 'click',
+          hideOnClick: true,
+          touch: true,
+          content: 'This date is the last data entry for this chart, according to the filters set. The last data entry from all available data in the database is: ' + latest_date
+        });
+        $('.last_updated_chart_date_bar').text(moment(datasets_actors[0].data[datasets_actors[0].data.length-1].x).format('Do MMM YYYY'));
+      }
+
 
 
       if (window.myChart) {
@@ -1583,63 +1658,6 @@
       });
     }
 
-
-    // self.graphFun = function(ctx, datasets, title_text, chart_sql, is_fat) {
-    //   var chartVar = 'myChart';
-    //   if(is_fat) {
-    //     chartVar = 'myChartFat';
-    //   }
-      
-    //   window[chartVar] = new Chart(ctx, {
-    //     type: 'line',
-    //     data: {datasets: datasets},
-    //     options: {
-    //       responsive: true,
-    //       maintainAspectRatio: false,
-    //       height: 400,
-    //       plugins: {
-    //         title: {
-    //           display: true,
-    //           text: title_text
-    //         },
-    //       },
-    //       scales: {
-    //         x: {
-    //           type: 'time',
-    //           time: {
-    //             unit: chart_sql,
-    //             parser: 'yyyy-MM-dd',
-    //             displayFormats: {
-    //               day: 'MMM d',
-    //               week: 'MMM d',
-    //               month: 'MMM yyyy',
-    //               quarter: 'MMM yyyy',
-    //               year: 'yyyy'
-    //             }
-    //           },
-    //           distribution: 'series',
-    //           ticks: {
-    //             source: 'data'
-    //           }
-    //         },
-    //         y: {
-    //           type: 'linear',
-    //           display: true,
-    //           beginAtZero: true
-    //         }
-    //       },
-    //       elements: {
-    //         line: {
-    //           tension: 0.4,
-    //           spanGaps: true
-    //         },
-    //         point: {
-    //           radius: 3
-    //         }
-    //       }
-    //     }
-    //   });
-    // }
 
     self.maps_polygons = function() {
 
@@ -1867,6 +1885,14 @@
     };
 
     self.getSeverityLabel = function(count, thresholds) {
+      // Add minimum threshold to prevent very low counts from being marked as high
+      const MIN_THRESHOLD = 5; // Adjust this value based on your needs
+
+      if (count < MIN_THRESHOLD) {
+        return 'Low';
+      }
+
+
       if (count >= thresholds.LARGE) {
         return 'High';
       } else if (count >= thresholds.MEDIUM) {
