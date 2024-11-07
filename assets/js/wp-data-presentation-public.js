@@ -1305,41 +1305,41 @@
         type: 'POST',
         success: function(response) {
 
-          // Check if all datasets are empty
-          const hasIncidentData = Object.keys(response.data.data).some(key => response.data.data[key].length > 0);
-          const hasFatalityData = Object.keys(response.data.data_fat).some(key => response.data.data_fat[key].length > 0);
-          const hasActorData = Object.keys(response.data.data_actors).some(key => response.data.data_actors[key].length > 0);
+          // // Check if all datasets are empty
+          // const hasIncidentData = Object.keys(response.data.data).some(key => response.data.data[key].length > 0);
+          // const hasFatalityData = Object.keys(response.data.data_fat).some(key => response.data.data_fat[key].length > 0);
+          // const hasActorData = Object.keys(response.data.data_actors).some(key => response.data.data_actors[key].length > 0);
 
-          // Hide loader
-          $('#wpdp-loader').hide();
+          // // Hide loader
+          // $('#wpdp-loader').hide();
 
-          // Handle incidents graph
-          if (!hasIncidentData) {
-            $('#wpdp_chart').addClass('wpdp_force_hide').removeClass('wpdp_force_show');
-            $('#wpdp_chart').after('<div class="no-chart-data-message" style="text-align: center; padding: 20px;">No incidents found. Please adjust the filter options to see more data.</div>');
-          } else {
-            $('#wpdp_chart').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
-            $('.no-chart-data-message').remove();
-          }
+          // // Handle incidents graph
+          // if (!hasIncidentData) {
+          //   $('#wpdp_chart').addClass('wpdp_force_hide').removeClass('wpdp_force_show');
+          //   $('#wpdp_chart').after('<div class="no-chart-data-message" style="text-align: center; padding: 20px;">No incidents found. Please adjust the filter options to see more data.</div>');
+          // } else {
+          //   $('#wpdp_chart').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
+          //   $('.no-chart-data-message').remove();
+          // }
 
-          // Handle fatalities graph
-          if (!hasFatalityData) {
-            $('#wpdp_chart_fat').removeClass('wpdp_force_show').addClass('wpdp_force_hide');
-            $('#wpdp_chart_fat').after('<div class="no-fat-data-message" style="text-align: center; padding: 20px;">No fatalities found. Please adjust the filter options to see more data.</div>');
-          } else {
-            $('#wpdp_chart_fat').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
-            $('.no-fat-data-message').remove();
-          }
+          // // Handle fatalities graph
+          // if (!hasFatalityData) {
+          //   $('#wpdp_chart_fat').removeClass('wpdp_force_show').addClass('wpdp_force_hide');
+          //   $('#wpdp_chart_fat').after('<div class="no-fat-data-message" style="text-align: center; padding: 20px;">No fatalities found. Please adjust the filter options to see more data.</div>');
+          // } else {
+          //   $('#wpdp_chart_fat').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
+          //   $('.no-fat-data-message').remove();
+          // }
 
-          // Handle actors graph
-          if (!hasActorData) {
-            $('#wpdp_chart_bar_chart').removeClass('wpdp_force_show').addClass('wpdp_force_hide');
-            $('#wpdp_chart_bar_chart').after('<div class="no-actors-data-message" style="text-align: center; padding: 20px;">No actors found. Please adjust the filter options to see more data.</div>');
-          } else {
-            $('#wpdp_chart_bar_chart').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
-            $('.no-actors-data-message').remove();
-          }
-
+          // // Handle actors graph
+          // if (!hasActorData) {
+          //   $('#wpdp_chart_bar_chart').removeClass('wpdp_force_show').addClass('wpdp_force_hide');
+          //   $('#wpdp_chart_bar_chart').after('<div class="no-actors-data-message" style="text-align: center; padding: 20px;">No actors found. Please adjust the filter options to see more data.</div>');
+          // } else {
+          //   $('#wpdp_chart_bar_chart').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
+          //   $('.no-actors-data-message').remove();
+          // }
+          // console.log(response.data);
           self.chartInit(response.data.data,response.data.data_fat,response.data.data_actors,response.data.chart_sql);
           $('#wpdp-loader').hide();
 
@@ -1382,16 +1382,19 @@
       let i =0;
       for(let label in data){ i++;
         let dataset = {
-          label:label,
+          label: label,
           borderColor: colors[i],
           fill: false,
           data: [],
-          count:[],
-          fat:[],
+          count: [],
+          fat: []
         };
 
-        for(let val of data[label]){
-          dataset.data.push({x: val.week_start, y: val.events_count});
+        for(let val in data[label]){
+          dataset.data.push({
+            x: val, 
+            y: data[label][val].events_count
+          });
         }
         datasets.push(dataset);
       }
@@ -1407,9 +1410,13 @@
           fat:[],
         };
 
-        for(let val of data_actors[label]){
-          dataset_actors.data.push({x: val.week_start, y: val.events_count});
+        for(let val in data_actors[label]){
+          dataset_actors.data.push({
+            x: val, 
+            y: data_actors[label][val].events_count
+          });
         }
+
         datasets_actors.push(dataset_actors);
       }
 
@@ -1424,10 +1431,13 @@
           fat:[],
         };
 
-
-        for(let val of data_fat[label]){
-          dataset_fat.data.push({x: val.week_start, y: val.fatalities_count});
+        for(let val in data_fat[label]){
+          dataset_fat.data.push({
+            x: val, 
+            y: data_fat[label][val].events_count
+          });
         }
+
         datasets_fat.push(dataset_fat);
       }
 
@@ -1500,16 +1510,6 @@
             height: 400, // Explicit height
 
           plugins: {
-            tooltip: {
-                callbacks: {
-                    title: function(tooltipItems) {
-                        var date = new Date(tooltipItems[0].parsed.x);
-                        var monthNames = ["January", "February", "March", "April", "May", "June",
-                                          "July", "August", "September", "October", "November", "December"];
-                        return monthNames[date.getMonth()] + ' ' + date.getFullYear();
-                    }
-                }
-            },
               title: {
                   display: true,
                   text: title_text
@@ -1550,16 +1550,6 @@
             height: 400, // Explicit height
 
           plugins: {
-            tooltip: {
-                callbacks: {
-                    title: function(tooltipItems) {
-                        var date = new Date(tooltipItems[0].parsed.x);
-                        var monthNames = ["January", "February", "March", "April", "May", "June",
-                                          "July", "August", "September", "October", "November", "December"];
-                        return monthNames[date.getMonth()] + ' ' + date.getFullYear();
-                    }
-                }
-            },
               title: {
                   display: true,
                   text: title_text

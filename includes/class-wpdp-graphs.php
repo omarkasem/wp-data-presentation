@@ -57,6 +57,38 @@ final class WPDP_Graphs {
         
         add_action('init',array($this,'clear_cache'));
 
+
+        if(isset($_GET['test566'])){
+            var_dump(get_option('test566'));exit;
+            $agg= [];
+            foreach(get_option('test566') as $res){
+                if(isset( $agg[$res['disorder_type'] ][$res['sql_date']] )){
+                    $agg[$res['disorder_type']][$res['sql_date']]['fatalities_count'] += $res['fatalities_count'];
+                    $agg[$res['disorder_type']][$res['sql_date']]['events_count'] += $res['events_count'];
+                }else{
+                    $agg[$res['disorder_type']][$res['sql_date']] = $res;
+                }
+
+
+                if(isset( $agg[$res['event_type'] ][$res['sql_date']] )){
+                    $agg[$res['event_type']][$res['sql_date']]['fatalities_count'] += $res['fatalities_count'];
+                    $agg[$res['event_type']][$res['sql_date']]['events_count'] += $res['events_count'];
+                }else{
+                    $agg[$res['event_type']][$res['sql_date']] = $res;
+                }
+
+                if(isset( $agg[$res['sub_event_type'] ][$res['sql_date']] )){
+                    $agg[$res['sub_event_type']][$res['sql_date']]['fatalities_count'] += $res['fatalities_count'];
+                    $agg[$res['sub_event_type']][$res['sql_date']]['events_count'] += $res['events_count'];
+                }else{
+                    $agg[$res['sub_event_type']][$res['sql_date']] = $res;
+                }
+
+            }
+
+            var_dump($agg);exit;
+        }
+
     }
 
     public function clear_cache(){
@@ -187,7 +219,7 @@ final class WPDP_Graphs {
         wp_register_script(WP_DATA_PRESENTATION_NAME.'chartjs-moment', WP_DATA_PRESENTATION_URL.'assets/js/moment.min.js', array('jquery'), WP_DATA_PRESENTATION_VERSION, true);
     }
     
-    public function build_where_clause($filters, $date_format, $column_exists,$actor_column_exists,$include_actors = false) {
+    public function build_where_clause($filters, $date_format, $column_exists,$actor_column_exists) {
         $whereSQL = ' WHERE 1=1 ';
         $mysql_date_format = $date_format['mysql'];
         $filter_format_from = date($date_format['php'],strtotime($filters['from']));
@@ -343,12 +375,15 @@ final class WPDP_Graphs {
                 }elseif($filters['timeframe'] == 'daily'){
                     $sql_type = 'DAY';
                     $chart_sql = 'day';
+                }elseif($filters['timeframe'] == 'yearly'){
+                    $sql_type = 'YEAR';
+                    $chart_sql = 'year';
                 }
             }else{
-                if($days < 40){
-                    $sql_type = 'YEARWEEK';
-                    $chart_sql = 'week';
-                }elseif($days >= 40 && $days < 369){
+                if($days < 61){
+                    $sql_type = 'day';
+                    $chart_sql = 'day';
+                }elseif($days >= 61 && $days < 369){
                     $sql_type = 'MONTH';
                     $chart_sql = 'month';
                 }elseif($days >= 370 && $days < 700){
@@ -380,15 +415,29 @@ final class WPDP_Graphs {
         }
 
         global $wpdb;
-        $sql_parts = [];
-        $sql_parts_actors = [];
+        $agg = [];
         
         $all_filters = WPDP_Shortcode::get_filters();
         $sql_type = $this->get_sql_type($filters, $all_filters);
         $chart_sql = $sql_type['chart_sql'];
         $sql_type = $sql_type['sql_type'];
+        
         $column_exists_arr = [];
    
+        $inter_labels = [
+            0 => 'No recorded actors',
+            1 => "State Forces",
+            2 => "Rebel Groups",
+            3 => "Political Militias",
+            4 => "Identity Militias",
+            5 => "Rioters",
+            6 => "Protesters",
+            7 => "Civilians",
+            8 => "External/Other Force"
+        ];
+
+        $data_actors = [];
+
         foreach($posts as $id){
             $table_name = $wpdb->prefix. 'wpdp_data_'.$id;
             $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
@@ -404,112 +453,135 @@ final class WPDP_Graphs {
             $mysql_date_format = $date_format['mysql'];
             $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'inter2'");
             $actor_column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'actor2'");
-            $whereSQL = $this->build_where_clause($filters, $date_format, $column_exists,$actor_column_exists,true);
-            $whereSQL_actors = $this->build_where_clause($filters, $date_format, $column_exists,$actor_column_exists);
+            $whereSQL = $this->build_where_clause($filters, $date_format, $column_exists,$actor_column_exists);
 
             $sql = "SELECT 
             SUM(fatalities) as fatalities_count,
             COUNT(*) as events_count,
-            {$sql_type}(STR_TO_DATE(event_date, '$mysql_date_format')) as year_week,
-            MIN(STR_TO_DATE(event_date, '$mysql_date_format')) as week_start
-            FROM {$table_name} ";
-
-            $sql_parts[] = $sql.$whereSQL;
-            $sql_parts_actors[] = $sql.$whereSQL_actors;
-            $column_exists_arr[] = ($column_exists ? $table_name : 0);
-        }
-
-        if(empty($sql_parts) && empty($sql_parts_actors)){
-            return [];
-        }
-
-        $data = [];
-        $data_fat = [];
-        foreach($filters['merged_types'] as $type){
-            $new_sql = [];
-            $text_and_conditions = $this->get_text_and_conditions($type);
-            $text = $text_and_conditions['text'];
-            $conditions = $text_and_conditions['conditions'];
-
-            $new_where = " AND (".implode(' OR ', $conditions).")";
-            
-            foreach($sql_parts as $sql){
-                $new_sql[]= $sql.' '.$new_where  . ' GROUP BY year_week';
-            }
-
-            $query = "
-            SELECT *
-            FROM (
-                " . implode(' UNION ', $new_sql) . "
-            ) AS t ORDER BY week_start ASC
+            disorder_type, 
+            event_type, 
+            sub_event_type,
+            CASE 
+                WHEN '{$sql_type}' = 'YEARWEEK' THEN DATE_FORMAT(STR_TO_DATE(CONCAT(YEARWEEK(STR_TO_DATE(event_date, '$mysql_date_format')), ' Sunday'), '%X%V %W'), '%Y-%m-%d')
+                WHEN '{$sql_type}' = 'MONTH' THEN DATE_FORMAT(STR_TO_DATE(event_date, '$mysql_date_format'), '%Y-%m-01')
+                WHEN '{$sql_type}' = 'YEAR' THEN DATE_FORMAT(STR_TO_DATE(event_date, '$mysql_date_format'), '%Y-01-01')
+                ELSE DATE_FORMAT(STR_TO_DATE(event_date, '$mysql_date_format'), '%Y-%m-%d')
+            END as sql_date
+            FROM {$table_name} {$whereSQL} 
+            GROUP BY sql_date, disorder_type, event_type, sub_event_type
             ";
-            $transient_key = md5($query);
+
+            $transient_key = md5($sql);
             $res = get_transient('wpdp_cache_'.$transient_key);
             if(empty($res) || WP_DATA_PRESENTATION_DISABLE_CACHE){
-                $res = $wpdb->get_results($query);
+                $results = $wpdb->get_results($sql, ARRAY_A);
                 set_transient('wpdp_cache_'.$transient_key, $res);
             }
 
-            $data_fat[$text] = $res;
-            $data[$text] = $res;
+            if(!empty($results)){
+                foreach($results as $res){
+
+                    foreach($filters['merged_types'] as $type){
+                        $type = explode('__',$type);
+                        $value = $type[0];
+                        $type = $type[1];
     
-        }
-
-        $inter_labels = [
-            0 => 'No recorded actors',
-            1 => "State Forces",
-            2 => "Rebel Groups",
-            3 => "Political Militias",
-            4 => "Identity Militias",
-            5 => "Rioters",
-            6 => "Protesters",
-            7 => "Civilians",
-            8 => "External/Other Force"
-        ];
-
-        $data_actors = [];
-        foreach($filters['actors'] as $type){
-            $new_sql = [];
-            $conditions = [];
-  
-            $value_parts = explode('+', $type);
-            foreach ($value_parts as $part) {
-                $conditions[] = "inter1 = '{$part}'";
-                foreach($column_exists_arr as $column_exists){
-                    if(strpos($column_exists,$sql) !== false){
-                        $conditions[] = "inter2 = '{$part}'";
+                        if($type === 'disorder_type' && $res['disorder_type'] === $value){
+    
+                            if(isset( $agg[$res['disorder_type'] ][$res['sql_date']] )){
+                                $agg[$res['disorder_type']][$res['sql_date']]['fatalities_count'] += $res['fatalities_count'];
+                                $agg[$res['disorder_type']][$res['sql_date']]['events_count'] += $res['events_count'];
+                            }else{
+                                $agg[$res['disorder_type']][$res['sql_date']] = $res;
+                            }
+    
+                        }
+    
+    
+                        if($type === 'event_type' && $res['event_type'] === $value){
+    
+                            if(isset( $agg[$res['event_type'] ][$res['sql_date']] )){
+                                $agg[$res['event_type']][$res['sql_date']]['fatalities_count'] += $res['fatalities_count'];
+                                $agg[$res['event_type']][$res['sql_date']]['events_count'] += $res['events_count'];
+                            }else{
+                                $agg[$res['event_type']][$res['sql_date']] = $res;
+                            }
+    
+                        }
+    
+                        if($type === 'sub_event_type' && $res['sub_event_type'] === $value){
+    
+                            if(isset( $agg[$res['sub_event_type'] ][$res['sql_date']] )){
+                                $agg[$res['sub_event_type']][$res['sql_date']]['fatalities_count'] += $res['fatalities_count'];
+                                $agg[$res['sub_event_type']][$res['sql_date']]['events_count'] += $res['events_count'];
+                            }else{
+                                $agg[$res['sub_event_type']][$res['sql_date']] = $res;
+                            }
+    
+                        }
+    
+    
                     }
                 }
             }
-            $new_where = " AND (".implode(' OR ', $conditions).")";
 
-            foreach($sql_parts as $key => $sql){
-                $new_sql[]= $sql.' '.$new_where  . ' GROUP BY year_week';
+            $inter_text = 'inter1';
+            if($column_exists){
+                $inter_text = 'inter1,inter2';
             }
-            $query = "
-            SELECT *
-            FROM (
-                " . implode(' UNION ', $new_sql) . "
-            ) AS t ORDER BY week_start ASC
-            ";
 
-            $transient_key = md5($query);
+            $sql_actor = "SELECT 
+            COUNT(*) as events_count,
+            {$inter_text},
+            CASE 
+                WHEN '{$sql_type}' = 'YEARWEEK' THEN DATE_FORMAT(STR_TO_DATE(CONCAT(YEARWEEK(STR_TO_DATE(event_date, '$mysql_date_format')), ' Sunday'), '%X%V %W'), '%Y-%m-%d')
+                WHEN '{$sql_type}' = 'MONTH' THEN DATE_FORMAT(STR_TO_DATE(event_date, '$mysql_date_format'), '%Y-%m-01')
+                WHEN '{$sql_type}' = 'YEAR' THEN DATE_FORMAT(STR_TO_DATE(event_date, '$mysql_date_format'), '%Y-01-01')
+                ELSE DATE_FORMAT(STR_TO_DATE(event_date, '$mysql_date_format'), '%Y-%m-%d')
+            END as sql_date
+            FROM {$table_name} {$whereSQL} 
+            GROUP BY sql_date, {$inter_text}";
+
+
+            $transient_key = md5($sql_actor);
             $res = get_transient('wpdp_cache_'.$transient_key);
             if(empty($res) || WP_DATA_PRESENTATION_DISABLE_CACHE){
-                $res = $wpdb->get_results($query);
+                $results_actors = $wpdb->get_results($sql_actor, ARRAY_A);
                 set_transient('wpdp_cache_'.$transient_key, $res);
             }
 
-            $data_actors[$inter_labels[$type]] = $res;
+
+            if(!empty($results_actors)){
+                foreach($results_actors as $res){
+
+                    foreach($filters['actors'] as $value){
+    
+                        if( $res['inter1'] === $value || $res['inter2'] === $value ){
+                            $text_value = (isset($inter_labels[$value])) ? $inter_labels[$value] : $value;
+
+                            if(isset( $data_actors[$text_value] [$res['sql_date']] )){
+                                $data_actors[$text_value][$res['sql_date']]['events_count'] += $res['events_count'];
+                            }else{
+                                $data_actors[$text_value][$res['sql_date']] = $res;
+                            }
+    
+                        }
+    
+    
+                    }
+                }
+            }
+
+
         }
 
-
         return [
-            'data'=>$this->aggregate_data($data),
-            'data_fat'=>$this->aggregate_data($data_fat),
-            'data_actors'=>$this->aggregate_data($data_actors),
+            'data'=>$agg,
+            'data_fat'=>$agg,
+            'data_actors'=>$data_actors,
             'chart_sql'=>$chart_sql
         ];
+
     }
 
     public function get_text_and_conditions($type){
