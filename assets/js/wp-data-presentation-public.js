@@ -1378,7 +1378,7 @@
             response.data.latest_date = 0;
           }
 
-          self.chartInit(response.data.data,response.data.data_fat,response.data.data_actors,response.data.chart_sql,response.data.latest_date);
+          self.chartInit(response.data.data,response.data.data_fat,response.data.data_actors,response.data.chart_sql,response.data.intervals,response.data.latest_date);
           $('#wpdp-loader').hide();
 
           if(response.data.count == 0){
@@ -1391,7 +1391,7 @@
       });
     }
 
-    self.chartInit = function(data, data_fat, data_actors, chart_sql, latest_date) {
+    self.chartInit = function(data, data_fat, data_actors, chart_sql, intervals, latest_date) {
       var datasets = [];
       var datasets_fat = [];
       var datasets_actors = [];
@@ -1425,7 +1425,7 @@
           fill: false,
           data: [],
           count: [],
-          fat: []
+          fat: [],
         };
 
         for(let val in data[label]){
@@ -1571,7 +1571,7 @@
       let title_text_fat = title_text.replace('Events', 'Events by Fatalities');
       let title_text_actors = title_text.replace('Events', 'Events by Actors');
 
-      self.graphFun(ctx, datasets, title_text, chart_sql, false);
+      self.graphFun(ctx, datasets, title_text, chart_sql, intervals, false);
       self.graphFunBar(ctx_fat, datasets_fat, title_text_fat, chart_sql, true);
       self.graphFunBar(ctx_bar, datasets_actors, title_text_actors, chart_sql, false);
     }
@@ -1619,20 +1619,25 @@
     }
 
 
-    self.graphFun = function(ctx,datasets,title_text,chart_sql,is_fat){
+    self.graphFun = function(ctx,datasets,title_text,chart_sql,intervals,is_fat){
+
       var chartVar = 'myChart';
       if(is_fat){
         chartVar = 'myChartFat';
       }
+      
+      // Add check for mobile screen width
+      const isMobile = window.innerWidth <= 768;
+      const maxTicksLimit = isMobile ? 15 : 30;
+
       window[chartVar] = new Chart(ctx, {
         type: 'line',
         data: {datasets:datasets},
         options: {
           spanGaps: true,
           responsive: true,
-            maintainAspectRatio: false, // Changed to false
-            height: 400, // Explicit height
-
+          maintainAspectRatio: false, // Changed to false
+          height: 400, // Explicit height
           plugins: {
               title: {
                   display: true,
@@ -1644,6 +1649,10 @@
                 type: 'time',
                 time: {
                   unit: chart_sql,
+                },
+                ticks:{
+                  maxTicksLimit: maxTicksLimit, // Use dynamic value based on screen width
+                  stepSize: intervals 
                 }
               },
               y:{

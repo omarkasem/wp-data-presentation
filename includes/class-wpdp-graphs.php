@@ -366,41 +366,105 @@ final class WPDP_Graphs {
             $days = intval($diff->format('%a'));
 
             if($filters['timeframe'] != ''){
-                if($filters['timeframe'] == 'monthly'){
+                // Handle custom timeframe selection
+                if($filters['timeframe'] == 'yearly'){
+                    $sql_type = 'YEAR';
+                    $chart_sql = 'year';
+                    $interval = 1;
+                }
+                elseif($filters['timeframe'] == 'monthly'){
                     $sql_type = 'MONTH';
                     $chart_sql = 'month';
-                }elseif($filters['timeframe'] == 'weekly'){
+                    $interval = 1;
+                }
+                elseif($filters['timeframe'] == 'weekly'){
                     $sql_type = 'YEARWEEK';
                     $chart_sql = 'week';
-                }elseif($filters['timeframe'] == 'daily'){
+                    $interval = 1;
+                }
+                elseif($filters['timeframe'] == 'daily'){
+                // Auto timeframe based on date range
+                if($days <= 30) { // Up to 1 month
                     $sql_type = 'DAY';
                     $chart_sql = 'day';
-                }elseif($filters['timeframe'] == 'yearly'){
-                    $sql_type = 'YEAR';
-                    $chart_sql = 'year';
+                    $interval = 1;
                 }
-            }else{
-                if($days < 61){
-                    $sql_type = 'day';
+                elseif($days <= 60) { // Up to 2 months
+                    $sql_type = 'DAY';
                     $chart_sql = 'day';
-                }elseif($days >= 61 && $days < 369){
+                    $interval = 2;
+                }
+                elseif($days <= 90) { // Up to 3 months
+                    $sql_type = 'DAY';
+                    $chart_sql = 'day';
+                    $interval = 3;
+                }
+                elseif($days <= 150) { // Up to 5 months
+                    $sql_type = 'DAY';
+                    $chart_sql = 'day';
+                    $interval = 5;
+                }
+                elseif($days <= 180) { // Up to 6 months
+                    $sql_type = 'DAY';
+                    $chart_sql = 'day';
+                    $interval = 6;
+                }
+                elseif($days <= 210) { // Up to 7 months
+                    $sql_type = 'WEEK';
+                    $chart_sql = 'week';
+                    $interval = 1;
+                }
+                else { // More than 7 months
                     $sql_type = 'MONTH';
                     $chart_sql = 'month';
-                }elseif($days >= 370 && $days < 700){
+                    $interval = 1;
+                }
+                }
+            }else{
+                // Auto timeframe based on date range
+                if($days <= 30) { // Up to 1 month
+                    $sql_type = 'DAY';
+                    $chart_sql = 'day';
+                    $interval = 1;
+                }
+                elseif($days <= 60) { // Up to 2 months
+                    $sql_type = 'DAY';
+                    $chart_sql = 'day';
+                    $interval = 2;
+                }
+                elseif($days <= 90) { // Up to 3 months
+                    $sql_type = 'DAY';
+                    $chart_sql = 'day';
+                    $interval = 3;
+                }
+                elseif($days <= 150) { // Up to 5 months
+                    $sql_type = 'DAY';
+                    $chart_sql = 'day';
+                    $interval = 5;
+                }
+                elseif($days <= 180) { // Up to 6 months
+                    $sql_type = 'DAY';
+                    $chart_sql = 'day';
+                    $interval = 6;
+                }
+                elseif($days <= 210) { // Up to 7 months
+                    $sql_type = 'WEEK';
+                    $chart_sql = 'week';
+                    $interval = 1;
+                }
+                else { // More than 7 months
                     $sql_type = 'MONTH';
-                    $chart_sql = 'quarter';
-                }else{
-                    $sql_type = 'YEAR';
-                    $chart_sql = 'year';
+                    $chart_sql = 'month';
+                    $interval = 1;
                 }
             }
-
         }
 
-        return [
-            'sql_type'=>$sql_type,
-            'chart_sql'=>$chart_sql
-        ];
+        return array(
+            'sql_type' => $sql_type,
+            'chart_sql' => $chart_sql,
+            'interval' => $interval,
+        );
     }
 
     public function get_data($filters,$types) {
@@ -419,9 +483,10 @@ final class WPDP_Graphs {
         $latest_date = null;
         
         $all_filters = WPDP_Shortcode::get_filters();
-        $sql_type = $this->get_sql_type($filters, $all_filters);
-        $chart_sql = $sql_type['chart_sql'];
-        $sql_type = $sql_type['sql_type'];
+        $sql_type_info = $this->get_sql_type($filters, $all_filters);
+        $chart_sql = $sql_type_info['chart_sql'];
+        $sql_type = $sql_type_info['sql_type'];
+        $intervals = $sql_type_info['interval'];
         
         $column_exists_arr = [];
    
@@ -566,7 +631,7 @@ final class WPDP_Graphs {
 
                     foreach($filters['actors'] as $value){
     
-                        if( $res['inter1'] === $value || $res['inter2'] === $value ){
+                        if( $res['inter1'] === $value || (isset($res['inter2']) && $res['inter2'] === $value) ){
                             $text_value = (isset($inter_labels[$value])) ? $inter_labels[$value] : $value;
 
                             if(isset( $data_actors[$text_value] [$res['sql_date']] )){
@@ -588,7 +653,8 @@ final class WPDP_Graphs {
             'data'=>$agg,
             'data_fat'=>$agg,
             'data_actors'=>$data_actors,
-            'chart_sql'=>$chart_sql,
+            'chart_sql' => $chart_sql,
+            'intervals' => $intervals,
             'latest_date'=>date('jS M Y', strtotime($latest_date))
         ];
 
