@@ -248,8 +248,8 @@
         }
 
         // Set the datepicker values
-        $('#wpdp_from').datepicker('setDate', defaultFromDate);
-        $('#wpdp_to').datepicker('setDate', maxDate);
+        $('#wpdp_from').datepicker('setDate', defaultFromDate).addClass('changed');
+        $('#wpdp_to').datepicker('setDate', maxDate).addClass('changed');
 
         // First uncheck all checkboxes
         $(this).find('input[type="checkbox"]').prop('checked', false);
@@ -306,7 +306,9 @@
 
       // Selected country hidden field
       $(document).on('change', 'input[name="wpdp_country"]:radio', function() {
-        $('input[name="wpdp_search_location_country"]').val($(this).val());
+        let val = $(this).val().split('__')[0];
+        
+        $('input[name="wpdp_search_location_country"]').val(val);
       });
 
       // View countries button
@@ -1318,7 +1320,8 @@
             Object.keys(response.data.data_actors[key]).some(date => response.data.data_actors[key][date].events_count > 0)
           );
 
-
+          
+          
           // Check if toYear falls in the last month
           const toYearDate = new Date(toYear);
           const currentDate = new Date();
@@ -1326,7 +1329,7 @@
           oneMonthAgo.setMonth(currentDate.getMonth() - 1);
           const daysDifference = Math.floor((currentDate - toYearDate) / (1000 * 60 * 60 * 24));
           const isInLastMonth = toYearDate >= oneMonthAgo && toYearDate <= currentDate;
-
+          
           // Hide loader
           $('#wpdp-loader').hide();
 
@@ -1338,8 +1341,9 @@
             $('#wpdp_chart').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
             
             if(isInLastMonth){
-              console.log('fgg');
+              setTimeout(() => {
                 $('.last_updated_chart.chart').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
+              }, 500);
             }
 
             $('.no-chart-data-message').remove();
@@ -1353,7 +1357,9 @@
             $('#wpdp_chart_fat').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
 
             if(isInLastMonth){
-              $('.last_updated_chart.chart_fat').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
+              setTimeout(() => {
+                $('.last_updated_chart.chart_fat').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
+              }, 500);
             }
 
 
@@ -1368,7 +1374,9 @@
             $('#wpdp_chart_bar_chart').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
 
             if(isInLastMonth){
-              $('.last_updated_chart.chart_bar').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
+              setTimeout(() => {
+                $('.last_updated_chart.chart_bar').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
+              }, 500);
             }
 
             $('.no-actors-data-message').remove();
@@ -1568,9 +1576,9 @@
       let ctx = document.getElementById('wpdp_chart').getContext('2d');
       let ctx_fat = document.getElementById('wpdp_chart_fat').getContext('2d');
       let ctx_bar = document.getElementById('wpdp_chart_bar_chart').getContext('2d');
-      let title_text_fat = title_text.replace('Events', 'Events by Fatalities');
-      let title_text_actors = title_text.replace('Events', 'Events by Actors');
-      console.log(datasets);
+      let title_text_fat = title_text.replace('Events', 'Fatalities by Events');
+      let title_text_actors = title_text.replace('Events', 'Type of Actors by Events');
+
       self.graphFun(ctx, datasets, title_text, chart_sql, intervals, false);
       self.graphFunBar(ctx_fat, datasets_fat, title_text_fat,intervals, chart_sql, true);
       self.graphFunBar(ctx_bar, datasets_actors, title_text_actors,intervals, chart_sql, false);
@@ -1701,18 +1709,24 @@
         type: 'POST',
         success: function(response) {
           $('#wpdp-loader').hide();
-          const eventCounts = response.data.data.map(country => country.events_count);
-          const sortedCounts = [...eventCounts].sort((a, b) => b - a);
           
-          // Calculate thresholds using quartiles instead of fixed positions
-          const highThreshold = sortedCounts[Math.floor(sortedCounts.length * 0.75)]; // 75th percentile
-          const mediumThreshold = sortedCounts[Math.floor(sortedCounts.length * 0.25)]; // 25th percentile
+          // Filter out countries with 0 events and sort by event count
+          const sortedCountries = [...response.data.data]
+            .filter(country => country.events_count > 0)
+            .sort((a, b) => b.events_count - a.events_count);
           
+          // Calculate thresholds based on the data distribution
+          const maxEvents = sortedCountries[0] ? sortedCountries[0].events_count : 0;
           const thresholds = {
-            LARGE: highThreshold || 0,
-            MEDIUM: mediumThreshold || 0
+            LARGE: Math.round(maxEvents * 0.4), // Countries with more than 40% of max are "high"
+            MEDIUM: Math.round(maxEvents * 0.1)  // Countries with more than 10% of max are "medium"
           };
 
+          // Ensure minimum thresholds
+          if (maxEvents > 100) {
+            thresholds.MEDIUM = Math.max(thresholds.MEDIUM, 50);  // At least 50 events for medium
+            thresholds.LARGE = Math.max(thresholds.LARGE, 150);   // At least 150 events for high
+          }
 
           // Add fixed info panel to map
           const infoPanel = document.createElement('div');

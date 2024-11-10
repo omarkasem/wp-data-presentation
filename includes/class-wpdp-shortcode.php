@@ -722,7 +722,7 @@ final class WPDP_Shortcode {
                     <div class="grp actors">
 
                         <div class="title">
-                            ACTORS <span class="dashicons dashicons-arrow-down-alt2"></span>
+                        Types of Actors <span class="dashicons dashicons-arrow-down-alt2"></span>
                         </div>
                         <div class="content">
 
@@ -957,7 +957,7 @@ final class WPDP_Shortcode {
                 $is_checked = 'checked="checked"';
             }
 
-            $html .= '<li class="expandable '.($class == 'wpdp_fat' && $first == 1 ? 'expanded' : '').'">';
+            $html .= '<li class="expandable">';
             $html .= '<input class="wpdp_filter_checkbox '.$class.'" type="checkbox" name="'.$checkbox_name.'" value="'.$checkbox_value.'" '.$is_checked.'>';
             $html .= '<div class="exp_click"><span>' . $item['text'] . '</span><span class="dashicons arrow dashicons-arrow-down-alt2"></span></div>';
             
