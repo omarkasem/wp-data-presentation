@@ -436,9 +436,9 @@ final class WPDP_Metabox {
         $table_name = $wpdb->prefix. 'wpdp_data_'.$post_id;
 
         if($use_posted_data){
-            $import_file = $_POST['acf']['field_657aa840cb9c5'];
-            $acled_url = $_POST['acf']['field_66a2ceaad7f51'];
-            $excel_file = $_POST['acf']['field_657aa818cb9c4'];
+            $import_file = (isset($_POST['acf']['field_657aa840cb9c5'])) ? $_POST['acf']['field_657aa840cb9c5'] : '';
+            $acled_url = (isset($_POST['acf']['field_66a2ceaad7f51'])) ? $_POST['acf']['field_66a2ceaad7f51'] : '';
+            $excel_file = (isset($_POST['acf']['field_657aa818cb9c4'])) ? $_POST['acf']['field_657aa818cb9c4'] : '';
         }else{
             $import_file = get_field('import_file',$post_id);
             $acled_url = get_field('acled_url',$post_id);

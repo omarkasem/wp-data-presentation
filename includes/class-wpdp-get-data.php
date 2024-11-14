@@ -138,13 +138,41 @@ class WPDP_Db_Table {
 
     private function merge_tables($temp_table_name) {
         global $wpdb;
-        $wpdb->query("
-            INSERT INTO {$this->table_name}
-            SELECT t.*
-            FROM {$temp_table_name} t
-            LEFT JOIN {$this->table_name} m ON t.event_id_cnty = m.event_id_cnty
-            WHERE m.event_id_cnty IS NULL
-        ");
+        
+        try {
+            // Set longer timeout for large datasets
+            set_time_limit(300); // 5 minutes
+            
+            // First, insert new records
+            $insert_result = $wpdb->query("
+                INSERT INTO {$this->table_name}
+                SELECT t.*
+                FROM {$temp_table_name} t
+                LEFT JOIN {$this->table_name} m ON t.event_id_cnty = m.event_id_cnty
+                WHERE m.event_id_cnty IS NULL
+            ");
+
+            // Then, update only fatalities, inter1, and inter2 when they've changed
+            $update_result = $wpdb->query("
+                UPDATE {$this->table_name} m
+                INNER JOIN {$temp_table_name} t ON m.event_id_cnty = t.event_id_cnty
+                SET 
+                    m.fatalities = COALESCE(t.fatalities, 0),
+                    m.inter1 = COALESCE(t.inter1, 0),
+                    m.inter2 = COALESCE(t.inter2, 0)
+                WHERE COALESCE(t.fatalities, 0) != COALESCE(m.fatalities, 0)
+                   OR COALESCE(t.inter1, 0) != COALESCE(m.inter1, 0)
+                   OR COALESCE(t.inter2, 0) != COALESCE(m.inter2, 0)
+            ");
+
+            return [
+                'inserted' => $insert_result,
+                'updated' => $update_result
+            ];
+        } catch (Exception $e) {
+            error_log("Error merging tables: " . $e->getMessage());
+            return false;
+        }
     }
 
     /**
