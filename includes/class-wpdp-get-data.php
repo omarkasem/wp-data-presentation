@@ -152,17 +152,21 @@ class WPDP_Db_Table {
                 WHERE m.event_id_cnty IS NULL
             ");
 
-            // Then, update only fatalities, inter1, and inter2 when they've changed
+            // Then, update fatalities, inter1, inter2, actor1, and actor2 when they've changed
             $update_result = $wpdb->query("
                 UPDATE {$this->table_name} m
                 INNER JOIN {$temp_table_name} t ON m.event_id_cnty = t.event_id_cnty
                 SET 
                     m.fatalities = COALESCE(t.fatalities, 0),
                     m.inter1 = COALESCE(t.inter1, 0),
-                    m.inter2 = COALESCE(t.inter2, 0)
+                    m.inter2 = COALESCE(t.inter2, 0),
+                    m.actor1 = t.actor1,
+                    m.actor2 = t.actor2
                 WHERE COALESCE(t.fatalities, 0) != COALESCE(m.fatalities, 0)
                    OR COALESCE(t.inter1, 0) != COALESCE(m.inter1, 0)
                    OR COALESCE(t.inter2, 0) != COALESCE(m.inter2, 0)
+                   OR IFNULL(t.actor1, '') != IFNULL(m.actor1, '')
+                   OR IFNULL(t.actor2, '') != IFNULL(m.actor2, '')
             ");
 
             return [

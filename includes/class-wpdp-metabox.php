@@ -449,6 +449,11 @@ final class WPDP_Metabox {
             $file_path = get_attached_file($excel_file);
         }else{
             $url = $acled_url;
+            $event_date = date('Y-m-d', strtotime('-1 month'));
+            $url = remove_query_arg('event_date_where', $url);
+            $url = add_query_arg('event_date', $event_date, $url);
+            $url = add_query_arg('event_date_where', '>', $url);
+
             $file_path = download_url($url);
             if (is_wp_error($file_path)) {
                 $error_message = $file_path->get_error_message();
