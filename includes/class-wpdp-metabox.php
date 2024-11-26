@@ -80,10 +80,41 @@ final class WPDP_Metabox {
         // Add new hook for file upload
         add_filter('upload_mimes', array($this, 'add_custom_mime_types'));
       
-
-
+        add_action('rest_api_init', array($this, 'register_cron_endpoint'));
 
     }
+
+
+    /**
+     * Register REST API endpoint for cron updates
+     */
+    public function register_cron_endpoint() {
+        register_rest_route('wpdp/v1', '/update-acled', array(
+            'methods' => 'GET',
+            'callback' => array($this, 'handle_cron_request'),
+            'permission_callback' => array($this, 'verify_cron_key')
+        ));
+    }
+
+    /**
+     * Verify security key for cron requests
+     */
+    public function verify_cron_key($request) {
+        $security_key = $request->get_param('security_key');
+        $valid_key = 'wpdp_acled_2024_RPOzXuBpfp'; // Your secure key here
+        
+        return !empty($valid_key) && $security_key === $valid_key;
+    }
+
+    /**
+     * Handle the cron request
+     */
+    public function handle_cron_request($request) {
+        $this->update_acled_presentations();
+        return new WP_REST_Response(array('status' => 'success', 'message' => 'ACLED presentations updated'), 200);
+    }
+
+
 
     function de_acf_free(){
         if ( ! function_exists( 'is_plugin_active' ) ) {
@@ -629,11 +660,17 @@ final class WPDP_Metabox {
         if(get_field('import_file',$post_id) == '' || get_field('import_file',$post_id) === 'Upload'){
             return;
         }
+
+        $url = get_field('acled_url',$post_id);
+        $event_date = date('Y-m-d', strtotime('-1 month'));
+        $url = remove_query_arg('event_date_where', $url);
+        $url = add_query_arg('event_date', $event_date, $url);
+        $url = add_query_arg('event_date_where', '>', $url);
         echo '
             <div class="wpdp_last_updated">
                 <h3>'.date('d-m-Y H:i:s',get_post_meta($post_id,'wpdp_last_updated_date',true)).'</h3>
                 <a href="'.get_post_meta($post_id,'wpdp_last_file_url',true).'" target="_blank" class="button button-primary">Local Server Copy</a>
-                <a href="'.get_field('acled_url',$post_id).'" target="_blank" class="button button-secondary">ACLED Copy</a>
+                <a href="'.$url.'" target="_blank" class="button button-secondary">ACLED Copy</a>
             </div>
         ';
     }

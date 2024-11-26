@@ -187,6 +187,7 @@ final class WPDP_Maps {
 
     function enqueue_scripts() {
         wp_register_script(WP_DATA_PRESENTATION_NAME.'google-maps-api', 'https://maps.googleapis.com/maps/api/js?key='.get_field('google_maps_api_key','option').'&callback=wpdp_map&loading=async&libraries=marker', array(), null, true);
+        wp_register_script(WP_DATA_PRESENTATION_NAME.'moment', WP_DATA_PRESENTATION_URL.'assets/js/moment.min.js', array('jquery'), WP_DATA_PRESENTATION_VERSION, true);
 
         
         wp_register_script(WP_DATA_PRESENTATION_NAME.'google-maps-cluster',WP_DATA_PRESENTATION_URL. 'assets/js/markerclustererplus.js', array(), null, true);
@@ -505,6 +506,7 @@ final class WPDP_Maps {
     public static function shortcode_output($atts){
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'google-maps-cluster');
         wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'google-maps-api');
+        wp_enqueue_script(WP_DATA_PRESENTATION_NAME.'moment');
     ?>
         <div class="wpdp_filter_content maps">
             <div <?php if(WPDP_Shortcode::get_instance()->search_location_country == '' ){ echo 'style="display:none;"'; } ?> id="wpdp_map"></div>

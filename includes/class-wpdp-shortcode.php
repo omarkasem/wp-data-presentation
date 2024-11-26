@@ -834,11 +834,12 @@ final class WPDP_Shortcode {
                             <div class="dates">
                                 <label for="wpdp_from">FROM</label>
                                 <input value="<?php 
+                                    $last_date = end($filters['years']);
                                     if (empty($this->get_session_value('wpdp_from'))) {
                                         if('map' === $atts['type']){
-                                            echo date('d F Y', strtotime('-30 days'));
+                                            echo date('d F Y', strtotime('-30 days', strtotime($last_date)));
                                         }else{
-                                            echo date('d F Y', strtotime('-1 year'));
+                                            echo date('d F Y', strtotime('-1 year', strtotime($last_date)));
                                         }
                                     } else {
                                         echo $this->get_session_value('wpdp_from', $this->get_from_date_value($filters, $atts));
@@ -849,12 +850,19 @@ final class WPDP_Shortcode {
                                 <label style="margin-right: 23px;" for="wpdp_to">TO</label>
                                 <input value="<?php 
                                     if (empty($this->get_session_value('wpdp_to'))) {
-                                        echo date('d F Y');
+                                        echo date('d F Y', strtotime($last_date));
                                     } else {
                                         echo $this->get_session_value('wpdp_to', $this->get_to_date_value($filters, $atts));
                                     }
                                 ?>" type="text" name="wpdp_to" id="wpdp_to">
                             </div>
+
+
+                            <div class="date-info">
+                                <span>Last data entry: <?php echo date('d F Y', strtotime($last_date)); ?></span>
+                                <?php echo self::info_icon('The last data entry from all available data in the database is '.date('d F Y', strtotime($last_date)).'.',' position: relative;top: 3px;right: 0;'); ?>
+                            </div>
+
                             <?php if ('graph' === $atts['type'] || '' == $atts['type']) {?>
                             <div class="dates">
                                 <label for="wpdp_date_timeframe">Timeframe</label>

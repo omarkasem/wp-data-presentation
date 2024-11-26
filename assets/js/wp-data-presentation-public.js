@@ -781,6 +781,16 @@
         // imagePath: wpdp_obj.url+'assets/images/m'
       });
 
+
+      // Date info panel
+      const datePanel = document.createElement('div');
+      datePanel.id = 'map-date-panel';
+      var formattedFromYear = moment(fromYear).format('Do MMM YYYY');
+      var formattedToYear = moment(toYear).format('Do MMM YYYY');
+      var date_text = 'Events in '+($('input[name="wpdp_search_location_country"]').length > 0 ? $('input[name="wpdp_search_location_country"]').val() : 'all ICGLR Member States')+' from ' + formattedFromYear + ' to ' + formattedToYear;
+      datePanel.innerHTML = '<p class="default-text">' + date_text + '</p>';
+      document.getElementById('wpdp_map').appendChild(datePanel);
+
     },
 
     self.dataTables = function(){
@@ -1312,8 +1322,8 @@
             Object.keys(response.data.data[key]).some(date => response.data.data[key][date].events_count > 0)
           );
           
-          const hasFatalityData = Object.keys(response.data.data_fat).some(key =>
-            Object.keys(response.data.data_fat[key]).some(date => response.data.data_fat[key][date].events_count > 0)
+          const hasFatalityData = Object.keys(response.data.data).some(key =>
+            Object.keys(response.data.data[key]).some(date => response.data.data[key][date].fatalities_count > 0)
           );
           
           const hasActorData = Object.keys(response.data.data_actors).some(key =>
@@ -1327,9 +1337,8 @@
           const currentDate = new Date();
           const oneMonthAgo = new Date();
           oneMonthAgo.setMonth(currentDate.getMonth() - 1);
-          const daysDifference = Math.floor((currentDate - toYearDate) / (1000 * 60 * 60 * 24));
           const isInLastMonth = toYearDate >= oneMonthAgo && toYearDate <= currentDate;
-          
+
           // Hide loader
           $('#wpdp-loader').hide();
 
@@ -1344,6 +1353,8 @@
               setTimeout(() => {
                 $('.last_updated_chart.chart').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
               }, 500);
+            }else{
+              $('.last_updated_chart.chart').removeClass('wpdp_force_show').addClass('wpdp_force_hide');
             }
 
             $('.no-chart-data-message').remove();
@@ -1360,6 +1371,8 @@
               setTimeout(() => {
                 $('.last_updated_chart.chart_fat').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
               }, 500);
+            }else{
+              $('.last_updated_chart.chart_fat').removeClass('wpdp_force_show').addClass('wpdp_force_hide');
             }
 
 
@@ -1377,6 +1390,8 @@
               setTimeout(() => {
                 $('.last_updated_chart.chart_bar').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
               }, 500);
+            }else{
+              $('.last_updated_chart.chart_bar').removeClass('wpdp_force_show').addClass('wpdp_force_hide');
             }
 
             $('.no-actors-data-message').remove();
@@ -1386,7 +1401,7 @@
             response.data.latest_date = 0;
           }
 
-          self.chartInit(response.data.data,response.data.data_fat,response.data.data_actors,response.data.chart_sql,response.data.intervals,response.data.latest_date);
+          self.chartInit(response.data.data,response.data.data_actors,response.data.chart_sql,response.data.intervals,response.data.latest_date);
           $('#wpdp-loader').hide();
 
           if(response.data.count == 0){
@@ -1399,7 +1414,8 @@
       });
     }
 
-    self.chartInit = function(data, data_fat, data_actors, chart_sql, intervals, latest_date) {
+    self.chartInit = function(data, data_actors, chart_sql, intervals, latest_date) {
+      console.log(data);
       var datasets = [];
       var datasets_fat = [];
       var datasets_actors = [];
@@ -1468,7 +1484,7 @@
       }
 
       i =0;
-      for(let label in data_fat){ i++;
+      for(let label in data){ i++;
         let dataset_fat = {
           label:label,
           borderColor: colors[i],
@@ -1478,10 +1494,10 @@
           fat:[],
         };
 
-        for(let val in data_fat[label]){
+        for(let val in data[label]){
           dataset_fat.data.push({
             x: val, 
-            y: data_fat[label][val].events_count
+            y: data[label][val].fatalities_count
           });
         }
 
@@ -1731,21 +1747,16 @@
           // Add fixed info panel to map
           const infoPanel = document.createElement('div');
           infoPanel.id = 'map-info-panel';
-          infoPanel.style.cssText = `
-            position: absolute;
-            bottom: 40px;
-            right: 310px;
-            background: white;
-            padding: 15px;
-            border-radius: 4px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-            min-width: 200px;
-            z-index: 1;
-            display: none;
-          `;
-          
-          // Add default content
           infoPanel.innerHTML = '<p class="default-text">Hover over a country to see details</p>';
+          
+          // Date info panel
+          const datePanel = document.createElement('div');
+          datePanel.id = 'map-date-panel';
+          var formattedFromYear = moment(fromYear).format('Do MMM YYYY');
+          var formattedToYear = moment(toYear).format('Do MMM YYYY');
+          var date_text = 'Events in all ICGLR Member States from ' + formattedFromYear + ' to ' + formattedToYear;
+          datePanel.innerHTML = '<p class="default-text">' + date_text + '</p>';
+
           
           self.poly_map = new google.maps.Map(document.getElementById('polygons_map'), {
             zoom: 5.5,
@@ -1754,6 +1765,7 @@
           });
           // Change how we add the info panel to the map
           document.getElementById('polygons_map').appendChild(infoPanel);
+          document.getElementById('polygons_map').appendChild(datePanel);
 
           // Set default styling for all features
           self.poly_map.data.setStyle({

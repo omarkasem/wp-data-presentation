@@ -58,37 +58,6 @@ final class WPDP_Graphs {
         add_action('init',array($this,'clear_cache'));
 
 
-        if(isset($_GET['test566'])){
-            var_dump(get_option('test566'));exit;
-            $agg= [];
-            foreach(get_option('test566') as $res){
-                if(isset( $agg[$res['disorder_type'] ][$res['sql_date']] )){
-                    $agg[$res['disorder_type']][$res['sql_date']]['fatalities_count'] += $res['fatalities_count'];
-                    $agg[$res['disorder_type']][$res['sql_date']]['events_count'] += $res['events_count'];
-                }else{
-                    $agg[$res['disorder_type']][$res['sql_date']] = $res;
-                }
-
-
-                if(isset( $agg[$res['event_type'] ][$res['sql_date']] )){
-                    $agg[$res['event_type']][$res['sql_date']]['fatalities_count'] += $res['fatalities_count'];
-                    $agg[$res['event_type']][$res['sql_date']]['events_count'] += $res['events_count'];
-                }else{
-                    $agg[$res['event_type']][$res['sql_date']] = $res;
-                }
-
-                if(isset( $agg[$res['sub_event_type'] ][$res['sql_date']] )){
-                    $agg[$res['sub_event_type']][$res['sql_date']]['fatalities_count'] += $res['fatalities_count'];
-                    $agg[$res['sub_event_type']][$res['sql_date']]['events_count'] += $res['events_count'];
-                }else{
-                    $agg[$res['sub_event_type']][$res['sql_date']] = $res;
-                }
-
-            }
-
-            var_dump($agg);exit;
-        }
-
     }
 
     public function clear_cache(){
@@ -570,10 +539,10 @@ final class WPDP_Graphs {
             ";
 
             $transient_key = md5($sql);
-            $res = get_transient('wpdp_cache_'.$transient_key);
-            if(empty($res) || WP_DATA_PRESENTATION_DISABLE_CACHE){
+            $results = get_transient('wpdp_cache_'.$transient_key);
+            if(empty($results) || WP_DATA_PRESENTATION_DISABLE_CACHE){
                 $results = $wpdb->get_results($sql, ARRAY_A);
-                set_transient('wpdp_cache_'.$transient_key, $res);
+                set_transient('wpdp_cache_'.$transient_key, $results);
             }
 
             if(!empty($results)){
@@ -646,10 +615,10 @@ final class WPDP_Graphs {
 
 
             $transient_key = md5($sql_actor);
-            $res = get_transient('wpdp_cache_'.$transient_key);
-            if(empty($res) || WP_DATA_PRESENTATION_DISABLE_CACHE){
+            $results_actors = get_transient('wpdp_cache_'.$transient_key);
+            if(empty($results_actors) || WP_DATA_PRESENTATION_DISABLE_CACHE){
                 $results_actors = $wpdb->get_results($sql_actor, ARRAY_A);
-                set_transient('wpdp_cache_'.$transient_key, $res);
+                set_transient('wpdp_cache_'.$transient_key, $results_actors);
             }
 
             if(!empty($results_actors)){
@@ -684,7 +653,6 @@ final class WPDP_Graphs {
 
         return [
             'data'=>$agg,
-            'data_fat'=>$agg,
             'data_actors'=>$data_actors,
             'chart_sql' => $chart_sql,
             'intervals' => $intervals,

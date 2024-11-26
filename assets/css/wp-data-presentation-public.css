@@ -497,6 +497,36 @@ a.select_unselect_all {
   clear:both;
 }
 
+.wpdp #map-info-panel{
+  position: absolute;
+  bottom: 40px;
+  right: 310px;
+  background: white;
+  padding: 15px;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  min-width: 200px;
+  z-index: 2;
+  display: none;
+}
+
+.wpdp #map-date-panel{
+  position: absolute;
+  bottom: 40px;
+  right: 310px;
+  background: #fff1f1;
+  padding: 15px;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  min-width: 200px;
+  z-index: 1;
+  display:block;
+}
+
+.wpdp #map-date-panel p{
+  margin:0;
+}
+
 @media only screen and (max-width: 600px) {
 	#wpdp_datatable_wrapper{
 		overflow-x: auto;
