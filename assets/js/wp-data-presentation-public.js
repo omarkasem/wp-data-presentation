@@ -322,7 +322,7 @@
     self.datePicker = function(){
 
       var minDate = new Date(wpdp_filter_dates[0]); 
-      var maxDate = new Date();
+      var maxDate = new Date(wpdp_filter_dates[wpdp_filter_dates.length - 1]);
 
       $('#wpdp_from').datepicker({
         minDate: minDate,
@@ -1397,11 +1397,13 @@
             $('.no-actors-data-message').remove();
           }
 
+          var latest_date = moment(wpdp_filter_dates[wpdp_filter_dates.length - 1]).format('Do MMM YYYY');
+
           if(!isInLastMonth){
-            response.data.latest_date = 0;
+            latest_date = 0;
           }
 
-          self.chartInit(response.data.data,response.data.data_actors,response.data.chart_sql,response.data.intervals,response.data.latest_date);
+          self.chartInit(response.data.data,response.data.data_actors,response.data.chart_sql,response.data.intervals,latest_date);
           $('#wpdp-loader').hide();
 
           if(response.data.count == 0){
@@ -1415,7 +1417,6 @@
     }
 
     self.chartInit = function(data, data_actors, chart_sql, intervals, latest_date) {
-      console.log(data);
       var datasets = [];
       var datasets_fat = [];
       var datasets_actors = [];
@@ -1525,7 +1526,12 @@
           touch: true,
           content: 'This date is the last data entry for this chart, according to the filters set. The last data entry from all available data in the database is: ' + latest_date
         });
-        $('.last_updated_chart_date').text(moment(datasets[0].data[datasets[0].data.length-1].x).format('Do MMM YYYY'));
+
+        $('.last_updated_chart_date').text(
+          moment($('#wpdp_to').val(), "DD MMMM YYYY").format('Do MMM YYYY')
+        );
+
+
       }
 
       if (datasets_fat && datasets_fat[0] && datasets_fat[0].data.length > 0 && latest_date != 0) {
@@ -1535,7 +1541,9 @@
           touch: true,
           content: 'This date is the last data entry for this chart, according to the filters set. The last data entry from all available data in the database is: ' + latest_date
         });
-        $('.last_updated_chart_date_fat').text(moment(datasets_fat[0].data[datasets_fat[0].data.length-1].x).format('Do MMM YYYY'));
+        $('.last_updated_chart_date_fat').text(
+          moment($('#wpdp_to').val(), "DD MMMM YYYY").format('Do MMM YYYY')
+        );
       }
 
       if (datasets_actors && datasets_actors[0] && datasets_actors[0].data.length > 0 && latest_date != 0) {
@@ -1545,7 +1553,11 @@
           touch: true,
           content: 'This date is the last data entry for this chart, according to the filters set. The last data entry from all available data in the database is: ' + latest_date
         });
-        $('.last_updated_chart_date_bar').text(moment(datasets_actors[0].data[datasets_actors[0].data.length-1].x).format('Do MMM YYYY'));
+
+        $('.last_updated_chart_date_bar').text(
+          moment($('#wpdp_to').val(), "DD MMMM YYYY").format('Do MMM YYYY')
+        );
+
       }
 
 
@@ -1627,6 +1639,23 @@
                   display: true,
                   text: title_text
               },
+              tooltip: {
+                callbacks: {
+                  title: function(context) {
+                    return moment(context[0].parsed.x).format('MMM D YYYY');
+                  },
+                  label: function(context) {
+                    let label = context.dataset.label || '';
+                    if (label) {
+                      label += ': ';
+                    }
+                    if (context.parsed.y !== null && is_fat) {
+                      label += context.parsed.y + ' Fatalities';
+                    }
+                    return label;
+                  }
+                }
+              }
           },
           scales: {
               x: {
@@ -1677,6 +1706,23 @@
                   display: true,
                   text: title_text
               },
+              tooltip: {
+                callbacks: {
+                  title: function(context) {
+                    return moment(context[0].parsed.x).format('MMM D YYYY');
+                  },
+                  label: function(context) {
+                    let label = context.dataset.label || '';
+                    if (label) {
+                      label += ': ';
+                    }
+                    if (context.parsed.y !== null) {
+                      label += context.parsed.y + ' Events';
+                    }
+                    return label;
+                  }
+                }
+              }
           },
           scales: {
               x: {

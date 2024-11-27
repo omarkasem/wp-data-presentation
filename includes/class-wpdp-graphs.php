@@ -470,7 +470,6 @@ final class WPDP_Graphs {
 
         global $wpdb;
         $agg = [];
-        $latest_date = null;
         
         $all_filters = WPDP_Shortcode::get_filters();
         $sql_type_info = $this->get_sql_type($filters, $all_filters);
@@ -510,15 +509,6 @@ final class WPDP_Graphs {
             $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'inter2'");
             $actor_column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_name} LIKE 'actor2'");
             $whereSQL = $this->build_where_clause($filters, $date_format, $column_exists,$actor_column_exists);
-
-            $current_latest_date = $wpdb->get_var("
-                SELECT MAX(STR_TO_DATE(event_date, '$mysql_date_format')) 
-                FROM $table_name
-            ");
-            
-            if ($latest_date === null || strtotime($current_latest_date) > strtotime($latest_date)) {
-                $latest_date = $current_latest_date;
-            }
 
 
             $sql = "SELECT 
@@ -656,7 +646,6 @@ final class WPDP_Graphs {
             'data_actors'=>$data_actors,
             'chart_sql' => $chart_sql,
             'intervals' => $intervals,
-            'latest_date'=>date('jS M Y', strtotime($latest_date))
         ];
 
     }
@@ -699,13 +688,13 @@ final class WPDP_Graphs {
     ?>
     <div class="wpdp_filter_content table-responsive">
         <canvas id="wpdp_chart" style="height:400px" class="table"  ></canvas>
-        <div class="last_updated_chart chart">Last data entry: <span class="last_updated_chart_date"></span> <?php echo $shortcode::info_icon(''); ?></div>
+        <div class="last_updated_chart chart">Last relevant data entry: <span class="last_updated_chart_date"></span> <?php echo $shortcode::info_icon(''); ?></div>
         <hr>
         <canvas id="wpdp_chart_fat" style="height:400px" class="table"  ></canvas>
-        <div class="last_updated_chart chart_fat">Last data entry: <span class="last_updated_chart_date"></span> <?php echo $shortcode::info_icon(''); ?></div>
+        <div class="last_updated_chart chart_fat">Last relevant data entry: <span class="last_updated_chart_date"></span> <?php echo $shortcode::info_icon(''); ?></div>
         <hr>
         <canvas id="wpdp_chart_bar_chart" style="height:400px" class="table"  ></canvas>
-        <div class="last_updated_chart chart_bar">Last data entry: <span class="last_updated_chart_date"></span> <?php echo $shortcode::info_icon(''); ?></div>
+        <div class="last_updated_chart chart_bar">Last relevant data entry: <span class="last_updated_chart_date"></span> <?php echo $shortcode::info_icon(''); ?></div>
     </div>
     <?php }
 

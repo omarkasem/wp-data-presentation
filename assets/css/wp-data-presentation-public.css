@@ -499,7 +499,7 @@ a.select_unselect_all {
 
 .wpdp #map-info-panel{
   position: absolute;
-  bottom: 40px;
+  bottom: 30px;
   right: 310px;
   background: white;
   padding: 15px;
@@ -512,10 +512,12 @@ a.select_unselect_all {
 
 .wpdp #map-date-panel{
   position: absolute;
-  bottom: 40px;
+  bottom: 30px;
   right: 310px;
-  background: #fff1f1;
-  padding: 15px;
+  font-size: 13px;
+  font-weight: 900;
+  padding: 10px 14px;
+  background-color: #FFFFFF;
   border-radius: 4px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
   min-width: 200px;
