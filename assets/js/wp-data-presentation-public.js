@@ -1403,7 +1403,7 @@
             latest_date = 0;
           }
 
-          self.chartInit(response.data.data,response.data.data_actors,response.data.chart_sql,response.data.intervals,latest_date);
+          self.chartInit(response.data.data,response.data.data_actors,response.data.chart_sql,response.data.intervals,latest_date,response.data.most_recent_date);
           $('#wpdp-loader').hide();
 
           if(response.data.count == 0){
@@ -1416,7 +1416,7 @@
       });
     }
 
-    self.chartInit = function(data, data_actors, chart_sql, intervals, latest_date) {
+    self.chartInit = function(data, data_actors, chart_sql, intervals, latest_date, most_recent_date) {
       var datasets = [];
       var datasets_fat = [];
       var datasets_actors = [];
@@ -1527,9 +1527,7 @@
           content: 'This date is the last data entry for this chart, according to the filters set. The last data entry from all available data in the database is: ' + latest_date
         });
 
-        $('.last_updated_chart_date').text(
-          moment($('#wpdp_to').val(), "DD MMMM YYYY").format('Do MMM YYYY')
-        );
+        $('.last_updated_chart_date').text(most_recent_date);
 
 
       }
@@ -1541,9 +1539,7 @@
           touch: true,
           content: 'This date is the last data entry for this chart, according to the filters set. The last data entry from all available data in the database is: ' + latest_date
         });
-        $('.last_updated_chart_date_fat').text(
-          moment($('#wpdp_to').val(), "DD MMMM YYYY").format('Do MMM YYYY')
-        );
+        $('.last_updated_chart_date_fat').text(most_recent_date);
       }
 
       if (datasets_actors && datasets_actors[0] && datasets_actors[0].data.length > 0 && latest_date != 0) {
@@ -1554,9 +1550,7 @@
           content: 'This date is the last data entry for this chart, according to the filters set. The last data entry from all available data in the database is: ' + latest_date
         });
 
-        $('.last_updated_chart_date_bar').text(
-          moment($('#wpdp_to').val(), "DD MMMM YYYY").format('Do MMM YYYY')
-        );
+        $('.last_updated_chart_date_bar').text(most_recent_date);
 
       }
 

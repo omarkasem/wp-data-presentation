@@ -470,6 +470,7 @@ final class WPDP_Graphs {
 
         global $wpdb;
         $agg = [];
+        $most_recent_date = null;
         
         $all_filters = WPDP_Shortcode::get_filters();
         $sql_type_info = $this->get_sql_type($filters, $all_filters);
@@ -517,6 +518,7 @@ final class WPDP_Graphs {
             disorder_type, 
             event_type, 
             sub_event_type,
+            MAX(STR_TO_DATE(event_date, '$mysql_date_format')) as last_event_date,
             CASE 
                 WHEN '{$sql_type}' = 'YEARWEEK' THEN DATE_FORMAT(STR_TO_DATE(CONCAT(YEARWEEK(STR_TO_DATE(event_date, '$mysql_date_format')), ' Sunday'), '%X%V %W'), '%Y-%m-%d')
                 WHEN '{$sql_type}' = 'MONTH' THEN DATE_FORMAT(STR_TO_DATE(event_date, '$mysql_date_format'), '%Y-%m-01')
@@ -540,6 +542,13 @@ final class WPDP_Graphs {
                 $group_interval = ($days < 270) ? ceil($days / 60) : 1;
                 
                 foreach($results as $res){
+
+                    // Update the most recent date
+                    if (is_null($most_recent_date) || strtotime($res['last_event_date']) > strtotime($most_recent_date)) {
+                        $most_recent_date = $res['last_event_date'];
+                    }
+
+
                     foreach($filters['merged_types'] as $type){
                         $type = explode('__',$type);
                         $value = $type[0];
@@ -641,11 +650,16 @@ final class WPDP_Graphs {
 
         }
 
+        if ($most_recent_date) {
+            $most_recent_date = date('jS M Y', strtotime($most_recent_date));
+        }
+
         return [
             'data'=>$agg,
             'data_actors'=>$data_actors,
             'chart_sql' => $chart_sql,
             'intervals' => $intervals,
+            'most_recent_date' => $most_recent_date,
         ];
 
     }
