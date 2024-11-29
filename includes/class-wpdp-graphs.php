@@ -112,13 +112,13 @@ final class WPDP_Graphs {
         ];
 
         $filters = [
-            'disorder_type' => isset($_REQUEST['type_val']) ? $_REQUEST['type_val'] : [],
+            'disorder_type' => isset($_REQUEST['type_val']) ? array_filter($_REQUEST['type_val']) : [],
             'locations' => isset($_REQUEST['locations_val']) ? $_REQUEST['locations_val'] : [],
             'from' => isset($_REQUEST['from_val']) ? $_REQUEST['from_val'] : '',
             'to' => isset($_REQUEST['to_val']) ? $_REQUEST['to_val'] : '',
             'timeframe' => isset($_REQUEST['timeframe']) ? $_REQUEST['timeframe'] : '',
             'actors' => isset($_REQUEST['actors_val']) ? $_REQUEST['actors_val'] : [],
-            'fatalities' => isset($_REQUEST['fat_val']) ? $_REQUEST['fat_val'] : [],
+            'fatalities' => isset($_REQUEST['fat_val']) ? array_filter($_REQUEST['fat_val']) : [],
             'actor_names' => isset($_REQUEST['actor_names_val']) ? $_REQUEST['actor_names_val'] : '',
             'target_civ' => isset($_REQUEST['target_civ']) ? $_REQUEST['target_civ'] : ''
         ];
@@ -471,7 +471,7 @@ final class WPDP_Graphs {
         global $wpdb;
         $agg = [];
         $most_recent_date = null;
-        
+        $most_recent_fatal_date = null;
         $all_filters = WPDP_Shortcode::get_filters();
         $sql_type_info = $this->get_sql_type($filters, $all_filters);
         $chart_sql = $sql_type_info['chart_sql'];
@@ -519,6 +519,9 @@ final class WPDP_Graphs {
             event_type, 
             sub_event_type,
             MAX(STR_TO_DATE(event_date, '$mysql_date_format')) as last_event_date,
+            MAX(IF(fatalities > 0, STR_TO_DATE(event_date, '$mysql_date_format'), NULL)) as last_fatal_event_date,
+
+
             CASE 
                 WHEN '{$sql_type}' = 'YEARWEEK' THEN DATE_FORMAT(STR_TO_DATE(CONCAT(YEARWEEK(STR_TO_DATE(event_date, '$mysql_date_format')), ' Sunday'), '%X%V %W'), '%Y-%m-%d')
                 WHEN '{$sql_type}' = 'MONTH' THEN DATE_FORMAT(STR_TO_DATE(event_date, '$mysql_date_format'), '%Y-%m-01')
@@ -546,6 +549,11 @@ final class WPDP_Graphs {
                     // Update the most recent date
                     if (is_null($most_recent_date) || strtotime($res['last_event_date']) > strtotime($most_recent_date)) {
                         $most_recent_date = $res['last_event_date'];
+                    }
+
+                    // Track the most recent fatal event date
+                    if (is_null($most_recent_fatal_date) || strtotime($res['last_fatal_event_date']) > strtotime($most_recent_fatal_date)) {
+                        $most_recent_fatal_date = $res['last_fatal_event_date'];
                     }
 
 
@@ -654,12 +662,17 @@ final class WPDP_Graphs {
             $most_recent_date = date('jS M Y', strtotime($most_recent_date));
         }
 
+        if($most_recent_fatal_date){
+            $most_recent_fatal_date = date('jS M Y', strtotime($most_recent_fatal_date));
+        }
+
         return [
             'data'=>$agg,
             'data_actors'=>$data_actors,
             'chart_sql' => $chart_sql,
             'intervals' => $intervals,
             'most_recent_date' => $most_recent_date,
+            'most_recent_fatal_date' => $most_recent_fatal_date,
         ];
 
     }

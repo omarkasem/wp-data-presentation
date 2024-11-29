@@ -118,13 +118,13 @@ final class WPDP_Tables {
 
 
         $filters = [
-            'disorder_type' => isset($_REQUEST['type_val']) ? $_REQUEST['type_val'] : [],
+            'disorder_type' => isset($_REQUEST['type_val']) ? array_filter($_REQUEST['type_val']) : [],
             'locations' => isset($_REQUEST['locations_val']) ? $_REQUEST['locations_val'] : [],
             'from' => isset($_REQUEST['from_val']) ? $_REQUEST['from_val'] : null,
             'to' => isset($_REQUEST['to_val']) ? $_REQUEST['to_val'] : null,
             'actors' => isset($_REQUEST['actors_val']) ? $_REQUEST['actors_val'] : [],
             'actor_names' => isset($_REQUEST['actor_names_val']) ? $_REQUEST['actor_names_val'] : [],
-            'fatalities' => isset($_REQUEST['fat_val']) ? $_REQUEST['fat_val'] : [],
+            'fatalities' => isset($_REQUEST['fat_val']) ? array_filter($_REQUEST['fat_val']) : [],
             'target_civ' => isset($_REQUEST['target_civ']) ? $_REQUEST['target_civ'] : '',
         ];
 

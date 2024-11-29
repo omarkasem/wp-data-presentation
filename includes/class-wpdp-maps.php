@@ -75,10 +75,10 @@ final class WPDP_Maps {
     public function get_country_polygons_data(){
         
         $filters = [
-            'disorder_type' => isset($_REQUEST['type_val']) ? $_REQUEST['type_val'] : [],
+            'disorder_type' => isset($_REQUEST['type_val']) ? array_filter($_REQUEST['type_val']) : [],
             'locations' => isset($_REQUEST['locations_val']) ? $_REQUEST['locations_val'] : [],
             'actors' => isset($_REQUEST['actors_val']) ? $_REQUEST['actors_val'] : [],
-            'fatalities' => isset($_REQUEST['fat_val']) ? $_REQUEST['fat_val'] : [],
+            'fatalities' => isset($_REQUEST['fat_val']) ? array_filter($_REQUEST['fat_val']) : [],
             'from' => isset($_REQUEST['from_val']) ? $_REQUEST['from_val'] : '',
             'to' => isset($_REQUEST['to_val']) ? $_REQUEST['to_val'] : '',
             'actors_names' => isset($_REQUEST['actors_names_val']) ? $_REQUEST['actors_names_val'] : '',

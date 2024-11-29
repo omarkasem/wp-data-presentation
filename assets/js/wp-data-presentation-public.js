@@ -1403,7 +1403,7 @@
             latest_date = 0;
           }
 
-          self.chartInit(response.data.data,response.data.data_actors,response.data.chart_sql,response.data.intervals,latest_date,response.data.most_recent_date);
+          self.chartInit(response.data.data,response.data.data_actors,response.data.chart_sql,response.data.intervals,latest_date,response.data.most_recent_date,response.data.most_recent_fatal_date);
           $('#wpdp-loader').hide();
 
           if(response.data.count == 0){
@@ -1416,7 +1416,7 @@
       });
     }
 
-    self.chartInit = function(data, data_actors, chart_sql, intervals, latest_date, most_recent_date) {
+    self.chartInit = function(data, data_actors, chart_sql, intervals, latest_date, most_recent_date, most_recent_fatal_date) {
       var datasets = [];
       var datasets_fat = [];
       var datasets_actors = [];
@@ -1527,7 +1527,7 @@
           content: 'This date is the last data entry for this chart, according to the filters set. The last data entry from all available data in the database is: ' + latest_date
         });
 
-        $('.last_updated_chart_date').text(most_recent_date);
+        $('.chart .last_updated_chart_date').text(most_recent_date);
 
 
       }
@@ -1539,7 +1539,7 @@
           touch: true,
           content: 'This date is the last data entry for this chart, according to the filters set. The last data entry from all available data in the database is: ' + latest_date
         });
-        $('.last_updated_chart_date_fat').text(most_recent_date);
+        $('.chart_fat .last_updated_chart_date').text(most_recent_fatal_date);
       }
 
       if (datasets_actors && datasets_actors[0] && datasets_actors[0].data.length > 0 && latest_date != 0) {
@@ -1550,7 +1550,7 @@
           content: 'This date is the last data entry for this chart, according to the filters set. The last data entry from all available data in the database is: ' + latest_date
         });
 
-        $('.last_updated_chart_date_bar').text(most_recent_date);
+        $('.chart_bar .last_updated_chart_date').text(most_recent_date);
 
       }
 
@@ -1677,7 +1677,6 @@
 
 
     self.graphFun = function(ctx,datasets,title_text,chart_sql,intervals,is_fat){
-
       var chartVar = 'myChart';
       if(is_fat){
         chartVar = 'myChartFat';
@@ -1686,6 +1685,26 @@
       // Add check for mobile screen width
       const isMobile = window.innerWidth <= 768;
       const maxTicksLimit = isMobile ? 15 : 30;
+
+      // Modify datasets to include zero values for missing dates
+      datasets.forEach(dataset => {
+        // Get all unique dates from all datasets
+        const allDates = new Set();
+        datasets.forEach(ds => {
+          ds.data.forEach(point => allDates.add(point.x));
+        });
+
+        // Sort dates chronologically
+        const sortedDates = Array.from(allDates).sort();
+
+        // Create a new array with zero values for missing dates
+        const newData = sortedDates.map(date => {
+          const existingPoint = dataset.data.find(point => point.x === date);
+          return existingPoint || { x: date, y: 0 };
+        });
+
+        dataset.data = newData;
+      });
 
       window[chartVar] = new Chart(ctx, {
         type: 'line',
