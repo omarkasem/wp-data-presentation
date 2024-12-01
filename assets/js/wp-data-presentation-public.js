@@ -32,12 +32,9 @@
       self.currentMapType = $('input[name="wpdp_search_location_country"]').length > 0 ? 
       ($('input[name="wpdp_search_location_country"]').val() == '' ? 'polygons' : 'points') : 'points';
       
-
-      self.setDefaultFilters();
+      // First initialize all other components
       self.dataTables();
-      self.graphChange();
       self.menuFilters();
-      self.filtersChange();
       self.expandable();
       self.showMapDetails();
       self.datePicker();
@@ -45,6 +42,13 @@
       self.checkfForIndeterminate();
       self.select2();
       self.tippy();
+
+      // Then set filters after a brief delay to ensure all checkboxes are ready
+      requestAnimationFrame(function() {
+        self.setDefaultFilters();
+        self.graphChange();
+        self.filtersChange();
+      });
     },
 
     self.tippy = function(){
@@ -104,7 +108,19 @@
         selectedGraphFat.push($(this).val());
       });
 
-
+      let $incidentTypeInputs = $('.grp.inident_type .content input[type="checkbox"]').not('.select_unselect_all');
+      let $fatalitiesInputs = $('.grp.fatalities .content input[type="checkbox"]').not('.select_unselect_all');
+      
+      let incidentTypeTotal = $incidentTypeInputs.length;
+      let incidentTypeChecked = $incidentTypeInputs.filter(':checked').length;
+      
+      let fatalitiesTotal = $fatalitiesInputs.length;
+      let fatalitiesChecked = $fatalitiesInputs.filter(':checked').length;
+      
+      self.allIncidentsAndFatSelected = (incidentTypeTotal === incidentTypeChecked && 
+                                        fatalitiesTotal === fatalitiesChecked && 
+                                        incidentTypeTotal > 0 && 
+                                        fatalitiesTotal > 0) ? 1 : 0;
     },
 
     self.checkedSelector = function(className){
@@ -1293,11 +1309,7 @@
 
       $('#wpdp-loader').css('display','flex');
 
-      let allIncidentsAndFatSelected = 0;
-
-      if($('.grp.inident_type .content input:checked').not('.select_unselect_all').length === $('.grp.inident_type .content input').not('.select_unselect_all').length && $('.grp.fatalities .content input:checked').not('.select_unselect_all').length === $('.grp.fatalities .content input').not('.select_unselect_all').length){
-        allIncidentsAndFatSelected = 1;
-      }
+      let allIncidentsAndFatSelected = self.allIncidentsAndFatSelected;
 
       $.ajax({
         url: wpdp_obj.ajax_url,
@@ -1439,7 +1451,17 @@
         '#4bc0c0',
         '#ff9f40',
         '#ffcd56',
-        '#36a2eb'
+        '#36a2eb',
+        '#ff7f50',
+        '#87ceeb',
+        '#32cd32',
+        '#ba55d3',
+        '#ff69b4',
+        '#cd5c5c',
+        '#ffa07a',
+        '#20b2aa',
+        '#778899',
+        '#b0c4de'
       ];
 
       let i =0;
@@ -1636,7 +1658,14 @@
               tooltip: {
                 callbacks: {
                   title: function(context) {
-                    return moment(context[0].parsed.x).format('MMM D YYYY');
+                    const timeUnit = chart_sql;
+      
+                    // Format date based on time unit
+                    if (timeUnit === 'day' || timeUnit === 'week') {
+                      return moment(context[0].parsed.x).format('MMM D YYYY');
+                    } else {
+                      return moment(context[0].parsed.x).format('MMMM YYYY');
+                    }
                   },
                   label: function(context) {
                     let label = context.dataset.label || '';
@@ -1722,7 +1751,14 @@
               tooltip: {
                 callbacks: {
                   title: function(context) {
-                    return moment(context[0].parsed.x).format('MMM D YYYY');
+                    const timeUnit = chart_sql;
+      
+                    // Format date based on time unit
+                    if (timeUnit === 'day' || timeUnit === 'week') {
+                      return moment(context[0].parsed.x).format('MMM D YYYY');
+                    } else {
+                      return moment(context[0].parsed.x).format('MMMM YYYY');
+                    }
                   },
                   label: function(context) {
                     let label = context.dataset.label || '';

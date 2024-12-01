@@ -82,6 +82,27 @@ final class WPDP_Metabox {
       
         add_action('rest_api_init', array($this, 'register_cron_endpoint'));
 
+        // if(isset($_GET['export_filters'])){
+        //     $request = 'https://icglr.ovio.digital/icglr2/wp-json/wpdp/v1/export-filters';
+        //     $response = wp_remote_get($request);
+        //     if(!is_wp_error($response)){
+        //         $body = json_decode(wp_remote_retrieve_body($response), true);
+        //         $incident_types = $body['incident_type_filter'];
+        //         $actors = $body['actor_filter'];
+        //         $fatalities = $body['fatalities_filter'];
+
+        //         if (!empty($incident_types)) {
+        //             update_field('incident_type_filter', $incident_types, 'option');
+        //         }
+        //         if (!empty($actors)) {
+        //             update_field('actor_filter', $actors, 'option');
+        //         }
+        //         if (!empty($fatalities)) {
+        //             update_field('fatalities_filter', $fatalities, 'option');
+        //         }
+        //     }
+        // }
+
     }
 
 
@@ -94,7 +115,29 @@ final class WPDP_Metabox {
             'callback' => array($this, 'handle_cron_request'),
             'permission_callback' => array($this, 'verify_cron_key')
         ));
+
+        // Add new endpoint for exporting ACF options
+        register_rest_route('wpdp/v1', '/export-filters', array(
+            'methods' => 'GET',
+            'callback' => array($this, 'handle_export_filters_request'),
+        ));
+        
     }
+
+    /**
+     * Handle the export filters request
+     */
+    public function handle_export_filters_request($request) {
+        $filters = array(
+            'incident_type_filter' => get_field('incident_type_filter', 'option'),
+            'actor_filter' => get_field('actor_filter', 'option'),
+            'fatalities_filter' => get_field('fatalities_filter', 'option')
+        );
+        
+        return new WP_REST_Response($filters, 200);
+    }
+
+
 
     /**
      * Verify security key for cron requests
