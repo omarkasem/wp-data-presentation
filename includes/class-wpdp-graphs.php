@@ -123,27 +123,6 @@ final class WPDP_Graphs {
             'target_civ' => isset($_REQUEST['target_civ']) ? $_REQUEST['target_civ'] : ''
         ];
         
-        if((int) $_REQUEST['all_selected'] === 1 || (empty($filters['disorder_type']) && empty($filters['fatalities']))){
-            $filters['disorder_type'] = [];
-            $filters['fatalities'] = [];
-            $incidents = get_field('incident_type_filter','option');
-            $db_columns = array(
-                'disorder_type',
-                'event_type',
-                'sub_event_type'
-            );
-
-            foreach($incidents as $incident){
-                foreach($incident['filter'] as $filter){
-                    if(strpos($filter['hierarchial'],'1') !== false){
-                        foreach($db_columns as $column){
-                            $filters['disorder_type'] = array_merge($filters['disorder_type'],$filter[$column]);
-                        }
-                    }
-                }
-            }
-        }
-        
         $merged_types = [];
         $new_actors = [];
 

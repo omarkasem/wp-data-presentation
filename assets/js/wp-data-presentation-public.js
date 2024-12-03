@@ -2,17 +2,15 @@
   'use strict';
 
     var self = {};
-    var myChart;
-    var myChartFat;
-    var table;
     var global_markers = [];
     var markerCluster;
     var selectedLocations = [];
+    var selectedIncidentsGraphs = [];
+    var selectedFatGraphs = [];
     var selectedIncidents = [];
     var selectedActorNames = [];
     var selectedActors = [];
     var selectedFat = [];
-    var selectedGraphFat = [];
     var fromYear = '';
     var toYear = '';
     var timeframe = '';
@@ -32,9 +30,11 @@
       self.currentMapType = $('input[name="wpdp_search_location_country"]').length > 0 ? 
       ($('input[name="wpdp_search_location_country"]').val() == '' ? 'polygons' : 'points') : 'points';
       
-      // First initialize all other components
-      self.dataTables();
+      self.setDefaultFilters();
+      self.filtersChange();
       self.menuFilters();
+      self.graphChange();
+      self.dataTables();
       self.expandable();
       self.showMapDetails();
       self.datePicker();
@@ -42,13 +42,6 @@
       self.checkfForIndeterminate();
       self.select2();
       self.tippy();
-
-      // Then set filters after a brief delay to ensure all checkboxes are ready
-      requestAnimationFrame(function() {
-        self.setDefaultFilters();
-        self.graphChange();
-        self.filtersChange();
-      });
     },
 
     self.tippy = function(){
@@ -63,7 +56,8 @@
       selectedActors = [];
       selectedActorNames = [];
       selectedFat = [];
-      selectedGraphFat = [];
+      selectedIncidentsGraphs = [];
+      selectedFatGraphs = [];
       fromYear = '';
       toYear = '';
       timeframe = '';
@@ -105,37 +99,124 @@
 
       $('input[type="checkbox"].wpdp_fat:checked').each(function() {
         selectedFat.push($(this).val());
-        selectedGraphFat.push($(this).val());
       });
 
-      let $incidentTypeInputs = $('.grp.inident_type .content input[type="checkbox"]').not('.select_unselect_all');
-      let $fatalitiesInputs = $('.grp.fatalities .content input[type="checkbox"]').not('.select_unselect_all');
-      
-      let incidentTypeTotal = $incidentTypeInputs.length;
-      let incidentTypeChecked = $incidentTypeInputs.filter(':checked').length;
-      
-      let fatalitiesTotal = $fatalitiesInputs.length;
-      let fatalitiesChecked = $fatalitiesInputs.filter(':checked').length;
-      
-      self.allIncidentsAndFatSelected = (incidentTypeTotal === incidentTypeChecked && 
-                                        fatalitiesTotal === fatalitiesChecked && 
-                                        incidentTypeTotal > 0 && 
-                                        fatalitiesTotal > 0) ? 1 : 0;
+      // Use the new function to collect graph items
+      const graphItems = self.collectGraphItems();
+      selectedIncidentsGraphs = graphItems.incidents;
+      selectedFatGraphs = graphItems.fatalities;
+
+
+
     },
 
+    self.collectGraphItems = function() {
+      let selectedIncidentsGraphs = [];
+      let selectedFatGraphs = [];
+
+      // Helper function to collect items from a specific level
+      const collectFromLevel = function(level) {
+        $('input[type="checkbox"].wpdp_incident_type.level_' + level + ':checked').each(function() {
+          let val = $(this).val();
+          if (val.includes('+')) {
+            val.split('+').forEach(item => selectedIncidentsGraphs.push(item));
+          } else {
+            selectedIncidentsGraphs.push(val);
+          }
+          
+        });
+
+        $('input[type="checkbox"].wpdp_fat.level_' + level + ':checked').each(function() {
+          let val = $(this).val();
+          if (val.includes('+')) {
+            val.split('+').forEach(item => selectedFatGraphs.push(item));
+          } else {
+            selectedFatGraphs.push(val);
+          }
+        });
+      };
+
+
+      // Helper function to collect items from a specific level
+      const collectFromLevelNotSelected = function(level) {
+        $('input[type="checkbox"].wpdp_incident_type.level_' + level + ':checked').each(function() {
+          if(!$(this).parents('ul.first_one').find('input[type="checkbox"].wpdp_incident_type.level_1').is(':checked')){
+            let val = $(this).val();
+            if (val.includes('+')) {
+              val.split('+').forEach(item => selectedIncidentsGraphs.push(item));
+            } else {
+              selectedIncidentsGraphs.push(val);
+            }
+          }
+        });
+
+        $('input[type="checkbox"].wpdp_fat.level_' + level + ':checked').each(function() {
+          if(!$(this).parents('ul.first_one').find('input[type="checkbox"].wpdp_fat.level_1').is(':checked')){
+            let val = $(this).val();
+            if (val.includes('+')) {
+              val.split('+').forEach(item => selectedFatGraphs.push(item));
+            } else {
+              selectedFatGraphs.push(val);
+            }
+          }
+        });
+      };
+
+
+      // Helper function to remove duplicates between arrays
+      const removeDuplicates = function(array1, array2) {
+        const duplicates = array1.filter(item => array2.includes(item));
+        
+        // Remove duplicates from array2, keeping them in array1
+        duplicates.forEach(item => {
+          const index = array2.indexOf(item);
+          if (index > -1) {
+            array2.splice(index, 1);
+          }
+        });
+
+        return {
+          array1: [...new Set(array1)], // Remove any internal duplicates
+          array2: [...new Set(array2)]  // Remove any internal duplicates
+        };
+      };
+
+      // Collect items level by level until we have enough unique items
+      for (let level = 1; level <= 3; level++) {
+        collectFromLevel(level);
+        console.log(level,selectedIncidentsGraphs, selectedFatGraphs);
+        // Remove duplicates after each collection
+        const cleaned = removeDuplicates(selectedIncidentsGraphs, selectedFatGraphs);
+        selectedIncidentsGraphs = cleaned.array1;
+        selectedFatGraphs = cleaned.array2;
+
+        // Check if we have enough items
+        if (selectedIncidentsGraphs.length + selectedFatGraphs.length >= 3) {
+          break;
+        }
+      }
+
+      // // Collect items level by level until we have enough unique items
+      for (let level = 2; level <= 3; level++) {
+        collectFromLevelNotSelected(level);
+        
+        // Remove duplicates after each collection
+        const cleaned = removeDuplicates(selectedIncidentsGraphs, selectedFatGraphs);
+        selectedIncidentsGraphs = cleaned.array1;
+        selectedFatGraphs = cleaned.array2;
+
+      }
+
+
+      return {
+        incidents: selectedIncidentsGraphs,
+        fatalities: selectedFatGraphs
+      };
+    };
+
+
     self.checkedSelector = function(className){
-      var totalActors = $('input[type="checkbox"].' + className).length;
-      var checkedActors = $('input[type="checkbox"].' + className + ':checked').length;
       var selected = [];
-
-      // if (totalActors === checkedActors) {
-      //   selected = [];
-      // } else {
-      //   $('input[type="checkbox"].' + className + ':checked').each(function() {
-      //     selected.push($(this).val());
-      //   });
-      // }
-
       $('input[type="checkbox"].' + className + ':checked').each(function() {
         selected.push($(this).val());
       });
@@ -1206,7 +1287,7 @@
         $(this).find('input, select').each(function() {
             var $this = $(this);
             if ($this.is(':checkbox') || $this.is(':radio')) {
-                if ($this.is(':checked')) {
+                if ($this.is(':checked') && !filterData[$this.attr('name')]) {
                     filterData[$this.attr('name')] = $this.val();
                 }
             } else {
@@ -1217,7 +1298,10 @@
                   if($this.attr('name') == 'wpdp_to' && !$('#wpdp_to').hasClass('changed')){
                     return true;
                   }
-                  filterData[$this.attr('name')] = $this.val();
+
+                  if(!filterData[$this.attr('name')]){
+                    filterData[$this.attr('name')] = $this.val();
+                  }
                 }
             }
         });
@@ -1309,21 +1393,19 @@
 
       $('#wpdp-loader').css('display','flex');
 
-      let allIncidentsAndFatSelected = self.allIncidentsAndFatSelected;
 
       $.ajax({
         url: wpdp_obj.ajax_url,
         data: {
           action:'wpdp_graph_request',
-          type_val: selectedIncidents,
+          type_val: selectedIncidentsGraphs,
           locations_val: selectedLocations,
           actors_val: selectedActors,
           actor_names_val: selectedActorNames,
-          fat_val: selectedGraphFat,
+          fat_val: selectedFatGraphs,
           from_val: fromYear,
           to_val: toYear,
           timeframe: timeframe,
-          all_selected: allIncidentsAndFatSelected,
           target_civ: targetCiv
         },
         type: 'POST',
@@ -1357,6 +1439,7 @@
           // Handle incidents graph
           if (!hasIncidentData) {
             $('#wpdp_chart,.last_updated_chart.chart').addClass('wpdp_force_hide').removeClass('wpdp_force_show');
+            $('.no-chart-data-message').remove();
             $('#wpdp_chart').after('<div class="no-chart-data-message" style="text-align: center; padding: 20px;">No incidents found. Please adjust the filter options to see more data.</div>');
           } else {
             $('#wpdp_chart').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
@@ -1375,6 +1458,7 @@
           // Handle fatalities graph
           if (!hasFatalityData) {
             $('#wpdp_chart_fat,.last_updated_chart.chart_fat').removeClass('wpdp_force_show').addClass('wpdp_force_hide');
+            $('.no-fat-data-message').remove();
             $('#wpdp_chart_fat').after('<div class="no-fat-data-message" style="text-align: center; padding: 20px;">No fatalities found. Please adjust the filter options to see more data.</div>');
           } else {
             $('#wpdp_chart_fat').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
@@ -1394,6 +1478,7 @@
           // Handle actors graph
           if (!hasActorData) {
             $('#wpdp_chart_bar_chart,.last_updated_chart.chart_bar').removeClass('wpdp_force_show').addClass('wpdp_force_hide');
+            $('.no-actors-data-message').remove();
             $('#wpdp_chart_bar_chart').after('<div class="no-actors-data-message" style="text-align: center; padding: 20px;">No actors found. Please adjust the filter options to see more data.</div>');
           } else {
             $('#wpdp_chart_bar_chart').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
@@ -2043,11 +2128,13 @@
     };
 
     self.mapsChoice = function(){
-      if($('input[name="wpdp_country"]:radio').length > 0){
-        self.maps_polygons();
-      }else{
-        self.maps();
-      }
+      setTimeout(() => {
+        if($('input[name="wpdp_country"]:radio').length > 0){
+          self.maps_polygons();
+        }else{
+          self.maps();
+        }
+      }, 100);
     }
 
     // Add this new function to handle lazy loading of location levels
@@ -2102,9 +2189,7 @@
     });
 
     $( self.init );
-
-
-    // window.wpdp_maps = self.maps;
-    
     window.wpdp_map = self.mapsChoice;
+
+    
 }( jQuery ) );

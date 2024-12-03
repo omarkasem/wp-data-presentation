@@ -128,8 +128,6 @@ final class WPDP_Tables {
             'target_civ' => isset($_REQUEST['target_civ']) ? $_REQUEST['target_civ'] : '',
         ];
 
-        $merged_types = array_unique(array_merge( $filters['disorder_type'],$filters['fatalities']));
-        $filters['merged_types'] = $merged_types;
 
         $search = isset($_REQUEST['search']['value']) ? $_REQUEST['search']['value'] : '';
         $start = $_REQUEST['start']; // Starting row

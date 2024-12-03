@@ -880,20 +880,6 @@ final class WPDP_Shortcode {
                     </div>
 
 
-                    <?php if ('graph' === $atts['type'] || '' == $atts['type']) {?>
-                    <!-- <div class="grp ">
-
-                        <div class="title">
-                            COUNT TYPE <span class="dashicons dashicons-arrow-down-alt2"></span>
-                        </div>
-                        <div class="content">
-                            <select name="wpdp_type_selector" id="wpdp_type_selector">
-                                <option value="fatalities" <?php selected($this->get_session_value('wpdp_type_selector'), 'fatalities'); ?>>Fatalities</option>
-                                <option value="incident_count" <?php selected($this->get_session_value('wpdp_type_selector'), 'incident_count'); ?>>Incident Count</option>
-                            </select>
-                        </div>
-                    </div> -->
-                    <?php }?>
 
                     <div class="no_data" style="display:none;">No data found, please adjust filters</div>
                     <input type="submit" value="Apply Filters">
@@ -942,9 +928,10 @@ final class WPDP_Shortcode {
     }
 
     function generateHierarchy($array, $not_incident = false, $first = 1) {
-        $html = '<ul '.($first == 1 ? 'class="first_one"' : '').'>';
+        $html = '<ul class="'.($first == 1 ? 'first_one' : '').'">';
         $class = 'wpdp_incident_type';
         foreach ($array as $item) { 
+            $level = substr($item['hierarchial'], -1);
             if ($not_incident) {
                 $class = 'wpdp_actors';
                 $value = (isset($item['actor_code'])  ? $item['actor_code'] : '');
@@ -966,7 +953,7 @@ final class WPDP_Shortcode {
             }
 
             $html .= '<li class="expandable">';
-            $html .= '<input class="wpdp_filter_checkbox '.$class.'" type="checkbox" name="'.$checkbox_name.'" value="'.$checkbox_value.'" '.$is_checked.'>';
+            $html .= '<input class="wpdp_filter_checkbox '.$class.' level_'.$level.'" type="checkbox" name="'.$checkbox_name.'" value="'.$checkbox_value.'" '.$is_checked.'>';
             $html .= '<div class="exp_click"><span>' . $item['text'] . '</span><span class="dashicons arrow dashicons-arrow-down-alt2"></span></div>';
             
             if (isset($item['children']) && !empty($item['children'])) {
