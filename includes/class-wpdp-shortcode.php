@@ -953,7 +953,7 @@ final class WPDP_Shortcode {
             }
 
             $html .= '<li class="expandable">';
-            $html .= '<input class="wpdp_filter_checkbox '.$class.' level_'.$level.'" type="checkbox" name="'.$checkbox_name.'" value="'.$checkbox_value.'" '.$is_checked.'>';
+            $html .= '<input label_value="'.strtolower($item['text']).'" class="wpdp_filter_checkbox '.$class.' level_'.$level.'" type="checkbox" name="'.$checkbox_name.'" value="'.$checkbox_value.'" '.$is_checked.'>';
             $html .= '<div class="exp_click"><span>' . $item['text'] . '</span><span class="dashicons arrow dashicons-arrow-down-alt2"></span></div>';
             
             if (isset($item['children']) && !empty($item['children'])) {

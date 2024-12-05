@@ -101,12 +101,180 @@
         selectedFat.push($(this).val());
       });
 
+      // Add class all_checked to parent input checkbox if all direct children are selected
+      $('input[type="checkbox"].wpdp_incident_type.level_1:checked, input[type="checkbox"].wpdp_fat.level_1:checked').each(function() {
+        if($(this).find('input[type="checkbox"].wpdp_incident_type.level_2:checked').length === $(this).find('input[type="checkbox"].wpdp_incident_type.level_2').length){
+          $(this).addClass('all_checked');
+        }else{
+          $(this).removeClass('all_checked');
+        }
+
+        if($(this).find('input[type="checkbox"].wpdp_fat.level_2:checked').length === $(this).find('input[type="checkbox"].wpdp_fat.level_2').length){
+          $(this).addClass('all_checked');
+        }else{
+          $(this).removeClass('all_checked');
+        }
+
+
+      });
+
+      $('input[type="checkbox"].wpdp_incident_type.level_2:checked, input[type="checkbox"].wpdp_fat.level_2:checked').each(function() {
+        if($(this).find('input[type="checkbox"].wpdp_incident_type.level_3:checked').length === $(this).find('input[type="checkbox"].wpdp_incident_type.level_3').length){
+          $(this).addClass('all_checked');
+        }else{
+          $(this).removeClass('all_checked');
+        }
+
+        if($(this).find('input[type="checkbox"].wpdp_fat.level_3:checked').length === $(this).find('input[type="checkbox"].wpdp_fat.level_3').length){
+          $(this).addClass('all_checked');
+        }else{
+          $(this).removeClass('all_checked');
+        }
+
+      });
+
+
       // Use the new function to collect graph items
       const graphItems = self.collectGraphItems();
       selectedIncidentsGraphs = graphItems.incidents;
       selectedFatGraphs = graphItems.fatalities;
 
 
+      // Remove all checked items from the array
+      var newSelectedIncidentsGraphs = [...selectedIncidentsGraphs];
+      $('input[type="checkbox"].wpdp_incident_type.level_1.all_checked').each(function() {
+        let eixst_in_array = false;
+        $.each($(this).find('input[type="checkbox"].wpdp_incident_type.level_2.all_checked'), function(){
+          if(newSelectedIncidentsGraphs.includes($(this).val())){
+            eixst_in_array = true;
+          }
+        });
+
+        if(!eixst_in_array){
+          return;
+        }
+
+        let val = $(this).val();
+        if (val.includes('+')) {
+          val.split('+').forEach(item => {
+            const index = newSelectedIncidentsGraphs.indexOf(item);
+            if (index > -1) {
+              newSelectedIncidentsGraphs.splice(index, 1);
+            }
+          });
+        } else {
+          const index = newSelectedIncidentsGraphs.indexOf(val);
+          if (index > -1) {
+            newSelectedIncidentsGraphs.splice(index, 1);
+          }
+        }
+      });
+
+      if(newSelectedIncidentsGraphs.length === selectedIncidentsGraphs.length){
+        $('input[type="checkbox"].wpdp_incident_type.level_2.all_checked').each(function() {
+
+          let eixst_in_array = false;
+          $.each($(this).find('input[type="checkbox"].wpdp_incident_type.level_3.all_checked'), function(){
+            if(newSelectedIncidentsGraphs.includes($(this).val())){
+              eixst_in_array = true;
+            }
+          });
+  
+          if(!eixst_in_array){
+            return;
+          }
+
+          let val = $(this).val();
+          if (val.includes('+')) {
+            val.split('+').forEach(item => {
+              const index = newSelectedIncidentsGraphs.indexOf(item);
+              if (index > -1) {
+                newSelectedIncidentsGraphs.splice(index, 1);
+              }
+            });
+          } else {
+            const index = newSelectedIncidentsGraphs.indexOf(val);
+            if (index > -1) {
+              newSelectedIncidentsGraphs.splice(index, 1);
+            }
+          }
+        });
+      }
+
+
+      var newSelectedFatGraphs = [...selectedFatGraphs];
+      $('input[type="checkbox"].wpdp_fat.level_1.all_checked').each(function() {
+
+        let eixst_in_array = false;
+        $.each($(this).find('input[type="checkbox"].wpdp_fat.level_2.all_checked'), function(){
+          if(newSelectedFatGraphs.includes($(this).val())){
+            eixst_in_array = true;
+          }
+        });
+
+        if(!eixst_in_array){
+          return;
+        }
+
+        let val = $(this).val();
+        if (val.includes('+')) {
+          val.split('+').forEach(item => {
+            const index = newSelectedFatGraphs.indexOf(item);
+            if (index > -1) {
+              newSelectedFatGraphs.splice(index, 1);
+            }
+          });
+        } else {
+          const index = newSelectedFatGraphs.indexOf(val);
+          if (index > -1) {
+            newSelectedFatGraphs.splice(index, 1);
+          }
+        }
+      });
+
+      if(newSelectedFatGraphs.length === selectedFatGraphs.length){
+        $('input[type="checkbox"].wpdp_fat.level_2.all_checked').each(function() {
+
+          let eixst_in_array = false;
+          $.each($(this).find('input[type="checkbox"].wpdp_fat.level_3.all_checked'), function(){
+            if(newSelectedFatGraphs.includes($(this).val())){
+              eixst_in_array = true;
+            }
+          });
+  
+          if(!eixst_in_array){
+            return;
+          }
+
+          let val = $(this).val();
+          if (val.includes('+')) {
+            val.split('+').forEach(item => {
+              const index = newSelectedFatGraphs.indexOf(item);
+              if (index > -1) {
+                newSelectedFatGraphs.splice(index, 1);
+              }
+            });
+          } else {
+            const index = newSelectedFatGraphs.indexOf(val);
+            if (index > -1) {
+              newSelectedFatGraphs.splice(index, 1);
+            }
+          }
+        });
+      }
+
+
+
+      if(newSelectedIncidentsGraphs.length >= 3){
+        selectedIncidentsGraphs = newSelectedIncidentsGraphs;
+      }
+
+      if(newSelectedFatGraphs.length >= 3){
+        selectedFatGraphs = newSelectedFatGraphs;
+      }
+
+
+      console.log(selectedIncidentsGraphs, selectedFatGraphs);
 
     },
 
@@ -140,7 +308,7 @@
       // Helper function to collect items from a specific level
       const collectFromLevelNotSelected = function(level) {
         $('input[type="checkbox"].wpdp_incident_type.level_' + level + ':checked').each(function() {
-          if(!$(this).parents('ul.first_one').find('input[type="checkbox"].wpdp_incident_type.level_1').is(':checked')){
+          if(!$(this).parents('ul').find('input[type="checkbox"].wpdp_incident_type.all_checked').length){
             let val = $(this).val();
             if (val.includes('+')) {
               val.split('+').forEach(item => selectedIncidentsGraphs.push(item));
@@ -151,7 +319,7 @@
         });
 
         $('input[type="checkbox"].wpdp_fat.level_' + level + ':checked').each(function() {
-          if(!$(this).parents('ul.first_one').find('input[type="checkbox"].wpdp_fat.level_1').is(':checked')){
+          if(!$(this).parents('ul').find('input[type="checkbox"].wpdp_fat.all_checked').length){
             let val = $(this).val();
             if (val.includes('+')) {
               val.split('+').forEach(item => selectedFatGraphs.push(item));
@@ -184,7 +352,7 @@
       // Collect items level by level until we have enough unique items
       for (let level = 1; level <= 3; level++) {
         collectFromLevel(level);
-        console.log(level,selectedIncidentsGraphs, selectedFatGraphs);
+
         // Remove duplicates after each collection
         const cleaned = removeDuplicates(selectedIncidentsGraphs, selectedFatGraphs);
         selectedIncidentsGraphs = cleaned.array1;
@@ -1548,6 +1716,63 @@
         '#778899',
         '#b0c4de'
       ];
+
+      // Sort data keys based on checkbox levels
+      const getLevelFromCheckbox = (label) => {
+        label = label.toLowerCase();
+        const checkbox = $(`input[type="checkbox"][label_value="${label}"]`).first();
+        if (checkbox.hasClass('level_1')) return 1;
+        if (checkbox.hasClass('level_2')) return 2;
+        if (checkbox.hasClass('level_3')) return 3;
+        return 4; // Default level for unknown items
+      };
+
+
+
+      // Helper function to check if any items exist at a specific level
+      const hasItemsAtLevel = (data, level) => {
+        return Object.keys(data).some(key => {
+          key = key.toLowerCase();
+          const checkbox = $(`input[type="checkbox"][label_value="${key}"]`).first();
+          return checkbox.hasClass(`level_${level}`);
+        });
+      };
+
+      const orderedData = {};
+      Object.keys(data)
+      .sort((a, b) => {
+        const levelA = getLevelFromCheckbox(a);
+        const levelB = getLevelFromCheckbox(b);
+        return levelA - levelB;
+      })
+      .forEach(key => {
+        const level = getLevelFromCheckbox(key);
+        console.log(key,level);
+        let newKey = key;
+
+        // Check for existence of different levels
+        const hasLevel3 = hasItemsAtLevel(data, 3);
+        const hasLevel2 = hasItemsAtLevel(data, 2);
+
+        // Apply (All) suffix based on conditions
+        if (hasLevel3) {
+          // If level 3 exists, add (All) to level 1 and 2
+          if (level === 1 || level === 2) {
+            newKey = `${key} (All)`;
+          }
+        } else if (hasLevel2) {
+          // If no level 3 but level 2 exists, add (All) only to level 1
+          if (level === 1) {
+            newKey = `${key} (All)`;
+          }
+        }
+        // If only level 1 exists, keep original key without (All)
+
+        orderedData[newKey] = data[key];
+      });
+
+
+      data = orderedData;
 
       let i =0;
       for(let label in data){ i++;

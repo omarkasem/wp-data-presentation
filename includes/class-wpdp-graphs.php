@@ -69,40 +69,6 @@ final class WPDP_Graphs {
         $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_wpdp_cache_%'");
     }
 
-    private function aggregate_data($data){
-
-        if(empty($data)){
-            return [];
-        }
-
-        $result = [];
-
-        foreach($data as $key => $values){
-            $aggregated = [];
-
-            foreach($values as $value){
-                $year_month = date('Y-m', strtotime($value->week_start));
-                $week_start = date('Y-m', strtotime($value->week_start));
-
-                if(!isset($aggregated[$year_month])){
-                    $aggregated[$year_month] = (object) [
-                        'fatalities_count' => 0,
-                        'events_count' => 0,
-                        'year_week' => $year_month,
-                        'week_start' => $week_start
-                    ];
-                }
-
-                $aggregated[$year_month]->fatalities_count += (int) $value->fatalities_count;
-                $aggregated[$year_month]->events_count += (int) $value->events_count;
-            }
-
-            $result[$key] = array_values($aggregated);
-        }
-
-        return $result;
-    }
-
     public function get_graph_data(){
         $types = [
             'country',
