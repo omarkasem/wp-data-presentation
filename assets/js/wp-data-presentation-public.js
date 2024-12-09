@@ -101,34 +101,30 @@
         selectedFat.push($(this).val());
       });
 
+      $('input[type="checkbox"].wpdp_incident_type, input[type="checkbox"].wpdp_fat').removeClass('all_checked');
+
       // Add class all_checked to parent input checkbox if all direct children are selected
       $('input[type="checkbox"].wpdp_incident_type.level_1:checked, input[type="checkbox"].wpdp_fat.level_1:checked').each(function() {
-        if($(this).find('input[type="checkbox"].wpdp_incident_type.level_2:checked').length === $(this).find('input[type="checkbox"].wpdp_incident_type.level_2').length){
+        
+
+        if($(this).parent().find('ul li input[type="checkbox"].wpdp_incident_type.level_2:checked').length === $(this).parent().find('ul li input[type="checkbox"].wpdp_incident_type.level_2').length){
           $(this).addClass('all_checked');
-        }else{
-          $(this).removeClass('all_checked');
         }
 
-        if($(this).find('input[type="checkbox"].wpdp_fat.level_2:checked').length === $(this).find('input[type="checkbox"].wpdp_fat.level_2').length){
+        if($(this).parent().find('ul li input[type="checkbox"].wpdp_fat.level_2:checked').length === $(this).parent().find('ul li input[type="checkbox"].wpdp_fat.level_2').length){
           $(this).addClass('all_checked');
-        }else{
-          $(this).removeClass('all_checked');
         }
-
 
       });
 
       $('input[type="checkbox"].wpdp_incident_type.level_2:checked, input[type="checkbox"].wpdp_fat.level_2:checked').each(function() {
-        if($(this).find('input[type="checkbox"].wpdp_incident_type.level_3:checked').length === $(this).find('input[type="checkbox"].wpdp_incident_type.level_3').length){
+
+        if($(this).parent().find('ul li input[type="checkbox"].wpdp_incident_type.level_3:checked').length === $(this).parent().find('ul li input[type="checkbox"].wpdp_incident_type.level_3').length){
           $(this).addClass('all_checked');
-        }else{
-          $(this).removeClass('all_checked');
         }
 
-        if($(this).find('input[type="checkbox"].wpdp_fat.level_3:checked').length === $(this).find('input[type="checkbox"].wpdp_fat.level_3').length){
+        if($(this).parent().find('ul li input[type="checkbox"].wpdp_fat.level_3:checked').length === $(this).parent().find('ul li input[type="checkbox"].wpdp_fat.level_3').length){
           $(this).addClass('all_checked');
-        }else{
-          $(this).removeClass('all_checked');
         }
 
       });
@@ -140,64 +136,62 @@
       selectedFatGraphs = graphItems.fatalities;
 
 
-      // Remove all checked items from the array
-      var newSelectedIncidentsGraphs = [...selectedIncidentsGraphs];
-      $('input[type="checkbox"].wpdp_incident_type.level_1.all_checked').each(function() {
-        let eixst_in_array = false;
-        $.each($(this).find('input[type="checkbox"].wpdp_incident_type.level_2.all_checked'), function(){
-          if(newSelectedIncidentsGraphs.includes($(this).val())){
-            eixst_in_array = true;
-          }
-        });
-
-        if(!eixst_in_array){
-          return;
-        }
-
-        let val = $(this).val();
+      const removeItemFromArray = function(array, val){
         if (val.includes('+')) {
           val.split('+').forEach(item => {
-            const index = newSelectedIncidentsGraphs.indexOf(item);
+            const index = array.indexOf(item);
             if (index > -1) {
-              newSelectedIncidentsGraphs.splice(index, 1);
+              array.splice(index, 1);
             }
           });
         } else {
-          const index = newSelectedIncidentsGraphs.indexOf(val);
+          const index = array.indexOf(val);
           if (index > -1) {
-            newSelectedIncidentsGraphs.splice(index, 1);
+            array.splice(index, 1);
           }
         }
+        return array;
+      }
+
+      // Remove all checked items from the array
+      var newSelectedIncidentsGraphs = [...selectedIncidentsGraphs];
+      $('input[type="checkbox"].wpdp_incident_type.level_1.all_checked').each(function() {
+        let all_levels_exist_in_array = true;
+        $.each($(this).parent().find('input[type="checkbox"].wpdp_incident_type.level_2'), function(){
+          if(!newSelectedIncidentsGraphs.includes($(this).val())){
+            all_levels_exist_in_array = false;
+          }
+        });
+
+        if(!all_levels_exist_in_array){
+          newSelectedIncidentsGraphs = removeItemFromArray(newSelectedIncidentsGraphs, $(this).val());
+        }else{
+          $.each($(this).parent().find('input[type="checkbox"].wpdp_incident_type.level_2'), function(){
+            newSelectedIncidentsGraphs = removeItemFromArray(newSelectedIncidentsGraphs, $(this).val());
+          });
+        }
+
       });
 
       if(newSelectedIncidentsGraphs.length === selectedIncidentsGraphs.length){
         $('input[type="checkbox"].wpdp_incident_type.level_2.all_checked').each(function() {
 
-          let eixst_in_array = false;
-          $.each($(this).find('input[type="checkbox"].wpdp_incident_type.level_3.all_checked'), function(){
-            if(newSelectedIncidentsGraphs.includes($(this).val())){
-              eixst_in_array = true;
+          let all_levels_exist_in_array = true;
+          $.each($(this).parent().find('input[type="checkbox"].wpdp_incident_type.level_3'), function(){
+            if(!newSelectedIncidentsGraphs.includes($(this).val())){
+              all_levels_exist_in_array = false;
             }
           });
   
-          if(!eixst_in_array){
-            return;
+          if(!all_levels_exist_in_array){
+            newSelectedIncidentsGraphs = removeItemFromArray(newSelectedIncidentsGraphs, $(this).val());
+          }else{
+            $.each($(this).parent().find('input[type="checkbox"].wpdp_incident_type.level_3'), function(){
+              newSelectedIncidentsGraphs = removeItemFromArray(newSelectedIncidentsGraphs, $(this).val());
+            });
           }
 
-          let val = $(this).val();
-          if (val.includes('+')) {
-            val.split('+').forEach(item => {
-              const index = newSelectedIncidentsGraphs.indexOf(item);
-              if (index > -1) {
-                newSelectedIncidentsGraphs.splice(index, 1);
-              }
-            });
-          } else {
-            const index = newSelectedIncidentsGraphs.indexOf(val);
-            if (index > -1) {
-              newSelectedIncidentsGraphs.splice(index, 1);
-            }
-          }
+
         });
       }
 
@@ -205,61 +199,40 @@
       var newSelectedFatGraphs = [...selectedFatGraphs];
       $('input[type="checkbox"].wpdp_fat.level_1.all_checked').each(function() {
 
-        let eixst_in_array = false;
-        $.each($(this).find('input[type="checkbox"].wpdp_fat.level_2.all_checked'), function(){
-          if(newSelectedFatGraphs.includes($(this).val())){
-            eixst_in_array = true;
+        let all_levels_exist_in_array = true;
+        $.each($(this).parent().find('input[type="checkbox"].wpdp_fat.level_2'), function(){
+          if(!newSelectedFatGraphs.includes($(this).val())){
+            all_levels_exist_in_array = false;
           }
         });
 
-        if(!eixst_in_array){
-          return;
-        }
-
-        let val = $(this).val();
-        if (val.includes('+')) {
-          val.split('+').forEach(item => {
-            const index = newSelectedFatGraphs.indexOf(item);
-            if (index > -1) {
-              newSelectedFatGraphs.splice(index, 1);
-            }
+        if(!all_levels_exist_in_array){
+          newSelectedFatGraphs = removeItemFromArray(newSelectedFatGraphs, $(this).val());
+        }else{
+          $.each($(this).parent().find('input[type="checkbox"].wpdp_fat.level_2'), function(){
+            newSelectedFatGraphs = removeItemFromArray(newSelectedFatGraphs, $(this).val());
           });
-        } else {
-          const index = newSelectedFatGraphs.indexOf(val);
-          if (index > -1) {
-            newSelectedFatGraphs.splice(index, 1);
-          }
         }
       });
 
       if(newSelectedFatGraphs.length === selectedFatGraphs.length){
         $('input[type="checkbox"].wpdp_fat.level_2.all_checked').each(function() {
 
-          let eixst_in_array = false;
-          $.each($(this).find('input[type="checkbox"].wpdp_fat.level_3.all_checked'), function(){
-            if(newSelectedFatGraphs.includes($(this).val())){
-              eixst_in_array = true;
+          let all_levels_exist_in_array = true;
+          $.each($(this).parent().find('input[type="checkbox"].wpdp_fat.level_3'), function(){
+            if(!newSelectedFatGraphs.includes($(this).val())){
+              all_levels_exist_in_array = false;
             }
           });
-  
-          if(!eixst_in_array){
-            return;
+
+          if(!all_levels_exist_in_array){
+            newSelectedFatGraphs = removeItemFromArray(newSelectedFatGraphs, $(this).val());
+          }else{
+            $.each($(this).parent().find('input[type="checkbox"].wpdp_fat.level_3'), function(){
+              newSelectedFatGraphs = removeItemFromArray(newSelectedFatGraphs, $(this).val());
+            });
           }
 
-          let val = $(this).val();
-          if (val.includes('+')) {
-            val.split('+').forEach(item => {
-              const index = newSelectedFatGraphs.indexOf(item);
-              if (index > -1) {
-                newSelectedFatGraphs.splice(index, 1);
-              }
-            });
-          } else {
-            const index = newSelectedFatGraphs.indexOf(val);
-            if (index > -1) {
-              newSelectedFatGraphs.splice(index, 1);
-            }
-          }
         });
       }
 
@@ -308,7 +281,7 @@
       // Helper function to collect items from a specific level
       const collectFromLevelNotSelected = function(level) {
         $('input[type="checkbox"].wpdp_incident_type.level_' + level + ':checked').each(function() {
-          if(!$(this).parents('ul').find('input[type="checkbox"].wpdp_incident_type.all_checked').length){
+          if(!$(this).parent().parent().parent().find('> input[type="checkbox"].wpdp_incident_type').hasClass('all_checked')){
             let val = $(this).val();
             if (val.includes('+')) {
               val.split('+').forEach(item => selectedIncidentsGraphs.push(item));
@@ -319,7 +292,7 @@
         });
 
         $('input[type="checkbox"].wpdp_fat.level_' + level + ':checked').each(function() {
-          if(!$(this).parents('ul').find('input[type="checkbox"].wpdp_fat.all_checked').length){
+          if(!$(this).parent().parent().parent().find('> input[type="checkbox"].wpdp_fat').hasClass('all_checked')){
             let val = $(this).val();
             if (val.includes('+')) {
               val.split('+').forEach(item => selectedFatGraphs.push(item));
@@ -1747,7 +1720,6 @@
       })
       .forEach(key => {
         const level = getLevelFromCheckbox(key);
-        console.log(key,level);
         let newKey = key;
 
         // Check for existence of different levels
