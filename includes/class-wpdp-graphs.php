@@ -611,6 +611,41 @@ final class WPDP_Graphs {
             $most_recent_fatal_date = date('jS M Y', strtotime($most_recent_fatal_date));
         }
 
+        // Check if protests and riots in $agg data, if so then combine their numbers and make their key called Protest & Riots
+
+        // Properly combine Protests and Riots data
+        if(isset($agg['Protests']) && isset($agg['Riots'])) {
+            $agg['Protests & Riots'] = [];
+            
+            // Get all unique dates from both arrays
+            $all_dates = [];
+            if(isset($agg['Protests'])) {
+                $all_dates = array_merge($all_dates, array_keys($agg['Protests']));
+            }
+            if(isset($agg['Riots'])) {
+                $all_dates = array_merge($all_dates, array_keys($agg['Riots']));
+            }
+            $all_dates = array_unique($all_dates);
+
+            // Combine data for each date
+            foreach($all_dates as $date) {
+                $protests_data = isset($agg['Protests'][$date]) ? $agg['Protests'][$date] : ['fatalities_count' => 0, 'events_count' => 0];
+                $riots_data = isset($agg['Riots'][$date]) ? $agg['Riots'][$date] : ['fatalities_count' => 0, 'events_count' => 0];
+
+                $agg['Protests & Riots'][$date] = [
+                    'fatalities_count' => $protests_data['fatalities_count'] + $riots_data['fatalities_count'],
+                    'events_count' => $protests_data['events_count'] + $riots_data['events_count'],
+                    'sql_date' => $date,
+                    'last_event_date' => max($protests_data['last_event_date'], $riots_data['last_event_date']),
+                    'last_fatal_event_date' => max($protests_data['last_fatal_event_date'], $riots_data['last_fatal_event_date']),
+                ];
+            }
+
+            // Remove original arrays
+            unset($agg['Protests']);
+            unset($agg['Riots']);
+        }
+
         return [
             'data'=>$agg,
             'data_actors'=>$data_actors,

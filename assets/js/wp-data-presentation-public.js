@@ -247,7 +247,6 @@
       }
 
 
-      console.log(selectedIncidentsGraphs, selectedFatGraphs);
 
     },
 
@@ -1640,6 +1639,8 @@
           if(!isInLastMonth){
             latest_date = 0;
           }
+
+          console.log(response.data.data);
 
           self.chartInit(response.data.data,response.data.data_actors,response.data.chart_sql,response.data.intervals,latest_date,response.data.most_recent_date,response.data.most_recent_fatal_date);
           $('#wpdp-loader').hide();
