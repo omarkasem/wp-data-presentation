@@ -101,8 +101,9 @@ final class WPDP_Graphs {
             }
         }
 
+        
         $filters['merged_types'] = $merged_types;
-
+        
         if(empty($filters['actors'])){
             $filters['actors'] = [1,2,3,4,5,6,7,8];
         }else{
@@ -615,7 +616,7 @@ final class WPDP_Graphs {
 
         // Properly combine Protests and Riots data
         if(isset($agg['Protests']) && isset($agg['Riots'])) {
-            $agg['Protests & Riots'] = [];
+            $agg['Protests and Riots'] = [];
             
             // Get all unique dates from both arrays
             $all_dates = [];
@@ -632,7 +633,7 @@ final class WPDP_Graphs {
                 $protests_data = isset($agg['Protests'][$date]) ? $agg['Protests'][$date] : ['fatalities_count' => 0, 'events_count' => 0];
                 $riots_data = isset($agg['Riots'][$date]) ? $agg['Riots'][$date] : ['fatalities_count' => 0, 'events_count' => 0];
 
-                $agg['Protests & Riots'][$date] = [
+                $agg['Protests and Riots'][$date] = [
                     'fatalities_count' => $protests_data['fatalities_count'] + $riots_data['fatalities_count'],
                     'events_count' => $protests_data['events_count'] + $riots_data['events_count'],
                     'sql_date' => $date,
@@ -695,13 +696,33 @@ final class WPDP_Graphs {
     ?>
     <div class="wpdp_filter_content table-responsive">
         <canvas id="wpdp_chart" style="height:400px" class="table"  ></canvas>
-        <div class="last_updated_chart chart">Last relevant data entry: <span class="last_updated_chart_date"></span> <?php echo $shortcode::info_icon(''); ?></div>
+        <div class="chart_flex">
+            <div class="chart-controls">
+                <h3>Toggle Event Category Levels:</h3>
+                <button class="chart-filter-btn top-level active">Top Level</button>
+                <button class="chart-filter-btn second-level active">2nd Level</button>
+                <button class="chart-filter-btn third-level">3rd Level</button>
+                <a href="javascript:void(0)" class="chart-filter-btn all-categories ">Show All</a>
+            </div>
+            <div class="last_updated_chart chart">Last relevant data entry: <span class="last_updated_chart_date"></span> <?php echo $shortcode::info_icon(''); ?></div>
+        </div>
+
         <hr>
         <canvas id="wpdp_chart_fat" style="height:400px" class="table"  ></canvas>
-        <div class="last_updated_chart chart_fat">Last relevant data entry: <span class="last_updated_chart_date"></span> <?php echo $shortcode::info_icon(''); ?></div>
+        <div class="chart_flex">
+        <div class="chart-controls">
+                <h3>Toggle Event Category Levels:</h3>
+                <button class="chart-filter-btn top-level active">Top Level</button>
+                <button class="chart-filter-btn second-level active">2nd Level</button>
+                <button class="chart-filter-btn third-level">3rd Level</button>
+                <a href="javascript:void(0)" class="chart-filter-btn all-categories ">Show All</a>
+            </div>
+            <div class="last_updated_chart chart_fat">Last relevant data entry: <span class="last_updated_chart_date"></span> <?php echo $shortcode::info_icon(''); ?></div>
+        </div>
         <hr>
         <canvas id="wpdp_chart_bar_chart" style="height:400px" class="table"  ></canvas>
         <div class="last_updated_chart chart_bar">Last relevant data entry: <span class="last_updated_chart_date"></span> <?php echo $shortcode::info_icon(''); ?></div>
+
     </div>
     <?php }
 

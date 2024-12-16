@@ -136,117 +136,8 @@
       selectedFatGraphs = graphItems.fatalities;
 
 
-      const removeItemFromArray = function(array, val){
-        if (val.includes('+')) {
-          val.split('+').forEach(item => {
-            const index = array.indexOf(item);
-            if (index > -1) {
-              array.splice(index, 1);
-            }
-          });
-        } else {
-          const index = array.indexOf(val);
-          if (index > -1) {
-            array.splice(index, 1);
-          }
-        }
-        return array;
-      }
-
-      // Remove all checked items from the array
-      var newSelectedIncidentsGraphs = [...selectedIncidentsGraphs];
-      $('input[type="checkbox"].wpdp_incident_type.level_1.all_checked').each(function() {
-        let all_levels_exist_in_array = true;
-        $.each($(this).parent().find('input[type="checkbox"].wpdp_incident_type.level_2'), function(){
-          if(!newSelectedIncidentsGraphs.includes($(this).val())){
-            all_levels_exist_in_array = false;
-          }
-        });
-
-        if(!all_levels_exist_in_array){
-          newSelectedIncidentsGraphs = removeItemFromArray(newSelectedIncidentsGraphs, $(this).val());
-        }else{
-          $.each($(this).parent().find('input[type="checkbox"].wpdp_incident_type.level_2'), function(){
-            newSelectedIncidentsGraphs = removeItemFromArray(newSelectedIncidentsGraphs, $(this).val());
-          });
-        }
-
-      });
-
-      if(newSelectedIncidentsGraphs.length === selectedIncidentsGraphs.length){
-        $('input[type="checkbox"].wpdp_incident_type.level_2.all_checked').each(function() {
-
-          let all_levels_exist_in_array = true;
-          $.each($(this).parent().find('input[type="checkbox"].wpdp_incident_type.level_3'), function(){
-            if(!newSelectedIncidentsGraphs.includes($(this).val())){
-              all_levels_exist_in_array = false;
-            }
-          });
-  
-          if(!all_levels_exist_in_array){
-            newSelectedIncidentsGraphs = removeItemFromArray(newSelectedIncidentsGraphs, $(this).val());
-          }else{
-            $.each($(this).parent().find('input[type="checkbox"].wpdp_incident_type.level_3'), function(){
-              newSelectedIncidentsGraphs = removeItemFromArray(newSelectedIncidentsGraphs, $(this).val());
-            });
-          }
-
-
-        });
-      }
-
-
-      var newSelectedFatGraphs = [...selectedFatGraphs];
-      $('input[type="checkbox"].wpdp_fat.level_1.all_checked').each(function() {
-
-        let all_levels_exist_in_array = true;
-        $.each($(this).parent().find('input[type="checkbox"].wpdp_fat.level_2'), function(){
-          if(!newSelectedFatGraphs.includes($(this).val())){
-            all_levels_exist_in_array = false;
-          }
-        });
-
-        if(!all_levels_exist_in_array){
-          newSelectedFatGraphs = removeItemFromArray(newSelectedFatGraphs, $(this).val());
-        }else{
-          $.each($(this).parent().find('input[type="checkbox"].wpdp_fat.level_2'), function(){
-            newSelectedFatGraphs = removeItemFromArray(newSelectedFatGraphs, $(this).val());
-          });
-        }
-      });
-
-      if(newSelectedFatGraphs.length === selectedFatGraphs.length){
-        $('input[type="checkbox"].wpdp_fat.level_2.all_checked').each(function() {
-
-          let all_levels_exist_in_array = true;
-          $.each($(this).parent().find('input[type="checkbox"].wpdp_fat.level_3'), function(){
-            if(!newSelectedFatGraphs.includes($(this).val())){
-              all_levels_exist_in_array = false;
-            }
-          });
-
-          if(!all_levels_exist_in_array){
-            newSelectedFatGraphs = removeItemFromArray(newSelectedFatGraphs, $(this).val());
-          }else{
-            $.each($(this).parent().find('input[type="checkbox"].wpdp_fat.level_3'), function(){
-              newSelectedFatGraphs = removeItemFromArray(newSelectedFatGraphs, $(this).val());
-            });
-          }
-
-        });
-      }
-
-
-
-      if(newSelectedIncidentsGraphs.length >= 3){
-        selectedIncidentsGraphs = newSelectedIncidentsGraphs;
-      }
-
-      if(newSelectedFatGraphs.length >= 3){
-        selectedFatGraphs = newSelectedFatGraphs;
-      }
-
-
+      console.log(selectedIncidentsGraphs);
+      console.log(selectedFatGraphs);
 
     },
 
@@ -272,32 +163,6 @@
             val.split('+').forEach(item => selectedFatGraphs.push(item));
           } else {
             selectedFatGraphs.push(val);
-          }
-        });
-      };
-
-
-      // Helper function to collect items from a specific level
-      const collectFromLevelNotSelected = function(level) {
-        $('input[type="checkbox"].wpdp_incident_type.level_' + level + ':checked').each(function() {
-          if(!$(this).parent().parent().parent().find('> input[type="checkbox"].wpdp_incident_type').hasClass('all_checked')){
-            let val = $(this).val();
-            if (val.includes('+')) {
-              val.split('+').forEach(item => selectedIncidentsGraphs.push(item));
-            } else {
-              selectedIncidentsGraphs.push(val);
-            }
-          }
-        });
-
-        $('input[type="checkbox"].wpdp_fat.level_' + level + ':checked').each(function() {
-          if(!$(this).parent().parent().parent().find('> input[type="checkbox"].wpdp_fat').hasClass('all_checked')){
-            let val = $(this).val();
-            if (val.includes('+')) {
-              val.split('+').forEach(item => selectedFatGraphs.push(item));
-            } else {
-              selectedFatGraphs.push(val);
-            }
           }
         });
       };
@@ -330,23 +195,7 @@
         selectedIncidentsGraphs = cleaned.array1;
         selectedFatGraphs = cleaned.array2;
 
-        // Check if we have enough items
-        if (selectedIncidentsGraphs.length + selectedFatGraphs.length >= 3) {
-          break;
-        }
       }
-
-      // // Collect items level by level until we have enough unique items
-      for (let level = 2; level <= 3; level++) {
-        collectFromLevelNotSelected(level);
-        
-        // Remove duplicates after each collection
-        const cleaned = removeDuplicates(selectedIncidentsGraphs, selectedFatGraphs);
-        selectedIncidentsGraphs = cleaned.array1;
-        selectedFatGraphs = cleaned.array2;
-
-      }
-
 
       return {
         incidents: selectedIncidentsGraphs,
@@ -1581,8 +1430,10 @@
             $('#wpdp_chart,.last_updated_chart.chart').addClass('wpdp_force_hide').removeClass('wpdp_force_show');
             $('.no-chart-data-message').remove();
             $('#wpdp_chart').after('<div class="no-chart-data-message" style="text-align: center; padding: 20px;">No incidents found. Please adjust the filter options to see more data.</div>');
+            $('.chart-controls').addClass('wpdp_force_hide').removeClass('wpdp_force_show');
           } else {
             $('#wpdp_chart').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
+            $('.chart-controls').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
             
             if(isInLastMonth){
               setTimeout(() => {
@@ -1600,8 +1451,10 @@
             $('#wpdp_chart_fat,.last_updated_chart.chart_fat').removeClass('wpdp_force_show').addClass('wpdp_force_hide');
             $('.no-fat-data-message').remove();
             $('#wpdp_chart_fat').after('<div class="no-fat-data-message" style="text-align: center; padding: 20px;">No fatalities found. Please adjust the filter options to see more data.</div>');
+            $('.chart-controls').addClass('wpdp_force_hide').removeClass('wpdp_force_show');
           } else {
             $('#wpdp_chart_fat').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
+            $('.chart-controls').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
 
             if(isInLastMonth){
               setTimeout(() => {
@@ -1640,8 +1493,6 @@
             latest_date = 0;
           }
 
-          console.log(response.data.data);
-
           self.chartInit(response.data.data,response.data.data_actors,response.data.chart_sql,response.data.intervals,latest_date,response.data.most_recent_date,response.data.most_recent_fatal_date);
           $('#wpdp-loader').hide();
 
@@ -1660,8 +1511,9 @@
       var datasets_fat = [];
       var datasets_actors = [];
       const colors = [
+        // Existing colors
         '#4dc9f6',
-        '#f67019',
+        '#f67019', 
         '#f53794',
         '#537bc4',
         '#acc236',
@@ -1673,23 +1525,24 @@
         '#ffcd56',
         '#36a2eb',
         '#9966ff',
-        '#c9cbcf',
-        '#ff6384',
-        '#4bc0c0',
-        '#ff9f40',
-        '#ffcd56',
-        '#36a2eb',
-        '#ff7f50',
-        '#87ceeb',
-        '#32cd32',
-        '#ba55d3',
-        '#ff69b4',
-        '#cd5c5c',
-        '#ffa07a',
-        '#20b2aa',
-        '#778899',
-        '#b0c4de'
-      ];
+        
+        // New colors
+        '#FF6B6B', // Coral red
+        '#4ECDC4', // Turquoise mint
+        '#45B7D1', // Ocean blue
+        '#96CEB4', // Sage green
+        '#D4A5A5', // Dusty rose
+        '#9B4DCA', // Royal purple
+        '#FFB347', // Pastel orange
+        '#A5668B', // Plum
+        '#69D2E7', // Sky blue
+        '#F7D794', // Sand yellow
+        '#E056FD', // Bright purple
+        '#B8E994', // Light lime
+        '#FF8C94', // Salmon pink
+        '#88D8B0', // Mint green
+        '#FFAAA5'  // Peach
+    ];
 
       // Sort data keys based on checkbox levels
       const getLevelFromCheckbox = (label) => {
@@ -1985,6 +1838,14 @@
           },
         }
       });
+
+
+      if(is_fat) {
+        self.initChartFilters('chart_fat', chartVar, datasets, 'fatalities');
+      }
+
+
+
     }
 
 
@@ -1994,6 +1855,7 @@
         chartVar = 'myChartFat';
       }
       
+
       // Add check for mobile screen width
       const isMobile = window.innerWidth <= 768;
       const maxTicksLimit = isMobile ? 15 : 30;
@@ -2077,7 +1939,115 @@
 
         }
       });
+
+      self.initChartFilters('chart', chartVar, datasets, 'incidents');
+
     }
+
+
+    self.initChartFilters = function(chartId, chartVar, datasets, type) {
+      const $container = $(`#wpdp_${chartId}`).next();
+      const $buttons = $container.find('.chart-filter-btn:not(.all-categories)');
+      const $allButton = $container.find('.chart-filter-btn.all-categories');
+  
+      // First, remove all existing event handlers
+      $buttons.off('click');
+      $allButton.off('click');
+  
+      // Function to update chart based on active buttons
+      const updateChart = () => {
+          const activeTypes = [];
+          $buttons.filter('.active').each(function() {
+              if ($(this).hasClass('top-level')) activeTypes.push('top-level');
+              if ($(this).hasClass('second-level')) activeTypes.push('second-level');
+              if ($(this).hasClass('third-level')) activeTypes.push('third-level');
+          });
+  
+          // Filter datasets based on all active types
+          const filteredDatasets = datasets.filter(dataset => {
+              const label = type === 'fatalities' 
+                  ? 'fatalities from ' + dataset.label.toLowerCase()
+                  : dataset.label.toLowerCase();
+                  
+              const selector = type === 'fatalities' 
+                  ? '.fatalities input[type="checkbox"]'
+                  : '.inident_type input[type="checkbox"]';
+                  
+              const checkbox = $(selector).filter(function() {
+                  return label.includes($(this).attr('label_value').toLowerCase());
+              }).first();
+  
+              return activeTypes.some(type => {
+                  switch(type) {
+                      case 'top-level': return checkbox.hasClass('level_1');
+                      case 'second-level': return checkbox.hasClass('level_2');
+                      case 'third-level': return checkbox.hasClass('level_3');
+                      default: return false;
+                  }
+              });
+          });
+  
+          window[chartVar].data.datasets = filteredDatasets;
+          window[chartVar].update();
+  
+          // Save state
+          const state = {
+              buttons: $buttons.map(function() {
+                  return {
+                      class: $(this).attr('class').split(' ')[1],
+                      active: $(this).hasClass('active')
+                  };
+              }).get()
+          };
+          localStorage.setItem(`wpdp_chart_filter_${chartId}`, JSON.stringify(state));
+      };
+  
+      // Individual level buttons click handler
+      $buttons.on('click', function() {
+          const $clicked = $(this);
+          
+          // If this is the last active button, prevent deactivation
+          if ($buttons.filter('.active').length === 1 && $clicked.hasClass('active')) {
+              return;
+          }
+  
+          $clicked.toggleClass('active');
+          updateChart();
+      });
+  
+      // Show All button click handler
+      $allButton.on('click', function() {
+          if ($buttons.filter('.active').length === $buttons.length) {
+              // If all are active, reset to default state (top and second level)
+              $buttons.removeClass('active');
+              $buttons.filter('.top-level, .second-level').addClass('active');
+          } else {
+              // Activate all buttons
+              $buttons.addClass('active');
+          }
+          updateChart();
+      });
+  
+      // Initialize state
+      const savedState = localStorage.getItem(`wpdp_chart_filter_${chartId}`);
+      if (savedState) {
+          try {
+              const state = JSON.parse(savedState);
+              state.buttons.forEach(button => {
+                  $buttons.filter(`.${button.class}`)[button.active ? 'addClass' : 'removeClass']('active');
+              });
+          } catch (e) {
+              // If there's an error parsing the saved state, use default
+              $buttons.filter('.top-level, .second-level').addClass('active');
+          }
+      } else {
+          // Default state: top and second level active
+          $buttons.filter('.top-level, .second-level').addClass('active');
+      }
+      
+      // Initial chart update
+      updateChart();
+  };
 
 
     self.maps_polygons = function() {
@@ -2389,5 +2359,48 @@
     $( self.init );
     window.wpdp_map = self.mapsChoice;
 
+    self.saveChartControlState = function(chartId, filterType) {
+        localStorage.setItem(`wpdp_chart_filter_${chartId}`, filterType);
+    };
     
+    self.restoreChartControlState = function(chartId) {
+        const savedState = localStorage.getItem(`wpdp_chart_filter_${chartId}`);
+        if (savedState) {
+            const $buttons = $(`#wpdp_${chartId}`).next().find('.chart-filter-btn');
+            $buttons.removeClass('active');
+            $buttons.filter(`.${savedState}`).addClass('active');
+            return savedState;
+        }
+        return 'top-level'; // default state
+    };
+
+    self.filterDatasets = function(datasets, filterType, type) {
+        return datasets.filter(dataset => {
+            const label = type === 'fatalities' 
+                ? 'fatalities from ' + dataset.label.toLowerCase()
+                : dataset.label.toLowerCase();
+                
+            const selector = type === 'fatalities' 
+                ? '.fatalities input[type="checkbox"]'
+                : '.inident_type input[type="checkbox"]';
+                
+            const checkbox = $(selector).filter(function() {
+                return label.includes($(this).attr('label_value').toLowerCase());
+            }).first();
+
+            switch(filterType) {
+                case 'all':
+                    return true;
+                case 'top-level':
+                    return checkbox.hasClass('level_1');
+                case 'second-level':
+                    return checkbox.hasClass('level_2');
+                case 'third-level':
+                    return checkbox.hasClass('level_3');
+                default:
+                    return true;
+            }
+        });
+    };
+
 }( jQuery ) );

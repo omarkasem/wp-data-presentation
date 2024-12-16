@@ -529,6 +529,54 @@ a.select_unselect_all {
   margin:0;
 }
 
+.chart_flex{
+  display:flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chart-controls {
+  text-align: center;
+  margin: 10px 12px;
+  display:none;
+}
+
+.chart-controls h3{
+  margin: 0;
+  padding: 0;
+  font-size: 18px;
+  text-align: left;
+  margin-left: 5px;
+  margin-bottom: 10px;
+}
+
+.chart-filter-btn, .chart-filter-btn:focus {
+  padding: 5px 10px;
+  margin: 0 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  color:#333;
+}
+
+.chart-filter-btn.active {
+  background: #007bff;
+  color: #fff;
+  border-color: #0056b3;
+}
+
+.chart-filter-btn:hover {
+  background: #f0f0f0;
+  color:#333;
+}
+
+.chart-filter-btn.active:hover {
+  background: #0056b3;
+  color:#fff;
+}
+
+
 @media only screen and (max-width: 600px) {
 	#wpdp_datatable_wrapper{
 		overflow-x: auto;
