@@ -681,7 +681,7 @@ final class WPDP_Shortcode {
                 <form id="filter_form" action="" style="margin-top:15px;">
 
 
-                    <div class="grp inident_type">
+                    <div class="grp incident_type">
 
                         <div class="title">
                         EVENT TYPE <span class="dashicons dashicons-arrow-down-alt2"></span>

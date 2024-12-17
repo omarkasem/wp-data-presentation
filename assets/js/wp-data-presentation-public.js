@@ -136,8 +136,23 @@
       selectedFatGraphs = graphItems.fatalities;
 
 
-      console.log(selectedIncidentsGraphs);
-      console.log(selectedFatGraphs);
+      if($('.chart-controls').length){
+        $('.chart-controls').each(function(){
+          if(!$(this).find('.chart-filter-btn.top-level').hasClass('active')){
+            $(this).find('.chart-filter-btn.top-level').trigger('click');
+          }
+          if(!$(this).find('.chart-filter-btn.second-level').hasClass('active')){
+            $(this).find('.chart-filter-btn.second-level').trigger('click');
+          }
+          if(!$(this).find('.chart-filter-btn.third-level').hasClass('active')){
+            $(this).find('.chart-filter-btn.third-level').trigger('click');
+          }
+          if(!$(this).find('.chart-filter-btn.all-categories').hasClass('active')){
+            $(this).find('.chart-filter-btn.all-categories').trigger('click');
+          }
+        });
+      }
+
 
     },
 
@@ -337,12 +352,26 @@
         $('#wpdp_from').datepicker('setDate', defaultFromDate).addClass('changed');
         $('#wpdp_to').datepicker('setDate', maxDate).addClass('changed');
 
-        // First uncheck all checkboxes
-        $(this).find('input[type="checkbox"]').prop('checked', false);
-        
-        // Then check only top-level checkboxes (direct children of first_one class)
-        $('.first_one > li > input[type="checkbox"]').prop('checked', true);
+        // Check all checkboxes 
+        $(this).find('.incident_type input[type="checkbox"],.fatalities input[type="checkbox"],.actors input[type="checkbox"]').prop('checked', true);
 
+        // Reset chart controls to default values which are level 1 and 2
+        if($('.chart-controls').length){
+          $('.chart-controls').each(function(){
+            if(!$(this).find('.chart-filter-btn.top-level').hasClass('active')){
+              $(this).find('.chart-filter-btn.top-level').trigger('click');
+            }
+            if(!$(this).find('.chart-filter-btn.second-level').hasClass('active')){
+              $(this).find('.chart-filter-btn.second-level').trigger('click');
+            }
+            if(!$(this).find('.chart-filter-btn.third-level').hasClass('active')){
+              $(this).find('.chart-filter-btn.third-level').trigger('click');
+            }
+            if(!$(this).find('.chart-filter-btn.all-categories').hasClass('active')){
+              $(this).find('.chart-filter-btn.all-categories').trigger('click');
+            }
+          });
+        }
         
         // Clear select2 fields
         $('#wpdp_search_location').val('').trigger('change');
@@ -1880,6 +1909,139 @@
         dataset.data = newData;
       });
 
+
+    // // Create custom legend container
+    // const existingLegend = document.querySelector(`#${ctx.canvas.id}-legend`);
+    // if (existingLegend) {
+    //     existingLegend.remove();
+    // }
+
+    // const legendContainer = document.createElement('div');
+    // legendContainer.id = `${ctx.canvas.id}-legend`;
+    // legendContainer.className = 'chart-legend';
+
+    // // Define your legend categories
+    // const legendCategories = {
+    //     'Violence': ['Political violence', 'Violence against civilians', 'Sexual violence', 'Armed clash'],
+    //     'Protests & Demonstrations': ['Protests and Riots', 'Peaceful protest', 'Protest with intervention', 'Violent demonstration'],
+    //     'Military Actions': ['Battles', 'Shelling/artillery/missile attack', 'Air/drone strike'],
+    //     'Other Events': ['Remote explosive/landmine/IED', 'Non-violent transfer of territory', 'Agreement', 'Change to group/activity']
+    // };
+
+    // // Add styles to document if not already present
+    // if (!document.getElementById('chart-legend-styles')) {
+    //     const styleSheet = document.createElement('style');
+    //     styleSheet.id = 'chart-legend-styles';
+    //     styleSheet.textContent = `
+    //         .chart-legend {
+    //             display: flex;
+    //             flex-wrap: wrap;
+    //             gap: 20px;
+    //             padding: 10px;
+    //             margin-top: 20px;
+    //             justify-content: center;
+    //         }
+    //         .legend-category {
+    //             min-width: 200px;
+    //             max-width: 300px;
+    //             background: #f8f9fa;
+    //             padding: 10px;
+    //             border-radius: 8px;
+    //         }
+    //         .category-header {
+    //             font-weight: bold;
+    //             margin-bottom: 10px;
+    //             cursor: pointer;
+    //             display: flex;
+    //             justify-content: space-between;
+    //             align-items: center;
+    //             color: #333;
+    //         }
+    //         .category-header:after {
+    //             content: '▼';
+    //             font-size: 12px;
+    //         }
+    //         .category-header.collapsed:after {
+    //             content: '▶';
+    //         }
+    //         .category-items {
+    //             display: grid;
+    //             gap: 8px;
+    //         }
+    //         .legend-item {
+    //             display: flex;
+    //             align-items: center;
+    //             gap: 8px;
+    //             font-size: 12px;
+    //             cursor: pointer;
+    //             padding: 2px 4px;
+    //             border-radius: 4px;
+    //         }
+    //         .legend-item:hover {
+    //             background: #eee;
+    //         }
+    //         .legend-color {
+    //             width: 12px;
+    //             height: 12px;
+    //             border-radius: 2px;
+    //         }
+    //         .legend-item.hidden {
+    //             opacity: 0.5;
+    //         }
+    //     `;
+    //     document.head.appendChild(styleSheet);
+    // }
+
+    // // Build legend HTML
+    // Object.entries(legendCategories).forEach(([category, items]) => {
+    //     const categoryDiv = document.createElement('div');
+    //     categoryDiv.className = 'legend-category';
+        
+    //     const categoryContent = `
+    //         <div class="category-header">${category}</div>
+    //         <div class="category-items">
+    //             ${datasets
+    //                 .filter(dataset => items.some(item => dataset.label.includes(item)))
+    //                 .map(dataset => `
+    //                     <div class="legend-item" data-label="${dataset.label}">
+    //                         <span class="legend-color" style="background-color: ${dataset.borderColor}"></span>
+    //                         <span class="legend-text">${dataset.label}</span>
+    //                     </div>
+    //                 `).join('')}
+    //         </div>
+    //     `;
+        
+    //     categoryDiv.innerHTML = categoryContent;
+    //     legendContainer.appendChild(categoryDiv);
+    // });
+
+    // // Insert legend after chart
+    // ctx.canvas.parentNode.appendChild(legendContainer);
+
+    // // Add event listeners
+    // legendContainer.querySelectorAll('.category-header').forEach(header => {
+    //     header.addEventListener('click', () => {
+    //         header.classList.toggle('collapsed');
+    //         const items = header.nextElementSibling;
+    //         items.style.display = header.classList.contains('collapsed') ? 'none' : 'grid';
+    //     });
+    // });
+
+    // legendContainer.querySelectorAll('.legend-item').forEach(item => {
+    //     item.addEventListener('click', () => {
+    //         const label = item.dataset.label;
+    //         const chart = window[chartVar];
+    //         const datasetIndex = chart.data.datasets.findIndex(dataset => dataset.label === label);
+            
+    //         if (datasetIndex > -1) {
+    //             chart.getDatasetMeta(datasetIndex).hidden = !chart.getDatasetMeta(datasetIndex).hidden;
+    //             item.classList.toggle('hidden');
+    //             chart.update();
+    //         }
+    //     });
+    // });
+
+
       window[chartVar] = new Chart(ctx, {
         type: 'line',
         data: {datasets:datasets},
@@ -1889,6 +2051,9 @@
           maintainAspectRatio: false, // Changed to false
           height: 400, // Explicit height
           plugins: {
+              // legend: {
+              //   display: false // Hide default legend since we're using custom
+              // },
               title: {
                   display: true,
                   text: title_text
@@ -1937,7 +2102,7 @@
           },
         
 
-        }
+        },
       });
 
       self.initChartFilters('chart', chartVar, datasets, 'incidents');
@@ -1971,7 +2136,7 @@
                   
               const selector = type === 'fatalities' 
                   ? '.fatalities input[type="checkbox"]'
-                  : '.inident_type input[type="checkbox"]';
+                  : '.incident_type input[type="checkbox"]';
                   
               const checkbox = $(selector).filter(function() {
                   return label.includes($(this).attr('label_value').toLowerCase());
@@ -2005,10 +2170,22 @@
       // Individual level buttons click handler
       $buttons.on('click', function() {
           const $clicked = $(this);
-          
           // If this is the last active button, prevent deactivation
           if ($buttons.filter('.active').length === 1 && $clicked.hasClass('active')) {
-              return;
+            const instance = tippy($clicked[0], {
+                content: "Sorry, at least one active category level must be selected to prevent an empty chart.",
+                placement: 'top',
+                trigger: 'manual',
+                hideOnClick: true,
+                touch: true,
+            });
+            instance.show();
+
+            // Destroy the tippy instance when the user clicks on any other button
+            $buttons.not($clicked).on('click', function() {
+                instance.destroy();
+            });
+            return;
           }
   
           $clicked.toggleClass('active');
@@ -2382,7 +2559,7 @@
                 
             const selector = type === 'fatalities' 
                 ? '.fatalities input[type="checkbox"]'
-                : '.inident_type input[type="checkbox"]';
+                : '.incident_type input[type="checkbox"]';
                 
             const checkbox = $(selector).filter(function() {
                 return label.includes($(this).attr('label_value').toLowerCase());
