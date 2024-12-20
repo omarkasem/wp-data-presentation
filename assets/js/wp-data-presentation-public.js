@@ -136,22 +136,6 @@
       selectedFatGraphs = graphItems.fatalities;
 
 
-      if($('.chart-controls').length){
-        $('.chart-controls').each(function(){
-          if(!$(this).find('.chart-filter-btn.top-level').hasClass('active')){
-            $(this).find('.chart-filter-btn.top-level').trigger('click');
-          }
-          if(!$(this).find('.chart-filter-btn.second-level').hasClass('active')){
-            $(this).find('.chart-filter-btn.second-level').trigger('click');
-          }
-          if(!$(this).find('.chart-filter-btn.third-level').hasClass('active')){
-            $(this).find('.chart-filter-btn.third-level').trigger('click');
-          }
-          if(!$(this).find('.chart-filter-btn.all-categories').hasClass('active')){
-            $(this).find('.chart-filter-btn.all-categories').trigger('click');
-          }
-        });
-      }
 
 
     },
@@ -359,13 +343,10 @@
         if($('.chart-controls').length){
           $('.chart-controls').each(function(){
             if(!$(this).find('.chart-filter-btn.top-level').hasClass('active')){
-              $(this).find('.chart-filter-btn.top-level').trigger('click');
+              $(this).find('.chart-filter-btn.top-level').trigger('click').addClass('active');
             }
             if(!$(this).find('.chart-filter-btn.second-level').hasClass('active')){
-              $(this).find('.chart-filter-btn.second-level').trigger('click');
-            }
-            if(!$(this).find('.chart-filter-btn.third-level').hasClass('active')){
-              $(this).find('.chart-filter-btn.third-level').trigger('click');
+              $(this).find('.chart-filter-btn.second-level').trigger('click').addClass('active');
             }
             if(!$(this).find('.chart-filter-btn.all-categories').hasClass('active')){
               $(this).find('.chart-filter-btn.all-categories').trigger('click');
@@ -1459,10 +1440,10 @@
             $('#wpdp_chart,.last_updated_chart.chart').addClass('wpdp_force_hide').removeClass('wpdp_force_show');
             $('.no-chart-data-message').remove();
             $('#wpdp_chart').after('<div class="no-chart-data-message" style="text-align: center; padding: 20px;">No incidents found. Please adjust the filter options to see more data.</div>');
-            $('.chart-controls').addClass('wpdp_force_hide').removeClass('wpdp_force_show');
+            $('.chart-controls.chart').addClass('wpdp_force_hide').removeClass('wpdp_force_show');
           } else {
             $('#wpdp_chart').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
-            $('.chart-controls').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
+            $('.chart-controls.chart').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
             
             if(isInLastMonth){
               setTimeout(() => {
@@ -1480,10 +1461,10 @@
             $('#wpdp_chart_fat,.last_updated_chart.chart_fat').removeClass('wpdp_force_show').addClass('wpdp_force_hide');
             $('.no-fat-data-message').remove();
             $('#wpdp_chart_fat').after('<div class="no-fat-data-message" style="text-align: center; padding: 20px;">No fatalities found. Please adjust the filter options to see more data.</div>');
-            $('.chart-controls').addClass('wpdp_force_hide').removeClass('wpdp_force_show');
+            $('.chart-controls.fat_chart').addClass('wpdp_force_hide').removeClass('wpdp_force_show');
           } else {
             $('#wpdp_chart_fat').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
-            $('.chart-controls').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
+            $('.chart-controls.fat_chart').removeClass('wpdp_force_hide').addClass('wpdp_force_show');
 
             if(isInLastMonth){
               setTimeout(() => {
@@ -1602,28 +1583,7 @@
         return levelA - levelB;
       })
       .forEach(key => {
-        const level = getLevelFromCheckbox(key);
-        let newKey = key;
-
-        // Check for existence of different levels
-        const hasLevel3 = hasItemsAtLevel(data, 3);
-        const hasLevel2 = hasItemsAtLevel(data, 2);
-
-        // Apply (All) suffix based on conditions
-        if (hasLevel3) {
-          // If level 3 exists, add (All) to level 1 and 2
-          if (level === 1 || level === 2) {
-            newKey = `${key} (All)`;
-          }
-        } else if (hasLevel2) {
-          // If no level 3 but level 2 exists, add (All) only to level 1
-          if (level === 1) {
-            newKey = `${key} (All)`;
-          }
-        }
-        // If only level 1 exists, keep original key without (All)
-
-        orderedData[newKey] = data[key];
+        orderedData[key] = data[key];
       });
 
 
@@ -2110,11 +2070,77 @@
     }
 
 
+    // Add new helper function to set default active buttons
+    self.setDefaultActiveButtons = function($buttons, existingLevels, datasets, type) {
+      // Count datasets for each level
+      const levelCounts = {
+          level_1: 0,
+          level_2: 0,
+          level_3: 0
+      };
+
+      datasets.forEach(dataset => {
+          const label = type === 'fatalities' 
+              ? 'fatalities from ' + dataset.label.toLowerCase()
+              : dataset.label.toLowerCase();
+              
+          const selector = type === 'fatalities' 
+              ? '.fatalities input[type="checkbox"]'
+              : '.incident_type input[type="checkbox"]';
+              
+          const checkbox = $(selector).filter(function() {
+              return label.includes($(this).attr('label_value').toLowerCase());
+          }).first();
+
+          if (checkbox.hasClass('level_1')) levelCounts.level_1++;
+          if (checkbox.hasClass('level_2')) levelCounts.level_2++;
+          if (checkbox.hasClass('level_3')) levelCounts.level_3++;
+      });
+
+      const topTwoLevelsCount = levelCounts.level_1 + levelCounts.level_2;
+
+      if (topTwoLevelsCount < 5) {
+          // If less than 5 datasets in levels 1 and 2 combined, activate all levels
+          $buttons.filter('.top-level, .second-level, .third-level').trigger('click').addClass('active');
+      } else if (existingLevels.size === 1 && existingLevels.has('level_3')) {
+          // If only level 3 exists, activate third-level button
+          $buttons.filter('.third-level').trigger('click').addClass('active');
+      } else {
+          // Default behavior: activate top and second level
+          $buttons.filter('.top-level, .second-level').trigger('click').addClass('active');
+          $buttons.filter('.third-level.active').trigger('click').removeClass('active');
+      }
+    };
+
     self.initChartFilters = function(chartId, chartVar, datasets, type) {
       const $container = $(`#wpdp_${chartId}`).next();
       const $buttons = $container.find('.chart-filter-btn:not(.all-categories)');
       const $allButton = $container.find('.chart-filter-btn.all-categories');
   
+      // First, determine what levels exist in the datasets
+      const existingLevels = new Set();
+      datasets.forEach(dataset => {
+          const label = type === 'fatalities' 
+              ? 'fatalities from ' + dataset.label.toLowerCase()
+              : dataset.label.toLowerCase();
+              
+          const selector = type === 'fatalities' 
+              ? '.fatalities input[type="checkbox"]'
+              : '.incident_type input[type="checkbox"]';
+              
+          const checkbox = $(selector).filter(function() {
+              return label.includes($(this).attr('label_value').toLowerCase());
+          }).first();
+  
+          if (checkbox.hasClass('level_1')) existingLevels.add('level_1');
+          if (checkbox.hasClass('level_2')) existingLevels.add('level_2');
+          if (checkbox.hasClass('level_3')) existingLevels.add('level_3');
+      });
+
+      // Get the dataset count
+      const datasetCount = datasets.length;
+
+
       // First, remove all existing event handlers
       $buttons.off('click');
       $allButton.off('click');
@@ -2164,27 +2190,33 @@
                   };
               }).get()
           };
+
+          console.log(state);
           localStorage.setItem(`wpdp_chart_filter_${chartId}`, JSON.stringify(state));
       };
   
       // Individual level buttons click handler
-      $buttons.on('click', function() {
+      $buttons.on('click', function(event) {
+          if(!event.originalEvent || !event.originalEvent.isTrusted){
+            return;
+          }
           const $clicked = $(this);
           // If this is the last active button, prevent deactivation
           if ($buttons.filter('.active').length === 1 && $clicked.hasClass('active')) {
-            const instance = tippy($clicked[0], {
-                content: "Sorry, at least one active category level must be selected to prevent an empty chart.",
-                placement: 'top',
-                trigger: 'manual',
-                hideOnClick: true,
-                touch: true,
-            });
-            instance.show();
+            // Check if the event is triggered by a real user click
+                const instance = tippy($clicked[0], {
+                    content: "Sorry, at least one active category level must be selected to prevent an empty chart.",
+                    placement: 'top',
+                    trigger: 'manual',
+                    hideOnClick: true,
+                    touch: true,
+                });
+                instance.show();
 
-            // Destroy the tippy instance when the user clicks on any other button
-            $buttons.not($clicked).on('click', function() {
-                instance.destroy();
-            });
+                // Destroy the tippy instance when the user clicks on any other button
+                $buttons.not($clicked).on('click', function() {
+                    instance.destroy();
+                });
             return;
           }
   
@@ -2213,13 +2245,14 @@
               state.buttons.forEach(button => {
                   $buttons.filter(`.${button.class}`)[button.active ? 'addClass' : 'removeClass']('active');
               });
+              self.setDefaultActiveButtons($buttons, existingLevels, datasets, type);
           } catch (e) {
-              // If there's an error parsing the saved state, use default
-              $buttons.filter('.top-level, .second-level').addClass('active');
+              // If there's an error parsing the saved state, set default based on existing levels
+              self.setDefaultActiveButtons($buttons, existingLevels, datasets, type);
           }
       } else {
-          // Default state: top and second level active
-          $buttons.filter('.top-level, .second-level').addClass('active');
+          // Default state based on existing levels
+          self.setDefaultActiveButtons($buttons, existingLevels, datasets, type);
       }
       
       // Initial chart update
@@ -2536,9 +2569,6 @@
     $( self.init );
     window.wpdp_map = self.mapsChoice;
 
-    self.saveChartControlState = function(chartId, filterType) {
-        localStorage.setItem(`wpdp_chart_filter_${chartId}`, filterType);
-    };
     
     self.restoreChartControlState = function(chartId) {
         const savedState = localStorage.getItem(`wpdp_chart_filter_${chartId}`);

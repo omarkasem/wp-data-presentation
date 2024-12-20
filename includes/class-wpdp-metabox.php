@@ -506,6 +506,13 @@ final class WPDP_Metabox {
     }
     
     public function create_data_table($post_id, $use_posted_data = true){
+
+        require_once(ABSPATH . 'wp-admin/includes/image.php');
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        require_once(ABSPATH . 'wp-admin/includes/media.php');
+        
+    
+
         global $wpdb;
         $table_name = $wpdb->prefix. 'wpdp_data_'.$post_id;
 

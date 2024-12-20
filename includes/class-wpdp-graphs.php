@@ -695,14 +695,14 @@ final class WPDP_Graphs {
         $shortcode = WPDP_Shortcode::get_instance();
     ?>
     <div class="wpdp_filter_content table-responsive">
-        <canvas id="wpdp_chart" style="height:400px" class="table"  ></canvas>
+        <canvas id="wpdp_chart" style="height:400px" class="table"></canvas>
         <div class="chart_flex">
-            <div class="chart-controls">
-                <h3>Toggle Event Category Levels:</h3>
+            <div class="chart-controls chart">
+                <h3>Toggle Event Category Levels <?php echo $shortcode::info_icon('Use these controls to show or hide event categories based on their hierarchy levels.','padding-top: 2px;'); ?></h3>
                 <button class="chart-filter-btn top-level active">Top Level</button>
                 <button class="chart-filter-btn second-level active">2nd Level</button>
                 <button class="chart-filter-btn third-level">3rd Level</button>
-                <a href="javascript:void(0)" class="chart-filter-btn all-categories ">Show All</a>
+                <a href="javascript:void(0)" class="chart-filter-btn all-categories ">Toggle All</a>
             </div>
             <div class="last_updated_chart chart">Last relevant data entry: <span class="last_updated_chart_date"></span> <?php echo $shortcode::info_icon(''); ?></div>
         </div>
@@ -710,12 +710,12 @@ final class WPDP_Graphs {
         <hr>
         <canvas id="wpdp_chart_fat" style="height:400px" class="table"  ></canvas>
         <div class="chart_flex">
-        <div class="chart-controls">
-                <h3>Toggle Event Category Levels:</h3>
+        <div class="chart-controls fat_chart">
+                <h3>Toggle Event Category Levels <?php echo $shortcode::info_icon('Use these controls to show or hide event categories based on their hierarchy levels.','padding-top: 2px;'); ?></h3>
                 <button class="chart-filter-btn top-level active">Top Level</button>
                 <button class="chart-filter-btn second-level active">2nd Level</button>
                 <button class="chart-filter-btn third-level">3rd Level</button>
-                <a href="javascript:void(0)" class="chart-filter-btn all-categories ">Show All</a>
+                <a href="javascript:void(0)" class="chart-filter-btn all-categories ">Toggle All</a>
             </div>
             <div class="last_updated_chart chart_fat">Last relevant data entry: <span class="last_updated_chart_date"></span> <?php echo $shortcode::info_icon(''); ?></div>
         </div>
