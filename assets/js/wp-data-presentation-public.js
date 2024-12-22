@@ -826,12 +826,12 @@
     
         global_markers.push(marker);
         let timestamp = new Date(loc.timestamp * 1000);
-        if (loc.inter1 && interLabels[loc.inter1]) {
-          loc.inter1 = interLabels[loc.inter1] + ' ( '+loc.actor1+' )';
+        if (loc.inter1) {
+          loc.inter1 = interLabels[loc.inter1] ? interLabels[loc.inter1] + ' ( '+loc.actor1+' )' : loc.inter1;
         }
 
-        if (loc.inter2 && interLabels[loc.inter2]) {
-          loc.inter2 = interLabels[loc.inter2] + ' ( '+loc.actor2+' )';
+        if (loc.inter2) {
+          loc.inter2 = interLabels[loc.inter2] ? interLabels[loc.inter2] + ' ( '+loc.actor2+' )' : loc.inter2;
         }
 
         marker.addListener('click', function() {
@@ -1057,12 +1057,12 @@
             type: 'POST',
             success: function(response) {
 
-              if (response.data[0].inter1 && interLabels[response.data[0].inter1]) {
-                response.data[0].inter1 = interLabels[response.data[0].inter1] + ' ( '+response.data[0].actor1+' )';
+              if (response.data[0].inter1) {
+                response.data[0].inter1 = interLabels[response.data[0].inter1] ? interLabels[response.data[0].inter1] + ' ( '+response.data[0].actor1+' )' : response.data[0].inter1;
               }
 
-              if (response.data[0].inter2 && interLabels[response.data[0].inter2]) {
-                response.data[0].inter2 = interLabels[response.data[0].inter2] + ' ( '+response.data[0].actor2+' )';
+              if (response.data[0].inter2) {
+                response.data[0].inter2 = interLabels[response.data[0].inter2] ? interLabels[response.data[0].inter2] + ' ( '+response.data[0].actor2+' )' : response.data[0].inter2;
               }
 
               let locationString = response.data[0].region+', '+response.data[0].country+', '+response.data[0].admin1+', '+response.data[0].admin2+', '+response.data[0].admin3+', '+response.data[0].location;
@@ -1795,10 +1795,10 @@
                   label: function(context) {
                     let label = context.dataset.label || '';
                     if (label) {
-                      label += ': ';
+                      label += ': '+ context.parsed.y;
                     }
                     if (context.parsed.y !== null && is_fat) {
-                      label += context.parsed.y + ' Fatalities';
+                      label += ' Fatalities';
                     }
                     return label;
                   }

@@ -88,6 +88,34 @@ final class WPDP_Maps {
         $merged_types = array_unique(array_merge($filters['disorder_type'],$filters['fatalities']));
         $filters['merged_types'] = $merged_types;
 
+        $inter_labels = [
+            0 => 'No recorded actors',
+            1 => "State Forces",
+            2 => "Rebel Groups",
+            3 => "Political Militias",
+            4 => "Identity Militias",
+            5 => "Rioters",
+            6 => "Protesters",
+            7 => "Civilians",
+            8 => "External/Other Force"
+        ];
+
+        if(!empty($filters['actors'])){
+            $new_actors = [];
+            foreach($filters['actors'] as $actor){
+                $value_parts = explode('+', $actor);
+                foreach ($value_parts as $part) {
+                    if (!in_array($part, $new_actors)) {
+                        $new_actors[] = $part;
+                        $new_actors[] = $inter_labels[$part];
+                    }
+                }
+            }
+            $filters['actors'] = array_unique($new_actors);
+        }
+
+
+
         $types = [
             'event_date',
             'disorder_type',
@@ -469,6 +497,32 @@ final class WPDP_Maps {
 
         $merged_types = array_unique(array_merge($filters['disorder_type'],$filters['fatalities']));
         $filters['merged_types'] = $merged_types;
+
+        $inter_labels = [
+            0 => 'No recorded actors',
+            1 => "State Forces",
+            2 => "Rebel Groups",
+            3 => "Political Militias",
+            4 => "Identity Militias",
+            5 => "Rioters",
+            6 => "Protesters",
+            7 => "Civilians",
+            8 => "External/Other Force"
+        ];
+
+        if(!empty($filters['actors'])){
+            $new_actors = [];
+            foreach($filters['actors'] as $actor){
+                $value_parts = explode('+', $actor);
+                foreach ($value_parts as $part) {
+                    if (!in_array($part, $new_actors)) {
+                        $new_actors[] = $part;
+                        $new_actors[] = $inter_labels[$part];
+                    }
+                }
+            }
+            $filters['actors'] = array_unique($new_actors);
+        }
 
         $types = [
             'event_date',

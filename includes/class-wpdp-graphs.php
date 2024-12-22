@@ -58,6 +58,9 @@ final class WPDP_Graphs {
         add_action('init',array($this,'clear_cache'));
 
 
+        if(isset($_GET['test'])){
+            var_dump(get_option('test'));exit;
+        }
     }
 
     public function clear_cache(){
@@ -100,18 +103,29 @@ final class WPDP_Graphs {
                 }
             }
         }
-
+        $inter_labels = [
+            0 => 'No recorded actors',
+            1 => "State Forces",
+            2 => "Rebel Groups",
+            3 => "Political Militias",
+            4 => "Identity Militias",
+            5 => "Rioters",
+            6 => "Protesters",
+            7 => "Civilians",
+            8 => "External/Other Force"
+        ];
         
         $filters['merged_types'] = $merged_types;
         
         if(empty($filters['actors'])){
-            $filters['actors'] = [1,2,3,4,5,6,7,8];
+            $filters['actors'] = [0,1,2,3,4,5,6,7,8,'No recorded actors','State Forces','Rebel Groups','Political Militias','Identity Militias','Rioters','Protesters','Civilians','External/Other Force'];
         }else{
             foreach($filters['actors'] as $actor){
                 $value_parts = explode('+', $actor);
                 foreach ($value_parts as $part) {
                     if (!in_array($part, $new_actors)) {
                         $new_actors[] = $part;
+                        $new_actors[] = $inter_labels[$part];
                     }
                 }
             }
@@ -439,7 +453,7 @@ final class WPDP_Graphs {
         ];
 
         $data_actors = [];
-
+        $test = [];
         foreach($posts as $id){
             $table_name = $wpdb->prefix. 'wpdp_data_'.$id;
             $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_name}'") === $table_name;
@@ -574,6 +588,7 @@ final class WPDP_Graphs {
                 set_transient('wpdp_cache_'.$transient_key, $results_actors);
             }
 
+            $test[] = $results_actors;
             if(!empty($results_actors)){
                 foreach($results_actors as $res){
 
@@ -585,8 +600,13 @@ final class WPDP_Graphs {
                         $days_diff = floor(($date_timestamp - $start_timestamp) / (60 * 60 * 24));
                         $group_index = floor($days_diff / $group_interval);
                         $group_date = date('Y-m-d', strtotime($filters['from'] ?: $res['sql_date']) + ($group_index * $group_interval * 24 * 60 * 60));
+                        
+                        // Handle inter1 and inter2 that sometimes they are integers and sometimes they are strings
+                        $inter1 = $res['inter1'];
+                        $inter2 = $res['inter2'];
+           
 
-                        if( $res['inter1'] === $value || (isset($res['inter2']) && $res['inter2'] === $value) ){
+                        if( $inter1 === $value || ( isset($inter2) && $inter2 === $value ) ){
                             $text_value = (isset($inter_labels[$value])) ? $inter_labels[$value] : $value;
 
                             if(isset( $data_actors[$text_value] [$group_date] )){
@@ -603,6 +623,7 @@ final class WPDP_Graphs {
             }
 
         }
+        update_option('test',$test);
 
         if ($most_recent_date) {
             $most_recent_date = date('jS M Y', strtotime($most_recent_date));
@@ -611,8 +632,6 @@ final class WPDP_Graphs {
         if($most_recent_fatal_date){
             $most_recent_fatal_date = date('jS M Y', strtotime($most_recent_fatal_date));
         }
-
-        // Check if protests and riots in $agg data, if so then combine their numbers and make their key called Protest & Riots
 
         // Properly combine Protests and Riots data
         if(isset($agg['Protests']) && isset($agg['Riots'])) {

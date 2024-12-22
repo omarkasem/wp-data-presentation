@@ -158,13 +158,13 @@ class WPDP_Db_Table {
                 INNER JOIN {$temp_table_name} t ON m.event_id_cnty = t.event_id_cnty
                 SET 
                     m.fatalities = COALESCE(t.fatalities, 0),
-                    m.inter1 = COALESCE(t.inter1, 0),
-                    m.inter2 = COALESCE(t.inter2, 0),
+                    m.inter1 = t.inter1,
+                    m.inter2 = t.inter2,
                     m.actor1 = t.actor1,
                     m.actor2 = t.actor2
                 WHERE COALESCE(t.fatalities, 0) != COALESCE(m.fatalities, 0)
-                   OR COALESCE(t.inter1, 0) != COALESCE(m.inter1, 0)
-                   OR COALESCE(t.inter2, 0) != COALESCE(m.inter2, 0)
+                   OR IFNULL(t.inter1, '') != IFNULL(m.inter1, '')
+                   OR IFNULL(t.inter2, '') != IFNULL(m.inter2, '')
                    OR IFNULL(t.actor1, '') != IFNULL(m.actor1, '')
                    OR IFNULL(t.actor2, '') != IFNULL(m.actor2, '')
             ");
@@ -263,8 +263,6 @@ class WPDP_Db_Table {
                     $column_definitions[] = "`$name` YEAR(4)";
                     break;
                 case 'time_precision':
-                case 'inter1':
-                case 'inter2':
                 case 'interaction':
                 case 'geo_precision':
                 case 'fatalities':
