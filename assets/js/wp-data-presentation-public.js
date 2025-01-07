@@ -2150,7 +2150,7 @@
               if ($(this).hasClass('second-level')) activeTypes.push('second-level');
               if ($(this).hasClass('third-level')) activeTypes.push('third-level');
           });
-  
+
           // Filter datasets based on all active types
           const filteredDatasets = datasets.filter(dataset => {
               const label = type === 'fatalities' 
@@ -2162,9 +2162,8 @@
                   : '.incident_type input[type="checkbox"]';
                   
               const checkbox = $(selector).filter(function() {
-                  return label.includes($(this).attr('label_value').toLowerCase());
+                  return label === $(this).attr('label_value').toLowerCase();
               }).first();
-  
               return activeTypes.some(type => {
                   switch(type) {
                       case 'top-level': return checkbox.hasClass('level_1');
@@ -2174,7 +2173,7 @@
                   }
               });
           });
-  
+
           window[chartVar].data.datasets = filteredDatasets;
           window[chartVar].update();
   
@@ -2188,7 +2187,6 @@
               }).get()
           };
 
-          console.log(state);
           localStorage.setItem(`wpdp_chart_filter_${chartId}`, JSON.stringify(state));
       };
   
