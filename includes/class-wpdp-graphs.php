@@ -512,7 +512,7 @@ final class WPDP_Graphs {
                     }
 
                     // Track the most recent fatal event date
-                    if (is_null($most_recent_fatal_date) || strtotime($res['last_fatal_event_date']) > strtotime($most_recent_fatal_date)) {
+                    if (is_null($most_recent_fatal_date) || (!is_null($res['last_fatal_event_date']) && strtotime($res['last_fatal_event_date']) > strtotime($most_recent_fatal_date))) {
                         $most_recent_fatal_date = $res['last_fatal_event_date'];
                     }
 
@@ -608,7 +608,7 @@ final class WPDP_Graphs {
                         
                         // Handle inter1 and inter2 that sometimes they are integers and sometimes they are strings
                         $inter1 = $res['inter1'];
-                        $inter2 = $res['inter2'];
+                        $inter2 = isset($res['inter2']) ? $res['inter2'] : null;
            
 
                         if( $inter1 === $value || ( isset($inter2) && $inter2 === $value ) ){

@@ -34,6 +34,8 @@ final class WPDP_Metabox {
         return self::$_instance;
     }
 
+    public $api_event_date;
+
     /**
      * Constructor
      *
@@ -77,31 +79,18 @@ final class WPDP_Metabox {
             wp_schedule_event(time(), 'daily', 'wpdp_daily_acled_update');
         }
 
+        // Schedule the cron job if it's not already scheduled
+        if (!wp_next_scheduled('wpdp_weekly_yearly_data_update')) {
+            wp_schedule_event(time(), 'weekly', 'wpdp_weekly_yearly_data_update');
+        }
+
+        add_action('wpdp_weekly_yearly_data_update', array($this, 'process_yearly_data_update'));
+
         // Add new hook for file upload
         add_filter('upload_mimes', array($this, 'add_custom_mime_types'));
       
         add_action('rest_api_init', array($this, 'register_cron_endpoint'));
 
-        // if(isset($_GET['export_filters'])){
-        //     $request = 'https://icglr.ovio.digital/icglr2/wp-json/wpdp/v1/export-filters';
-        //     $response = wp_remote_get($request);
-        //     if(!is_wp_error($response)){
-        //         $body = json_decode(wp_remote_retrieve_body($response), true);
-        //         $incident_types = $body['incident_type_filter'];
-        //         $actors = $body['actor_filter'];
-        //         $fatalities = $body['fatalities_filter'];
-
-        //         if (!empty($incident_types)) {
-        //             update_field('incident_type_filter', $incident_types, 'option');
-        //         }
-        //         if (!empty($actors)) {
-        //             update_field('actor_filter', $actors, 'option');
-        //         }
-        //         if (!empty($fatalities)) {
-        //             update_field('fatalities_filter', $fatalities, 'option');
-        //         }
-        //     }
-        // }
 
     }
 
@@ -526,11 +515,15 @@ final class WPDP_Metabox {
             $excel_file = get_field('upload_excel_file',$post_id);
         }
 
+        if(empty($this->api_event_date)){
+            $this->api_event_date = current_time('Y-m-d');
+        }
+
         if($import_file === 'Upload'){
             $file_path = get_attached_file($excel_file);
         }else{
             $url = $acled_url;
-            $event_date = date('Y-m-d', strtotime('-1 year'));
+            $event_date = date('Y-m-d', strtotime($this->api_event_date . ' -3 months'));
             $url = remove_query_arg('event_date_where', $url);
             $url = add_query_arg('event_date', $event_date, $url);
             $url = add_query_arg('event_date_where', '>', $url);
@@ -807,6 +800,44 @@ final class WPDP_Metabox {
         }
 
         return $file;
+    }
+
+
+    public function process_yearly_data_update() {
+        // Get the last processed date from options
+        $last_processed_date = get_option('wpdp_last_processed_date');
+        
+        if (!$last_processed_date) {
+            // First run - start with current date
+            $this->api_event_date = current_time('Y-m-d');
+        } else {
+            // Continue from last processed date
+            $this->api_event_date = $last_processed_date;
+        }
+        
+        // Calculate new date range (3 months before the start date)
+        $this->api_event_date = date('Y-m-d', strtotime($this->api_event_date . ' -3 months'));
+        
+        // Update the presentations for this period
+        $this->update_acled_presentations();
+        
+        // Save the new date as last processed
+        update_option('wpdp_last_processed_date', $this->api_event_date);
+        
+        // Count how many iterations we've done
+        $iteration_count = get_option('wpdp_update_iteration_count', 0);
+        $iteration_count++;
+        update_option('wpdp_update_iteration_count', $iteration_count);
+        
+        // If we haven't done 4 iterations yet, schedule the next one with a small delay
+        if ($iteration_count < 4) {
+            // Schedule next run in 2 minutes
+            wp_schedule_single_event(time() + (2 * MINUTE_IN_SECONDS), 'wpdp_weekly_yearly_data_update');
+        } else {
+            // Reset for next week
+            delete_option('wpdp_last_processed_date');
+            delete_option('wpdp_update_iteration_count');
+        }
     }
 
 }
