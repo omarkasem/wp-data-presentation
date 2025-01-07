@@ -530,7 +530,7 @@ final class WPDP_Metabox {
             $file_path = get_attached_file($excel_file);
         }else{
             $url = $acled_url;
-            $event_date = date('Y-m-d', strtotime('-1 month'));
+            $event_date = date('Y-m-d', strtotime('-1 year'));
             $url = remove_query_arg('event_date_where', $url);
             $url = add_query_arg('event_date', $event_date, $url);
             $url = add_query_arg('event_date_where', '>', $url);
@@ -712,7 +712,7 @@ final class WPDP_Metabox {
         }
 
         $url = get_field('acled_url',$post_id);
-        $event_date = date('Y-m-d', strtotime('-1 month'));
+        $event_date = date('Y-m-d', strtotime('-1 year'));
         $url = remove_query_arg('event_date_where', $url);
         $url = add_query_arg('event_date', $event_date, $url);
         $url = add_query_arg('event_date_where', '>', $url);

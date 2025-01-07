@@ -135,9 +135,6 @@
       selectedIncidentsGraphs = graphItems.incidents;
       selectedFatGraphs = graphItems.fatalities;
 
-
-
-
     },
 
     self.collectGraphItems = function() {

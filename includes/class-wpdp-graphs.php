@@ -541,11 +541,16 @@ final class WPDP_Graphs {
 
                         // Handle event_type aggregation
                         if($type === 'event_type' && $res['event_type'] === $value){
-                            if(isset($agg[$res['event_type']][$group_date])){
-                                $agg[$res['event_type']][$group_date]['fatalities_count'] += $res['fatalities_count'];
-                                $agg[$res['event_type']][$group_date]['events_count'] += $res['events_count'];
+                            $res_key = $res['event_type'];
+                            if(strpos(strtolower($res['event_type']),'strategic') !== false){
+                                $res_key = 'Strategic developments Events';
+                            }
+
+                            if(isset($agg[$res_key][$group_date])){
+                                $agg[$res_key][$group_date]['fatalities_count'] += $res['fatalities_count'];
+                                $agg[$res_key][$group_date]['events_count'] += $res['events_count'];
                             }else{
-                                $agg[$res['event_type']][$group_date] = array_merge($res, ['sql_date' => $group_date]);
+                                $agg[$res_key][$group_date] = array_merge($res, ['sql_date' => $group_date]);
                             }
                         }
 
@@ -662,8 +667,8 @@ final class WPDP_Graphs {
             }
 
             // Remove original arrays
-            unset($agg['Protests']);
-            unset($agg['Riots']);
+            // unset($agg['Protests']);
+            // unset($agg['Riots']);
         }
 
         return [
