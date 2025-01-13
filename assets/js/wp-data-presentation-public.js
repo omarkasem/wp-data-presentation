@@ -2164,7 +2164,8 @@
               const checkbox = $(selector).filter(function() {
                   return label === $(this).attr('label_value').toLowerCase();
               }).first();
-              return activeTypes.some(type => {
+              
+              const matchesActiveTypes = activeTypes.some(type => {
                   switch(type) {
                       case 'top-level': return checkbox.hasClass('level_1');
                       case 'second-level': return checkbox.hasClass('level_2');
@@ -2172,6 +2173,15 @@
                       default: return false;
                   }
               });
+
+              // Check if activeTypes contains both 'top-level' and 'second-level'
+              const isTopAndSecondLevelActive = activeTypes.includes('top-level') && activeTypes.includes('second-level');
+              // Exclude 'strategic development events' if both 'top-level' and 'second-level' are active
+              if (isTopAndSecondLevelActive && label === 'strategic development events') {
+                  return false;
+              }
+
+              return matchesActiveTypes;
           });
 
           window[chartVar].data.datasets = filteredDatasets;

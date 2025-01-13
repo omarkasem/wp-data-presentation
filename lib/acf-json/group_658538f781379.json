@@ -81,6 +81,24 @@
             "append": ""
         },
         {
+            "key": "field_6784bd285d65f",
+            "label": "Clear Cache",
+            "name": "",
+            "aria-label": "",
+            "type": "message",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "message": "",
+            "new_lines": "wpautop",
+            "esc_html": 0
+        },
+        {
             "key": "field_66747fe50e940",
             "label": "Countries",
             "name": "",
@@ -413,8 +431,8 @@
                                 "Excessive force against protesters__sub_event_type": "Excessive force against protesters",
                                 "Grenade__sub_event_type": "Grenade",
                                 "Headquarters or base established__sub_event_type": "Headquarters or base established",
-                                "Suicide bomb__sub_event_type": "Suicide bomb",
-                                "Chemical weapon__sub_event_type": "Chemical weapon"
+                                "Chemical weapon__sub_event_type": "Chemical weapon",
+                                "Suicide bomb__sub_event_type": "Suicide bomb"
                             },
                             "default_value": [],
                             "return_format": "value",
@@ -444,7 +462,7 @@
                 "class": "",
                 "id": ""
             },
-            "message": "<div id=\"empty_cats\">\n            <div>\n            <h2>Disorder Types<\/h2>\n            <ul>\n        <li>Demonstrations<\/li><li>Political violence; Demonstrations<\/li><li>Demonstrations<\/li><li>Political violence<\/li><li>Political violence; Demonstrations<\/li><\/div><\/ul>\n            <div>\n            <h2>Event Types<\/h2>\n            <ul>\n        <li>Strategic developments<\/li><li>Battles<\/li><li>Violence against civilians<\/li><li>Strategic developments<\/li><li>Explosions\/Remote violence<\/li><li>Protests<\/li><li>Riots<\/li><\/div><\/ul>\n            <div>\n            <h2>Sub Event Types<\/h2>\n            <ul>\n        <li>Non-state actor overtakes territory<\/li><li>Armed clash<\/li><li>Attack<\/li><li>Non-state actor overtakes territory<\/li><li>Change to group\/activity<\/li><li>Air\/drone strike<\/li><li>Shelling\/artillery\/missile attack<\/li><li>Disrupted weapons use<\/li><li>Peaceful protest<\/li><li>Violent demonstration<\/li><li>Mob violence<\/li><li>Protest with intervention<\/li><li>Non-violent transfer of territory<\/li><li>Looting\/property destruction<\/li><li>Abduction\/forced disappearance<\/li><li>Other<\/li><li>Arrests<\/li><li>Grenade<\/li><li>Sexual violence<\/li><li>Government regains territory<\/li><li>Agreement<\/li><li>Excessive force against protesters<\/li><li>Remote explosive\/landmine\/IED<\/li><\/div><\/ul><\/div>",
+            "message": "<div id=\"empty_cats\">\n            <div>\n            <h2>Disorder Types<\/h2>\n            <ul>\n        <li>Demonstrations<\/li><li>Political violence; Demonstrations<\/li><li>Demonstrations<\/li><li>Political violence<\/li><li>Political violence; Demonstrations<\/li><li>Strategic developments<\/li><\/div><\/ul>\n            <div>\n            <h2>Event Types<\/h2>\n            <ul>\n        <li>Strategic developments<\/li><li>Battles<\/li><li>Violence against civilians<\/li><li>Strategic developments<\/li><li>Explosions\/Remote violence<\/li><li>Protests<\/li><li>Riots<\/li><\/div><\/ul>\n            <div>\n            <h2>Sub Event Types<\/h2>\n            <ul>\n        <li>Non-state actor overtakes territory<\/li><li>Armed clash<\/li><li>Attack<\/li><li>Non-state actor overtakes territory<\/li><li>Change to group\/activity<\/li><li>Air\/drone strike<\/li><li>Shelling\/artillery\/missile attack<\/li><li>Disrupted weapons use<\/li><li>Peaceful protest<\/li><li>Violent demonstration<\/li><li>Mob violence<\/li><li>Protest with intervention<\/li><li>Non-violent transfer of territory<\/li><li>Looting\/property destruction<\/li><li>Abduction\/forced disappearance<\/li><li>Other<\/li><li>Arrests<\/li><li>Grenade<\/li><li>Sexual violence<\/li><li>Government regains territory<\/li><li>Agreement<\/li><li>Excessive force against protesters<\/li><li>Remote explosive\/landmine\/IED<\/li><li>Headquarters or base established<\/li><li>Chemical weapon<\/li><\/div><\/ul><\/div>",
             "new_lines": "wpautop",
             "esc_html": 0
         },
@@ -786,7 +804,8 @@
                                 "Riots": "Riots - [2]",
                                 "Violent demonstration": "Violent demonstration - [3]",
                                 "Mob violence": "Mob violence - [3]",
-                                "Strategic developments": "Strategic developments - [2]",
+                                "Strategic developments": "Strategic developments - [1]",
+                                "Strategic development events": "Strategic development events - [2]",
                                 "Agreement": "Agreement - [3]",
                                 "Arrests": "Arrests - [3]",
                                 "Change to group\/activity": "Change to group\/activity - [3]",
@@ -829,5 +848,5 @@
     "active": true,
     "description": "",
     "show_in_rest": 0,
-    "modified": 1733213218
+    "modified": 1736752456
 }

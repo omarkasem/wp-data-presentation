@@ -91,10 +91,20 @@ final class WPDP_Metabox {
       
         add_action('rest_api_init', array($this, 'register_cron_endpoint'));
 
+        add_filter('acf/render_field/key=field_6784bd285d65f', array($this,'cache_message_field'), 20, 1);
 
     }
 
-
+    public function cache_message_field($field){
+        $clear_cache_url = add_query_arg(array(
+            'wpdp_clear_cache' => '1',
+        ));
+    
+        echo '<div class="wpdp_cache_message">';
+        echo '<a href="' . esc_url($clear_cache_url) . '" class="button button-secondary wpdp_clear_cache">Clear Cache</a>';
+        echo '</div>';
+    }
+    
     /**
      * Register REST API endpoint for cron updates
      */

@@ -58,9 +58,6 @@ final class WPDP_Graphs {
         add_action('init',array($this,'clear_cache'));
 
 
-        if(isset($_GET['test'])){
-            var_dump(get_option('test'));exit;
-        }
     }
 
     public function clear_cache(){
@@ -543,7 +540,7 @@ final class WPDP_Graphs {
                         if($type === 'event_type' && $res['event_type'] === $value){
                             $res_key = $res['event_type'];
                             if(strpos(strtolower($res['event_type']),'strategic') !== false){
-                                $res_key = 'Strategic developments Events';
+                                $res_key = 'Strategic development Events';
                             }
 
                             if(isset($agg[$res_key][$group_date])){
