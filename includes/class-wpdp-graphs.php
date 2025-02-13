@@ -528,11 +528,17 @@ final class WPDP_Graphs {
 
                         // Handle disorder_type aggregation
                         if($type === 'disorder_type' && $res['disorder_type'] === $value){
+
+                            $res_key = $res['disorder_type'];
+                            if(strpos(strtolower($res['disorder_type']),'strategic') !== false){
+                                $res_key = 'Strategic Developments';
+                            }
+
                             if(isset($agg[$res['disorder_type']][$group_date])){
-                                $agg[$res['disorder_type']][$group_date]['fatalities_count'] += $res['fatalities_count'];
-                                $agg[$res['disorder_type']][$group_date]['events_count'] += $res['events_count'];
+                                $agg[$res_key][$group_date]['fatalities_count'] += $res['fatalities_count'];
+                                $agg[$res_key][$group_date]['events_count'] += $res['events_count'];
                             }else{
-                                $agg[$res['disorder_type']][$group_date] = array_merge($res, ['sql_date' => $group_date]);
+                                $agg[$res_key][$group_date] = array_merge($res, ['sql_date' => $group_date]);
                             }
                         }
 
@@ -540,7 +546,7 @@ final class WPDP_Graphs {
                         if($type === 'event_type' && $res['event_type'] === $value){
                             $res_key = $res['event_type'];
                             if(strpos(strtolower($res['event_type']),'strategic') !== false){
-                                $res_key = 'Strategic development Events';
+                                $res_key = 'Strategic Development Events';
                             }
 
                             if(isset($agg[$res_key][$group_date])){

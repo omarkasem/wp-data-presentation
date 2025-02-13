@@ -2177,7 +2177,7 @@
               // Check if activeTypes contains both 'top-level' and 'second-level'
               const isTopAndSecondLevelActive = activeTypes.includes('top-level') && activeTypes.includes('second-level');
               // Exclude 'strategic development events' if both 'top-level' and 'second-level' are active
-              if (isTopAndSecondLevelActive && label === 'strategic development events') {
+              if (isTopAndSecondLevelActive && label === 'Strategic Development Events') {
                   return false;
               }
 
