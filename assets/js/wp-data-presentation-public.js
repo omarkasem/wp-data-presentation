@@ -1800,28 +1800,54 @@
       const customTitlePlugin = {
         id: 'customTitle',
         beforeDraw: (chart) => {
-          const { ctx, chartArea, options } = chart;
+          const { ctx, chartArea, options, width } = chart;
           if (!chartArea) return;
-
+      
           const titleConfig = options.plugins.title;
           if (!titleConfig || !titleConfig.display) return;
-
+      
           const { top, left, right } = chartArea;
           const { title, source } = titleConfig.labels;
-
-          // Draw title (left-aligned)
+          const isMobile = width <= 768; // Check if we're on mobile
+      
+          // Clear the area where we'll draw the title
+          ctx.save();
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, width, titleConfig.padding.top + 40);
+          ctx.restore();
+      
+          // Draw title and source based on screen size
           ctx.save();
           ctx.textBaseline = 'top';
-          ctx.font = `${title.font.weight} ${title.font.size}px sans-serif`;
-          ctx.fillStyle = title.color;
-          ctx.textAlign = 'left';
-          ctx.fillText(title.text, left, titleConfig.padding.top);
-
-          // Draw source (right-aligned)
-          ctx.font = `${source.font.size}px sans-serif`;
-          ctx.fillStyle = source.color;
-          ctx.textAlign = 'right';
-          ctx.fillText(source.text, right, titleConfig.padding.top);
+      
+          if (isMobile) {
+            // Mobile layout - stacked vertically and centered
+            // Draw title
+            ctx.font = `${title.font.weight} ${title.font.size}px sans-serif`;
+            ctx.fillStyle = title.color;
+            ctx.textAlign = 'center';
+            ctx.fillText(title.text, width / 2, titleConfig.padding.top);
+      
+            // Draw source below title
+            ctx.font = `${source.font.size}px sans-serif`;
+            ctx.fillStyle = source.color;
+            ctx.textAlign = 'center';
+            ctx.fillText(source.text, width / 2, titleConfig.padding.top + title.font.size + 5);
+          } else {
+            // Desktop layout - side by side
+            // Draw title (left-aligned)
+            ctx.font = `${title.font.weight} ${title.font.size}px sans-serif`;
+            ctx.fillStyle = title.color;
+            ctx.textAlign = 'left';
+            ctx.fillText(title.text, left, titleConfig.padding.top);
+      
+            // Draw source (right-aligned)
+            ctx.font = `${source.font.size}px sans-serif`;
+            ctx.fillStyle = source.color;
+            ctx.textAlign = 'right';
+            ctx.fillText(source.text, right, titleConfig.padding.top);
+          }
+          
           ctx.restore();
         }
       };
@@ -1861,6 +1887,12 @@
           responsive: true,
           maintainAspectRatio: false, // Changed to false
           height: 400, // Explicit height
+          layout: {
+            padding: {
+              // Add extra padding at the top on mobile
+              top: 10
+            }
+          },
           plugins: {
               title: titleConfig,
               tooltip: {
@@ -1917,231 +1949,77 @@
     };
 
 
-    self.graphFun = function(ctx,datasets,titleConfig,chart_sql,intervals,is_fat){
+    self.graphFun = function(ctx, datasets, titleConfig, chart_sql, intervals, is_fat) {
       var chartVar = 'myChart';
-      if(is_fat){
+      if(is_fat) {
         chartVar = 'myChartFat';
       }
-      
 
       // Add check for mobile screen width
       const isMobile = window.innerWidth <= 768;
       const maxTicksLimit = isMobile ? 15 : 30;
 
-      // Modify datasets to include zero values for missing dates
-      datasets.forEach(dataset => {
-        // Get all unique dates from all datasets
-        const allDates = new Set();
-        datasets.forEach(ds => {
-          ds.data.forEach(point => allDates.add(point.x));
-        });
-
-        // Sort dates chronologically
-        const sortedDates = Array.from(allDates).sort();
-
-        // Create a new array with zero values for missing dates
-        const newData = sortedDates.map(date => {
-          const existingPoint = dataset.data.find(point => point.x === date);
-          return existingPoint || { x: date, y: 0 };
-        });
-
-        dataset.data = newData;
-      });
-
-
-    // // Create custom legend container
-    // const existingLegend = document.querySelector(`#${ctx.canvas.id}-legend`);
-    // if (existingLegend) {
-    //     existingLegend.remove();
-    // }
-
-    // const legendContainer = document.createElement('div');
-    // legendContainer.id = `${ctx.canvas.id}-legend`;
-    // legendContainer.className = 'chart-legend';
-
-    // // Define your legend categories
-    // const legendCategories = {
-    //     'Violence': ['Political violence', 'Violence against civilians', 'Sexual violence', 'Armed clash'],
-    //     'Protests & Demonstrations': ['Protests and Riots', 'Peaceful protest', 'Protest with intervention', 'Violent demonstration'],
-    //     'Military Actions': ['Battles', 'Shelling/artillery/missile attack', 'Air/drone strike'],
-    //     'Other Events': ['Remote explosive/landmine/IED', 'Non-violent transfer of territory', 'Agreement', 'Change to group/activity']
-    // };
-
-    // // Add styles to document if not already present
-    // if (!document.getElementById('chart-legend-styles')) {
-    //     const styleSheet = document.createElement('style');
-    //     styleSheet.id = 'chart-legend-styles';
-    //     styleSheet.textContent = `
-    //         .chart-legend {
-    //             display: flex;
-    //             flex-wrap: wrap;
-    //             gap: 20px;
-    //             padding: 10px;
-    //             margin-top: 20px;
-    //             justify-content: center;
-    //         }
-    //         .legend-category {
-    //             min-width: 200px;
-    //             max-width: 300px;
-    //             background: #f8f9fa;
-    //             padding: 10px;
-    //             border-radius: 8px;
-    //         }
-    //         .category-header {
-    //             font-weight: bold;
-    //             margin-bottom: 10px;
-    //             cursor: pointer;
-    //             display: flex;
-    //             justify-content: space-between;
-    //             align-items: center;
-    //             color: #333;
-    //         }
-    //         .category-header:after {
-    //             content: '▼';
-    //             font-size: 12px;
-    //         }
-    //         .category-header.collapsed:after {
-    //             content: '▶';
-    //         }
-    //         .category-items {
-    //             display: grid;
-    //             gap: 8px;
-    //         }
-    //         .legend-item {
-    //             display: flex;
-    //             align-items: center;
-    //             gap: 8px;
-    //             font-size: 12px;
-    //             cursor: pointer;
-    //             padding: 2px 4px;
-    //             border-radius: 4px;
-    //         }
-    //         .legend-item:hover {
-    //             background: #eee;
-    //         }
-    //         .legend-color {
-    //             width: 12px;
-    //             height: 12px;
-    //             border-radius: 2px;
-    //         }
-    //         .legend-item.hidden {
-    //             opacity: 0.5;
-    //         }
-    //     `;
-    //     document.head.appendChild(styleSheet);
-    // }
-
-    // // Build legend HTML
-    // Object.entries(legendCategories).forEach(([category, items]) => {
-    //     const categoryDiv = document.createElement('div');
-    //     categoryDiv.className = 'legend-category';
-        
-    //     const categoryContent = `
-    //         <div class="category-header">${category}</div>
-    //         <div class="category-items">
-    //             ${datasets
-    //                 .filter(dataset => items.some(item => dataset.label.includes(item)))
-    //                 .map(dataset => `
-    //                     <div class="legend-item" data-label="${dataset.label}">
-    //                         <span class="legend-color" style="background-color: ${dataset.borderColor}"></span>
-    //                         <span class="legend-text">${dataset.label}</span>
-    //                     </div>
-    //                 `).join('')}
-    //         </div>
-    //     `;
-        
-    //     categoryDiv.innerHTML = categoryContent;
-    //     legendContainer.appendChild(categoryDiv);
-    // });
-
-    // // Insert legend after chart
-    // ctx.canvas.parentNode.appendChild(legendContainer);
-
-    // // Add event listeners
-    // legendContainer.querySelectorAll('.category-header').forEach(header => {
-    //     header.addEventListener('click', () => {
-    //         header.classList.toggle('collapsed');
-    //         const items = header.nextElementSibling;
-    //         items.style.display = header.classList.contains('collapsed') ? 'none' : 'grid';
-    //     });
-    // });
-
-    // legendContainer.querySelectorAll('.legend-item').forEach(item => {
-    //     item.addEventListener('click', () => {
-    //         const label = item.dataset.label;
-    //         const chart = window[chartVar];
-    //         const datasetIndex = chart.data.datasets.findIndex(dataset => dataset.label === label);
-            
-    //         if (datasetIndex > -1) {
-    //             chart.getDatasetMeta(datasetIndex).hidden = !chart.getDatasetMeta(datasetIndex).hidden;
-    //             item.classList.toggle('hidden');
-    //             chart.update();
-    //         }
-    //     });
-    // });
-
-
       window[chartVar] = new Chart(ctx, {
         type: 'line',
-        data: {datasets:datasets},
+        data: {datasets: datasets},
         options: {
           spanGaps: true,
           responsive: true,
-          maintainAspectRatio: false, // Changed to false
-          height: 400, // Explicit height
+          maintainAspectRatio: false,
+          height: 400,
+          layout: {
+            padding: {
+              // Add extra padding at the top on mobile
+              top: 10
+            }
+          },
           plugins: {
-              title: titleConfig,
-              tooltip: {
-                callbacks: {
-                  title: function(context) {
-                    const timeUnit = chart_sql;
-      
-                    // Format date based on time unit
-                    if (timeUnit === 'day' || timeUnit === 'week') {
-                      return moment(context[0].parsed.x).format('MMM D YYYY');
-                    } else {
-                      return moment(context[0].parsed.x).format('MMMM YYYY');
-                    }
-                  },
-                  label: function(context) {
-                    let label = context.dataset.label || '';
-                    if (label) {
-                      label += ': ';
-                    }
-                    if (context.parsed.y !== null) {
-                      label += context.parsed.y + ' Events';
-                    }
-                    return label;
+            title: titleConfig,
+            tooltip: {
+              callbacks: {
+                title: function(context) {
+                  const timeUnit = chart_sql;
+                  if (timeUnit === 'day' || timeUnit === 'week') {
+                    return moment(context[0].parsed.x).format('MMM D YYYY');
+                  } else {
+                    return moment(context[0].parsed.x).format('MMMM YYYY');
                   }
+                },
+                label: function(context) {
+                  let label = context.dataset.label || '';
+                  if (label) {
+                    label += ': ';
+                  }
+                  if (context.parsed.y !== null) {
+                    label += context.parsed.y + ' Events';
+                  }
+                  return label;
                 }
               }
+            }
           },
           scales: {
-              x: {
-                type: 'time',
-                time: {
-                  unit: chart_sql,
-                },
-                ticks:{
-                  maxTicksLimit: maxTicksLimit, // Use dynamic value based on screen width
-                  stepSize: intervals 
-                }
+            x: {
+              type: 'time',
+              time: {
+                unit: chart_sql,
               },
-              y:{
-                type: 'linear',
-                display: true,
-                beginAtZero: true
+              ticks: {
+                maxTicksLimit: maxTicksLimit,
+                stepSize: intervals
               }
+            },
+            y: {
+              type: 'linear',
+              display: true,
+              beginAtZero: true
+            }
           },
-        
-
-        },
+        }
       });
 
       self.initChartFilters('chart', chartVar, datasets, 'incidents');
-
     }
-
 
     // Add new helper function to set default active buttons
     self.setDefaultActiveButtons = function($buttons, existingLevels, datasets, type) {

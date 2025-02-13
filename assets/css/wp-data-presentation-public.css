@@ -530,7 +530,7 @@ a.select_unselect_all {
 }
 
 .chart_flex{
-  display:flex;
+  display: flex;
   justify-content: space-between;
   align-items: center;
 }
@@ -630,4 +630,50 @@ a.select_unselect_all {
 }
 #map-legend-panel .legend-text {
   flex: 1;
+}
+
+/* Add these new mobile-specific styles */
+@media screen and (max-width: 427px) {
+  .chart_flex {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .chart_flex > * {
+    width: 100%;
+  }
+
+  .wpdp .last_updated_chart {
+    float: none;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+
+  /* Adjust chart controls for mobile */
+  .chart-controls {
+    margin: 10px 0;
+    width: 100%;
+    display:flex!important;
+    flex-direction: column;
+  }
+
+  .chart-controls .chart-filter-btn {
+    margin: 3px;
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+
+  /* Custom title plugin adjustments for mobile */
+  .customTitle {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .customTitle .title-text,
+  .customTitle .source-text {
+    width: 100%;
+    text-align: center;
+    margin: 5px 0;
+  }
 }
