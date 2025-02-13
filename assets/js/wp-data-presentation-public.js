@@ -1746,12 +1746,95 @@
       let title_text_fat = title_text.replace('Events', 'Fatalities by Events');
       let title_text_actors = title_text.replace('Events', 'Type of Actors by Events');
 
-      self.graphFun(ctx, datasets, title_text, chart_sql, intervals, false);
-      self.graphFunBar(ctx_fat, datasets_fat, title_text_fat,intervals, chart_sql, true);
-      self.graphFunBar(ctx_bar, datasets_actors, title_text_actors,intervals, chart_sql, false);
+      // Create title configuration object with source text
+      const titleConfig = {
+        display: true,
+        padding: {
+          top: 10,
+          bottom: 10
+        },
+        labels: {
+          title: {
+            text: title_text,
+            align: 'start',
+            font: {
+              weight: 'bold',
+              size: 14
+            },
+            color: '#000000'
+          },
+          source: {
+            text: 'Source: ACLED',
+            align: 'end',
+            font: {
+              size: 14
+            },
+            color: '#666666'
+          }
+        }
+      };
+
+      const titleConfigFat = {
+        ...titleConfig,
+        labels: {
+          ...titleConfig.labels,
+          title: {
+            ...titleConfig.labels.title,
+            text: title_text_fat
+          }
+        }
+      };
+
+      const titleConfigActors = {
+        ...titleConfig,
+        labels: {
+          ...titleConfig.labels,
+          title: {
+            ...titleConfig.labels.title,
+            text: title_text_actors
+          }
+        }
+      };
+
+      // Register custom title plugin
+      const customTitlePlugin = {
+        id: 'customTitle',
+        beforeDraw: (chart) => {
+          const { ctx, chartArea, options } = chart;
+          if (!chartArea) return;
+
+          const titleConfig = options.plugins.title;
+          if (!titleConfig || !titleConfig.display) return;
+
+          const { top, left, right } = chartArea;
+          const { title, source } = titleConfig.labels;
+
+          // Draw title (left-aligned)
+          ctx.save();
+          ctx.textBaseline = 'top';
+          ctx.font = `${title.font.weight} ${title.font.size}px sans-serif`;
+          ctx.fillStyle = title.color;
+          ctx.textAlign = 'left';
+          ctx.fillText(title.text, left, titleConfig.padding.top);
+
+          // Draw source (right-aligned)
+          ctx.font = `${source.font.size}px sans-serif`;
+          ctx.fillStyle = source.color;
+          ctx.textAlign = 'right';
+          ctx.fillText(source.text, right, titleConfig.padding.top);
+          ctx.restore();
+        }
+      };
+
+      // Register the plugin
+      Chart.register(customTitlePlugin);
+
+      self.graphFun(ctx, datasets, titleConfig, chart_sql, intervals, false);
+      self.graphFunBar(ctx_fat, datasets_fat, titleConfigFat, intervals, chart_sql, true);
+      self.graphFunBar(ctx_bar, datasets_actors, titleConfigActors, intervals, chart_sql, false);
     }
 
-    self.graphFunBar = function(ctx,datasets,title_text,intervals,chart_sql,is_fat){
+    self.graphFunBar = function(ctx,datasets,titleConfig,intervals,chart_sql,is_fat){
       var chartVar = 'myChartBar';
       if(is_fat){
         chartVar = 'myChartBarFat';
@@ -1774,10 +1857,7 @@
           maintainAspectRatio: false, // Changed to false
           height: 400, // Explicit height
           plugins: {
-              title: {
-                  display: true,
-                  text: title_text
-              },
+              title: titleConfig,
               tooltip: {
                 callbacks: {
                   title: function(context) {
@@ -1836,7 +1916,7 @@
     }
 
 
-    self.graphFun = function(ctx,datasets,title_text,chart_sql,intervals,is_fat){
+    self.graphFun = function(ctx,datasets,titleConfig,chart_sql,intervals,is_fat){
       var chartVar = 'myChart';
       if(is_fat){
         chartVar = 'myChartFat';
@@ -2009,13 +2089,7 @@
           maintainAspectRatio: false, // Changed to false
           height: 400, // Explicit height
           plugins: {
-              // legend: {
-              //   display: false // Hide default legend since we're using custom
-              // },
-              title: {
-                  display: true,
-                  text: title_text
-              },
+              title: titleConfig,
               tooltip: {
                 callbacks: {
                   title: function(context) {
