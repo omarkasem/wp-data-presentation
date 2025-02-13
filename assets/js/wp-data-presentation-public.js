@@ -2369,6 +2369,9 @@
                 center.lat(),
                 lng
               ));
+
+              // set zoom to 5.5
+              self.poly_map.setZoom(4);
             });
 
           }).fail(function(jqXHR, textStatus, errorThrown) {
