@@ -1233,12 +1233,13 @@
             }
 
           });
-          $('#map-info-panel').css('right','60px');
+          $('#map-info-panel,#map-legend-panel').css('right','60px');
+          $
         } else {
           // Opening filter menu
           $('.wpdp .con').animate({marginLeft:'0'},200).show().addClass('active');
           $(this).find('span').attr('class','fas fa-arrow-left');
-          $('#map-info-panel').css('right','290px');
+          $('#map-info-panel,#map-legend-panel').css('right','290px');
           if ($('.wpdp_filter_content').hasClass('maps')) {
               $('.wpdp_filter_content').animate({marginLeft:'270px',width:'100%'},200, function() {
                 // After animation, shift center point right to compensate for opened menu
@@ -2476,6 +2477,52 @@
             $('input[name="wpdp_country"][value="' + countryName + '"]:radio').prop('checked', true);
             $('input[name="wpdp_search_location_country"]').val(countryName).parents('form').submit();
           });
+
+          // Add legend panel
+          const legendPanel = document.createElement('div');
+          legendPanel.id = 'map-legend-panel';
+          
+          // Update the legend content based on thresholds
+          const updateLegend = function(maxEvents, thresholds) {
+            return `
+              <div class="legend-content">
+                <h4 style="margin: 0 0 8px 0; font-size: 14px;">Risk Level</h4>
+                <div class="legend-item">
+                  <span class="color-box" style="background-color: #CD6155"></span>
+                  <span class="legend-text">High: ${thresholds.LARGE.toLocaleString()}+ events</span>
+                </div>
+                <div class="legend-item">
+                  <span class="color-box" style="background-color: #F0B27A"></span>
+                  <span class="legend-text">Medium: ${thresholds.MEDIUM.toLocaleString()}-${(thresholds.LARGE-1).toLocaleString()} events</span>
+                </div>
+                <div class="legend-item">
+                  <span class="color-box" style="background-color: #F9E79F"></span>
+                  <span class="legend-text">Low: 1-${(thresholds.MEDIUM-1).toLocaleString()} events</span>
+                </div>
+                <div class="legend-item">
+                  <span class="color-box" style="background-color: #CCCCCC"></span>
+                  <span class="legend-text">No events found</span>
+                </div>
+              </div>
+            `;
+          };
+
+          legendPanel.innerHTML = updateLegend(maxEvents, thresholds);
+          document.getElementById('polygons_map').appendChild(legendPanel);
+
+          // Update mouseover event to hide legend
+          self.poly_map.data.addListener('mouseover', function(event) {
+            // ... existing mouseover code ...
+            legendPanel.style.display = 'none'; // Hide legend when showing country info
+          });
+
+          // Update mouseout event to show legend
+          self.poly_map.data.addListener('mouseout', function(event) {
+            self.poly_map.data.revertStyle();
+            infoPanel.style.display = 'none';
+            legendPanel.style.display = 'block'; // Show legend when not hovering over country
+          });
+
         },
         error: function(errorThrown) {
           console.error('Failed to load country data:', errorThrown);

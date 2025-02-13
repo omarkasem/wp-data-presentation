@@ -602,3 +602,32 @@ a.select_unselect_all {
   line-height: 1.2;
   font-weight: normal;
 }
+
+
+#map-legend-panel {
+  position: absolute;
+  bottom:40px;
+  right: 310px;
+  background: white;
+  padding: 10px;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  font-size: 12px;
+  z-index: 1;
+  min-width: 200px;
+}
+#map-legend-panel .legend-item {
+  display: flex;
+  align-items: center;
+  margin: 4px 0;
+}
+#map-legend-panel .color-box {
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  border: 1px solid #000;
+  opacity: 0.35;
+}
+#map-legend-panel .legend-text {
+  flex: 1;
+}
