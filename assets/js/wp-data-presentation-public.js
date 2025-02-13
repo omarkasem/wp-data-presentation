@@ -2342,7 +2342,7 @@
               label: {
                 text: "Republic of\nthe Congo", // Using explicit newline character
                 color: "#AEA88F",
-                fontSize: "12px",
+                fontSize: "8px",
                 fontWeight: "bold",
                 className: "map-label" // Adding a class in case we need CSS styling
               }

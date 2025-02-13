@@ -677,3 +677,95 @@ a.select_unselect_all {
     margin: 5px 0;
   }
 }
+
+
+/* Map Panel Base Styles */
+.wpdp #map-info-panel,
+.wpdp #map-legend-panel,
+.wpdp #map-date-panel {
+  position: absolute;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  z-index: 2;
+}
+
+
+/* Mobile Adjustments */
+@media screen and (max-width: 1200px) {
+  .wpdp #map-info-panel,
+  .wpdp #map-legend-panel,
+  .wpdp #map-date-panel {
+    right: 60px; /* Adjust when filter panel is collapsed */
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .wpdp #map-info-panel,
+  .wpdp #map-legend-panel,
+  .wpdp #map-date-panel {
+    right: 10px;
+    max-width: 250px;
+  }
+
+  .wpdp #map-date-panel {
+    top: 10px;
+  }
+
+  .wpdp #map-legend-panel {
+    bottom: 0px; /* Position above info panel */
+  }
+
+  .wpdp #map-info-panel {
+    bottom: 0px;
+  }
+
+  /* Adjust text size and padding for better mobile readability */
+  .wpdp #map-date-panel {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  .wpdp #map-legend-panel {
+    padding: 8px;
+  }
+
+  .wpdp #map-info-panel {
+    padding: 10px;
+  }
+
+  /* Make legend more compact on mobile */
+  #map-legend-panel .legend-item {
+    margin: 2px 0;
+  }
+
+  #map-legend-panel .color-box {
+    width: 15px;
+    height: 15px;
+    margin-right: 6px;
+  }
+
+  #map-legend-panel .legend-text {
+    font-size: 11px;
+  }
+}
+
+/* Small mobile devices */
+@media screen and (max-width: 380px) {
+  .wpdp #map-info-panel,
+  .wpdp #map-legend-panel,
+  .wpdp #map-date-panel {
+    max-width: 200px;
+  }
+
+  .wpdp #map-date-panel {
+    font-size: 11px;
+    padding: 6px 8px;
+  }
+
+  .wpdp #map-info-panel,
+  .wpdp #map-legend-panel {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+}
