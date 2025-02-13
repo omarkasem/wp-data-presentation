@@ -2377,6 +2377,33 @@
             });
             self.poly_map.fitBounds(bounds);
 
+            // Create custom label for Republic of Congo
+            const congoLabel = new google.maps.Marker({
+              position: { lat: -0.228021, lng: 15.827659 }, // Approximate center of Republic of Congo
+              map: self.poly_map,
+              icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 0, // Makes the marker invisible
+              },
+              label: {
+                text: "Republic of\nthe Congo", // Using explicit newline character
+                color: "#AEA88F",
+                fontSize: "12px",
+                fontWeight: "bold",
+                className: "map-label" // Adding a class in case we need CSS styling
+              }
+            });
+
+            // Add zoom change listener to show/hide the label
+            const ZOOM_THRESHOLD = 5; // Adjust this value based on when you want the label to hide
+            google.maps.event.addListener(self.poly_map, 'zoom_changed', function() {
+              const currentZoom = self.poly_map.getZoom();
+              congoLabel.setVisible(currentZoom < ZOOM_THRESHOLD);
+            });
+
+            // Initial visibility check
+            congoLabel.setVisible(self.poly_map.getZoom() < ZOOM_THRESHOLD);
+
             // To shift the center after bounds are set, add this:
             google.maps.event.addListenerOnce(self.poly_map, 'bounds_changed', function() {
               var center = self.poly_map.getCenter();

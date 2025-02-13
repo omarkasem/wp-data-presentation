@@ -595,3 +595,10 @@ a.select_unselect_all {
   }
 }
 
+/* Add this CSS for map labels */
+.map-label {
+  white-space: pre-line !important;
+  text-align: center;
+  line-height: 1.2;
+  font-weight: normal;
+}
