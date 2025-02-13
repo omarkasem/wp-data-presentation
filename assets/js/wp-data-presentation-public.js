@@ -1844,11 +1844,16 @@
       const isMobile = window.innerWidth <= 768;
       const maxTicksLimit = isMobile ? 15 : 30;
 
-
+      // Modify datasets to set "No recorded actors" to light grey
       datasets.forEach(function(dataset) {
-        dataset.backgroundColor = dataset.borderColor;
+        if (dataset.label === "No recorded actors") {
+          dataset.backgroundColor = '#D3D3D3'; // Light grey color
+        } else {
+          dataset.backgroundColor = dataset.borderColor;
+        }
         delete dataset.borderColor;
       });
+
       window[chartVar] = new Chart(ctx, {
         type: 'bar',
         data: {datasets:datasets},
@@ -1906,14 +1911,10 @@
         }
       });
 
-
       if(is_fat) {
         self.initChartFilters('chart_fat', chartVar, datasets, 'fatalities');
       }
-
-
-
-    }
+    };
 
 
     self.graphFun = function(ctx,datasets,titleConfig,chart_sql,intervals,is_fat){
