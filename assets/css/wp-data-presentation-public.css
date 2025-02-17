@@ -653,9 +653,7 @@ a.select_unselect_all {
   /* Adjust chart controls for mobile */
   .chart-controls {
     margin: 10px 0;
-    width: 100%;
-    display:flex!important;
-    flex-direction: column;
+    text-align: left;
   }
 
   .chart-controls .chart-filter-btn {

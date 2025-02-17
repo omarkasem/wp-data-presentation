@@ -1233,13 +1233,13 @@
             }
 
           });
-          $('#map-info-panel,#map-legend-panel').css('right','60px');
+          $('#map-info-panel,#map-legend-panel,#map-date-panel').css('right','60px');
           $
         } else {
           // Opening filter menu
           $('.wpdp .con').animate({marginLeft:'0'},200).show().addClass('active');
           $(this).find('span').attr('class','fas fa-arrow-left');
-          $('#map-info-panel,#map-legend-panel').css('right','290px');
+          $('#map-info-panel,#map-legend-panel,#map-date-panel').css('right','290px');
           if ($('.wpdp_filter_content').hasClass('maps')) {
               $('.wpdp_filter_content').animate({marginLeft:'270px',width:'100%'},200, function() {
                 // After animation, shift center point right to compensate for opened menu
@@ -1767,7 +1767,7 @@
             text: 'Source: ACLED',
             align: 'end',
             font: {
-              size: 14
+              size: 11
             },
             color: '#666666'
           }
@@ -2342,7 +2342,7 @@
               label: {
                 text: "Republic of\nthe Congo", // Using explicit newline character
                 color: "#AEA88F",
-                fontSize: "8px",
+                fontSize: "12px",
                 fontWeight: "bold",
                 className: "map-label" // Adding a class in case we need CSS styling
               }
