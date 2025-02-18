@@ -653,7 +653,11 @@ a.select_unselect_all {
   /* Adjust chart controls for mobile */
   .chart-controls {
     margin: 10px 0;
-    text-align: left;
+    text-align: center;
+  }
+
+  .chart-controls h3{
+    font-size: 16px;
   }
 
   .chart-controls .chart-filter-btn {

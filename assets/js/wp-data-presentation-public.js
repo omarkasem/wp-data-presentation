@@ -1813,7 +1813,7 @@
           // Clear the area where we'll draw the title
           ctx.save();
           ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, width, titleConfig.padding.top + 40);
+          ctx.fillRect(0, 0, width, titleConfig.padding.top + (isMobile ? 60 : 40)); // Increased height for mobile
           ctx.restore();
       
           // Draw title and source based on screen size
@@ -1821,27 +1821,49 @@
           ctx.textBaseline = 'top';
       
           if (isMobile) {
-            // Mobile layout - stacked vertically and centered
-            // Draw title
+            // Mobile layout - stacked vertically and wrapped text
             ctx.font = `${title.font.weight} ${title.font.size}px sans-serif`;
             ctx.fillStyle = title.color;
             ctx.textAlign = 'center';
-            ctx.fillText(title.text, width / 2, titleConfig.padding.top);
-      
+
+            // Word wrap logic for mobile
+            const words = title.text.split(' ');
+            let line = '';
+            let lines = [];
+            const maxWidth = width - 20; // Leave some padding on sides
+
+            for (let word of words) {
+              const testLine = line + (line ? ' ' : '') + word;
+              const metrics = ctx.measureText(testLine);
+              
+              if (metrics.width > maxWidth && line) {
+                lines.push(line);
+                line = word;
+              } else {
+                line = testLine;
+              }
+            }
+            if (line) {
+              lines.push(line);
+            }
+
+            // Draw wrapped title lines
+            lines.forEach((line, index) => {
+              ctx.fillText(line, width / 2, titleConfig.padding.top + (index * (title.font.size + 2)));
+            });
+
             // Draw source below title
             ctx.font = `${source.font.size}px sans-serif`;
             ctx.fillStyle = source.color;
             ctx.textAlign = 'center';
-            ctx.fillText(source.text, width / 2, titleConfig.padding.top + title.font.size + 5);
+            ctx.fillText(source.text, width / 2, titleConfig.padding.top + (lines.length * (title.font.size + 2)) + 5);
           } else {
             // Desktop layout - side by side
-            // Draw title (left-aligned)
             ctx.font = `${title.font.weight} ${title.font.size}px sans-serif`;
             ctx.fillStyle = title.color;
             ctx.textAlign = 'left';
             ctx.fillText(title.text, left, titleConfig.padding.top);
       
-            // Draw source (right-aligned)
             ctx.font = `${source.font.size}px sans-serif`;
             ctx.fillStyle = source.color;
             ctx.textAlign = 'right';
@@ -1890,7 +1912,7 @@
           layout: {
             padding: {
               // Add extra padding at the top on mobile
-              top: 10
+              top: 20
             }
           },
           plugins: {
