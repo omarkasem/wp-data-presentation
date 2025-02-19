@@ -493,6 +493,15 @@ a.select_unselect_all {
   display:none;
 }
 
+.chart_bar_note{
+  display: block;
+  width: 100%;
+  clear: both;
+  text-align: right;
+  font-size: 12px;
+  line-height: 25px;
+}
+
 .wpdp_filter_content.table-responsive hr{
   clear:both;
 }
