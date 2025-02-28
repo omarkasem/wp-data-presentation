@@ -502,6 +502,10 @@ a.select_unselect_all {
   line-height: 25px;
 }
 
+.wpdp_filter_content #wpdp_chart{
+  margin-top:30px;
+}
+
 .wpdp_filter_content.table-responsive hr{
   clear:both;
 }

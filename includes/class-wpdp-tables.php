@@ -129,17 +129,7 @@ final class WPDP_Tables {
         ];
 
 
-        $inter_labels = [
-            0 => 'No recorded actors',
-            1 => "State Forces",
-            2 => "Rebel Groups",
-            3 => "Political Militias",
-            4 => "Identity Militias",
-            5 => "Rioters",
-            6 => "Protesters",
-            7 => "Civilians",
-            8 => "External/Other Force"
-        ];
+        $inter_labels = wpdp_get_actors();
 
         if(!empty($filters['actors'])){
             $new_actors = [];

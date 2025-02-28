@@ -62,6 +62,7 @@ final class WP_Data_Presentation {
 	 * @return void
 	 */
 	private function _require_files() {
+		require_once( WP_DATA_PRESENTATION_PATH . 'includes/class-helpers.php' );
 		require_once( WP_DATA_PRESENTATION_PATH . 'includes/class-wpdp-post-types.php' );
 		require_once( WP_DATA_PRESENTATION_ACF_PATH . 'acf.php' );
 		require_once( WP_DATA_PRESENTATION_PATH . 'includes/class-wpdp-get-data.php' );

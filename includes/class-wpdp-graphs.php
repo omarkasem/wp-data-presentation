@@ -100,22 +100,14 @@ final class WPDP_Graphs {
                 }
             }
         }
-        $inter_labels = [
-            0 => 'No recorded actors',
-            1 => "State Forces",
-            2 => "Rebel Groups",
-            3 => "Political Militias",
-            4 => "Identity Militias",
-            5 => "Rioters",
-            6 => "Protesters",
-            7 => "Civilians",
-            8 => "External/Other Force"
-        ];
+
+        $inter_labels = wpdp_get_actors();
         
         $filters['merged_types'] = $merged_types;
         
         if(empty($filters['actors'])){
-            $filters['actors'] = [0,1,2,3,4,5,6,7,8,'No recorded actors','State Forces','Rebel Groups','Political Militias','Identity Militias','Rioters','Protesters','Civilians','External/Other Force'];
+            // merge array keys and array values
+            $filters['actors'] = array_merge(array_keys($inter_labels), array_values($inter_labels));
         }else{
             foreach($filters['actors'] as $actor){
                 $value_parts = explode('+', $actor);
@@ -437,17 +429,7 @@ final class WPDP_Graphs {
         $days = $sql_type_info['days'];
         $column_exists_arr = [];
    
-        $inter_labels = [
-            0 => 'No recorded actors',
-            1 => "State Forces",
-            2 => "Rebel Groups",
-            3 => "Political Militias",
-            4 => "Identity Militias",
-            5 => "Rioters",
-            6 => "Protesters",
-            7 => "Civilians",
-            8 => "External/Other Force"
-        ];
+        $inter_labels = wpdp_get_actors();
 
         $data_actors = [];
         $test = [];

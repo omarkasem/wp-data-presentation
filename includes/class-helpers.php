@@ -1,17 +1,18 @@
 <?php
+function wpdp_get_actors(){
+    $actors = get_field('actor_filter','option');
 
-/**
- * Class for importing CSV data into database table
- *
- * @since 1.0.0
- */
-
-class WPDP_Helpers {
-
-    public function __construct() {
-        
+    if(!$actors){
+        return [];
     }
 
-}
+    $actor_list = [];
 
-new WPDP_Helpers();
+    foreach($actors as $actor){
+        $filter = $actor['filter'];
+        foreach($filter as $f){
+            $actor_list[$f['actor_code'][0]] = $f['text'];
+        }
+    }
+    return $actor_list;
+}
