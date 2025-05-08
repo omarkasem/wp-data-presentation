@@ -131,6 +131,10 @@ final class WPDP_Tables {
 
         $inter_labels = wpdp_get_actors();
 
+        if(count($inter_labels) === count($filters['actors'])){
+            $filters['actors'] = [];
+        }
+
         if(!empty($filters['actors'])){
             $new_actors = [];
             foreach($filters['actors'] as $actor){

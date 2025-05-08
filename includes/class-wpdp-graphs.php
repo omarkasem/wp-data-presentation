@@ -103,6 +103,10 @@ final class WPDP_Graphs {
 
         $inter_labels = wpdp_get_actors();
         
+        if(count($inter_labels) === count($filters['actors'])){
+            $filters['actors'] = [];
+        }
+
         $filters['merged_types'] = $merged_types;
         
         if(empty($filters['actors'])){
