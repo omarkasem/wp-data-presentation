@@ -11,7 +11,10 @@ function wpdp_get_actors(){
     foreach($actors as $actor){
         $filter = $actor['filter'];
         foreach($filter as $f){
-            $actor_list[$f['actor_code'][0]] = $f['text'];
+            $value = ucfirst( strtolower( $f['text'] ) );
+            $value = str_replace('militias', 'militia', $value);
+            $value = str_replace('groups', 'group', $value);
+            $actor_list[$f['actor_code'][0]] = $value;
         }
     }
     return $actor_list;
