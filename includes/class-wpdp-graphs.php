@@ -122,6 +122,10 @@ final class WPDP_Graphs {
                     }
                 }
             }
+    
+            if(in_array('No recorded actors', $new_actors)){
+                $new_actors[] = '';
+            }
 
             $filters['actors'] = array_unique($new_actors);
         }
@@ -230,16 +234,57 @@ final class WPDP_Graphs {
         if(!empty($filters['actors'])) {
             $actor_values = [];
             foreach ($filters['actors'] as $value) {
-                $actor_values = array_merge($actor_values, array_map(function($v) {
-                    return "'" . esc_sql($v) . "'";
-                }, explode('+', $value)));
+                $actor_values = array_merge($actor_values, explode('+', $value));
             }
-            $actor_values = array_unique($actor_values);
-            $whereSQL .= " AND (inter1 IN (" . implode(',', $actor_values) . ")";
             
-            if($column_exists){
-                $whereSQL .= " OR inter2 IN (" . implode(',', $actor_values) . ")";
+            // Check if "No recorded actors" is present
+            $no_recorded_actors_values = ['No recorded actors', '0', ''];
+            $has_no_recorded_actors = false;
+            $other_actor_values = [];
+            
+            foreach ($actor_values as $value) {
+                if (in_array($value, $no_recorded_actors_values)) {
+                    $has_no_recorded_actors = true;
+                } else {
+                    $other_actor_values[] = $value;
+                }
             }
+            
+            $whereSQL .= " AND (";
+            $conditions = [];
+            
+            // Handle "No recorded actors" with AND logic if present
+            if ($has_no_recorded_actors) {
+                $no_recorded_escaped = array_map(function($v) {
+                    return "'" . esc_sql($v) . "'";
+                }, $no_recorded_actors_values);
+                
+                $no_recorded_condition = "(inter1 IN (" . implode(',', $no_recorded_escaped) . ")";
+                
+                if ($column_exists) {
+                    $no_recorded_condition .= " AND inter2 IN (" . implode(',', $no_recorded_escaped) . ")";
+                }
+                $no_recorded_condition .= ")";
+                $conditions[] = $no_recorded_condition;
+            }
+            
+            // Handle other actors with OR logic if present
+            if (!empty($other_actor_values)) {
+                $other_escaped = array_map(function($v) {
+                    return "'" . esc_sql($v) . "'";
+                }, array_unique($other_actor_values));
+                
+                $other_condition = "(inter1 IN (" . implode(',', $other_escaped) . ")";
+                
+                if ($column_exists) {
+                    $other_condition .= " OR inter2 IN (" . implode(',', $other_escaped) . ")";
+                }
+                $other_condition .= ")";
+                $conditions[] = $other_condition;
+            }
+            
+            // Combine conditions with OR
+            $whereSQL .= implode(' OR ', $conditions);
             $whereSQL .= ")";
         }
  
@@ -617,7 +662,6 @@ final class WPDP_Graphs {
             }
 
         }
-        update_option('test',$test);
 
         if ($most_recent_date) {
             $most_recent_date = date('jS M Y', strtotime($most_recent_date));

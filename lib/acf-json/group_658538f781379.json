@@ -81,24 +81,6 @@
             "append": ""
         },
         {
-            "key": "field_6784bd285d65f",
-            "label": "Clear Cache",
-            "name": "",
-            "aria-label": "",
-            "type": "message",
-            "instructions": "",
-            "required": 0,
-            "conditional_logic": 0,
-            "wrapper": {
-                "width": "",
-                "class": "",
-                "id": ""
-            },
-            "message": "",
-            "new_lines": "wpautop",
-            "esc_html": 0
-        },
-        {
             "key": "field_66747fe50e940",
             "label": "Countries",
             "name": "",
@@ -212,6 +194,7 @@
                     "collapsed": "",
                     "button_label": "Add Selector",
                     "rows_per_page": 20,
+                    "parent_repeater": "field_667583c2060cd",
                     "sub_fields": [
                         {
                             "key": "field_674ebb6871d96",
@@ -369,11 +352,11 @@
                                 "id": ""
                             },
                             "choices": {
-                                "Battles__event_type": "Battles",
-                                "Protests__event_type": "Protests",
-                                "Riots__event_type": "Riots",
                                 "Strategic developments__event_type": "Strategic developments",
+                                "Protests__event_type": "Protests",
                                 "Violence against civilians__event_type": "Violence against civilians",
+                                "Riots__event_type": "Riots",
+                                "Battles__event_type": "Battles",
                                 "Explosions\/Remote violence__event_type": "Explosions\/Remote violence"
                             },
                             "default_value": [],
@@ -408,29 +391,29 @@
                                 "id": ""
                             },
                             "choices": {
-                                "Armed clash__sub_event_type": "Armed clash",
-                                "Peaceful protest__sub_event_type": "Peaceful protest",
-                                "Mob violence__sub_event_type": "Mob violence",
+                                "Disrupted weapons use__sub_event_type": "Disrupted weapons use",
                                 "Other__sub_event_type": "Other",
-                                "Attack__sub_event_type": "Attack",
-                                "Shelling\/artillery\/missile attack__sub_event_type": "Shelling\/artillery\/missile attack",
-                                "Air\/drone strike__sub_event_type": "Air\/drone strike",
-                                "Change to group\/activity__sub_event_type": "Change to group\/activity",
                                 "Protest with intervention__sub_event_type": "Protest with intervention",
-                                "Non-violent transfer of territory__sub_event_type": "Non-violent transfer of territory",
-                                "Looting\/property destruction__sub_event_type": "Looting\/property destruction",
-                                "Violent demonstration__sub_event_type": "Violent demonstration",
+                                "Peaceful protest__sub_event_type": "Peaceful protest",
+                                "Attack__sub_event_type": "Attack",
+                                "Mob violence__sub_event_type": "Mob violence",
+                                "Armed clash__sub_event_type": "Armed clash",
+                                "Change to group\/activity__sub_event_type": "Change to group\/activity",
                                 "Sexual violence__sub_event_type": "Sexual violence",
+                                "Arrests__sub_event_type": "Arrests",
+                                "Looting\/property destruction__sub_event_type": "Looting\/property destruction",
                                 "Abduction\/forced disappearance__sub_event_type": "Abduction\/forced disappearance",
                                 "Agreement__sub_event_type": "Agreement",
-                                "Government regains territory__sub_event_type": "Government regains territory",
-                                "Remote explosive\/landmine\/IED__sub_event_type": "Remote explosive\/landmine\/IED",
-                                "Disrupted weapons use__sub_event_type": "Disrupted weapons use",
-                                "Non-state actor overtakes territory__sub_event_type": "Non-state actor overtakes territory",
-                                "Arrests__sub_event_type": "Arrests",
                                 "Excessive force against protesters__sub_event_type": "Excessive force against protesters",
                                 "Grenade__sub_event_type": "Grenade",
+                                "Remote explosive\/landmine\/IED__sub_event_type": "Remote explosive\/landmine\/IED",
+                                "Violent demonstration__sub_event_type": "Violent demonstration",
+                                "Air\/drone strike__sub_event_type": "Air\/drone strike",
+                                "Shelling\/artillery\/missile attack__sub_event_type": "Shelling\/artillery\/missile attack",
+                                "Non-violent transfer of territory__sub_event_type": "Non-violent transfer of territory",
+                                "Non-state actor overtakes territory__sub_event_type": "Non-state actor overtakes territory",
                                 "Headquarters or base established__sub_event_type": "Headquarters or base established",
+                                "Government regains territory__sub_event_type": "Government regains territory",
                                 "Chemical weapon__sub_event_type": "Chemical weapon",
                                 "Suicide bomb__sub_event_type": "Suicide bomb"
                             },
@@ -443,8 +426,7 @@
                             "placeholder": "",
                             "parent_repeater": "field_667ced43d9c6d"
                         }
-                    ],
-                    "parent_repeater": "field_667583c2060cd"
+                    ]
                 }
             ]
         },
@@ -462,7 +444,7 @@
                 "class": "",
                 "id": ""
             },
-            "message": "<div id=\"empty_cats\">\n            <div>\n            <h2>Disorder Types<\/h2>\n            <ul>\n        <li>Demonstrations<\/li><li>Political violence; Demonstrations<\/li><li>Demonstrations<\/li><li>Political violence<\/li><li>Political violence; Demonstrations<\/li><li>Strategic developments<\/li><\/div><\/ul>\n            <div>\n            <h2>Event Types<\/h2>\n            <ul>\n        <li>Strategic developments<\/li><li>Battles<\/li><li>Violence against civilians<\/li><li>Strategic developments<\/li><li>Explosions\/Remote violence<\/li><li>Protests<\/li><li>Riots<\/li><\/div><\/ul>\n            <div>\n            <h2>Sub Event Types<\/h2>\n            <ul>\n        <li>Non-state actor overtakes territory<\/li><li>Armed clash<\/li><li>Attack<\/li><li>Non-state actor overtakes territory<\/li><li>Change to group\/activity<\/li><li>Air\/drone strike<\/li><li>Shelling\/artillery\/missile attack<\/li><li>Disrupted weapons use<\/li><li>Peaceful protest<\/li><li>Violent demonstration<\/li><li>Mob violence<\/li><li>Protest with intervention<\/li><li>Non-violent transfer of territory<\/li><li>Looting\/property destruction<\/li><li>Abduction\/forced disappearance<\/li><li>Other<\/li><li>Arrests<\/li><li>Grenade<\/li><li>Sexual violence<\/li><li>Government regains territory<\/li><li>Agreement<\/li><li>Excessive force against protesters<\/li><li>Remote explosive\/landmine\/IED<\/li><li>Headquarters or base established<\/li><li>Chemical weapon<\/li><\/div><\/ul><\/div>",
+            "message": "<div id=\"empty_cats\">\n            <div>\n            <h2>Disorder Types<\/h2>\n            <ul>\n        <li>Demonstrations<\/li><li>Political violence; Demonstrations<\/li><li>Demonstrations<\/li><li>Political violence<\/li><li>Political violence; Demonstrations<\/li><li>Strategic developments<\/li><\/div><\/ul>\n            <div>\n            <h2>Event Types<\/h2>\n            <ul>\n        <li>Strategic developments<\/li><li>Battles<\/li><li>Protests<\/li><li>Violence against civilians<\/li><li>Explosions\/Remote violence<\/li><li>Strategic developments<\/li><li>Riots<\/li><\/div><\/ul>\n            <div>\n            <h2>Sub Event Types<\/h2>\n            <ul>\n        <li>Non-state actor overtakes territory<\/li><li>Armed clash<\/li><li>Peaceful protest<\/li><li>Attack<\/li><li>Shelling\/artillery\/missile attack<\/li><li>Looting\/property destruction<\/li><li>Government regains territory<\/li><li>Protest with intervention<\/li><li>Sexual violence<\/li><li>Non-violent transfer of territory<\/li><li>Headquarters or base established<\/li><li>Abduction\/forced disappearance<\/li><li>Remote explosive\/landmine\/IED<\/li><li>Change to group\/activity<\/li><li>Non-state actor overtakes territory<\/li><li>Violent demonstration<\/li><li>Mob violence<\/li><li>Arrests<\/li><li>Disrupted weapons use<\/li><li>Excessive force against protesters<\/li><li>Agreement<\/li><li>Other<\/li><li>Grenade<\/li><li>Chemical weapon<\/li><li>Air\/drone strike<\/li><\/div><\/ul><\/div>",
             "new_lines": "wpautop",
             "esc_html": 0
         },
@@ -526,6 +508,7 @@
                     "collapsed": "",
                     "button_label": "Add Row",
                     "rows_per_page": 20,
+                    "parent_repeater": "field_669223c4fd327",
                     "sub_fields": [
                         {
                             "key": "field_674ebc0ba1614",
@@ -630,8 +613,7 @@
                             "placeholder": "",
                             "parent_repeater": "field_66957a9209257"
                         }
-                    ],
-                    "parent_repeater": "field_669223c4fd327"
+                    ]
                 }
             ]
         },
@@ -695,6 +677,7 @@
                     "collapsed": "",
                     "button_label": "Add Selector",
                     "rows_per_page": 20,
+                    "parent_repeater": "field_669287c1659ed",
                     "sub_fields": [
                         {
                             "key": "field_674ebc1ba1615",
@@ -804,8 +787,8 @@
                                 "Riots": "Riots - [2]",
                                 "Violent demonstration": "Violent demonstration - [3]",
                                 "Mob violence": "Mob violence - [3]",
-                                "Strategic developments": "Strategic developments - [1]",
-                                "Strategic development events": "Strategic development events - [2]",
+                                "Strategic Developments": "Strategic Developments - [1]",
+                                "Strategic Development Events": "Strategic Development Events - [2]",
                                 "Agreement": "Agreement - [3]",
                                 "Arrests": "Arrests - [3]",
                                 "Change to group\/activity": "Change to group\/activity - [3]",
@@ -824,8 +807,7 @@
                             "placeholder": "",
                             "parent_repeater": "field_669287c1659ee"
                         }
-                    ],
-                    "parent_repeater": "field_669287c1659ed"
+                    ]
                 }
             ]
         }
@@ -848,5 +830,5 @@
     "active": true,
     "description": "",
     "show_in_rest": 0,
-    "modified": 1736752456
+    "modified": 1753182734
 }

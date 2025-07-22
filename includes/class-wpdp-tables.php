@@ -142,6 +142,9 @@ final class WPDP_Tables {
                     }
                 }
             }
+            if(in_array('No recorded actors', $new_actors)){
+                $new_actors[] = '';
+            }
             $filters['actors'] = array_unique($new_actors);
         }
 
@@ -382,14 +385,53 @@ final class WPDP_Tables {
             foreach ($filters['actors'] as $value) {
                 $actor_values = array_merge($actor_values, explode('+', $value));
             }
-            $actor_placeholders = implode(',', array_fill(0, count($actor_values), '%s'));
-            $whereSQL .= " AND (inter1 IN ($actor_placeholders)";
-            $queryArgs = array_merge($queryArgs, $actor_values);
             
-            if($column_exists){
-                $whereSQL .= " OR inter2 IN ($actor_placeholders)";
-                $queryArgs = array_merge($queryArgs, $actor_values);
+            // Check if "No recorded actors" is present
+            $no_recorded_actors_values = ['No recorded actors', '0', ''];
+            $has_no_recorded_actors = false;
+            $other_actor_values = [];
+            
+            foreach ($actor_values as $value) {
+                if (in_array($value, $no_recorded_actors_values)) {
+                    $has_no_recorded_actors = true;
+                } else {
+                    $other_actor_values[] = $value;
+                }
             }
+            
+            $whereSQL .= " AND (";
+            $conditions = [];
+            
+            // Handle "No recorded actors" with AND logic if present
+            if ($has_no_recorded_actors) {
+                $no_recorded_placeholders = implode(',', array_fill(0, count($no_recorded_actors_values), '%s'));
+                $no_recorded_condition = "(inter1 IN ($no_recorded_placeholders)";
+                $queryArgs = array_merge($queryArgs, $no_recorded_actors_values);
+                
+                if ($column_exists) {
+                    $no_recorded_condition .= " AND inter2 IN ($no_recorded_placeholders)";
+                    $queryArgs = array_merge($queryArgs, $no_recorded_actors_values);
+                }
+                $no_recorded_condition .= ")";
+                $conditions[] = $no_recorded_condition;
+            }
+            
+            // Handle other actors with OR logic if present
+            if (!empty($other_actor_values)) {
+                $other_placeholders = implode(',', array_fill(0, count($other_actor_values), '%s'));
+                $other_condition = "(inter1 IN ($other_placeholders)";
+                $queryArgs = array_merge($queryArgs, $other_actor_values);
+                
+                if ($column_exists) {
+                    $other_condition .= " OR inter2 IN ($other_placeholders)";
+                    $queryArgs = array_merge($queryArgs, $other_actor_values);
+                }
+                $other_condition .= ")";
+                $conditions[] = $other_condition;
+            }
+            
+            // Combine conditions with OR
+            $whereSQL .= implode(' OR ', $conditions);
             $whereSQL .= ")";
         }
 

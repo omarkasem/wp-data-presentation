@@ -14,6 +14,8 @@ function wpdp_get_actors(){
             $value = ucfirst( strtolower( $f['text'] ) );
             $value = str_replace('militias', 'militia', $value);
             $value = str_replace('groups', 'group', $value);
+            $value = str_replace('Civilian targets/victims', 'Civilians', $value);
+            $value = str_replace('Protestors', 'Protesters', $value);
             $actor_list[$f['actor_code'][0]] = $value;
         }
     }
