@@ -131,10 +131,21 @@ class WPDP_Db_Table {
         return true;
     }
 
-    private function create_temp_table($temp_table_name) {
-        global $wpdb;
-        $wpdb->query("CREATE TABLE {$temp_table_name} LIKE {$this->table_name}");
-    }
+	private function create_temp_table($temp_table_name) {
+		global $wpdb;
+
+		// Optional: Drop temp table if it exists to avoid "already exists" error
+		$wpdb->query("DROP TABLE IF EXISTS {$temp_table_name}");
+
+		$result = $wpdb->query("CREATE TABLE {$temp_table_name} LIKE {$this->table_name}");
+
+		if ($result === false) {
+			error_log("Failed to create temp table {$temp_table_name}: " . $wpdb->last_error);
+			// You can also throw an exception or handle it however you want
+			// throw new Exception("Error creating temp table: " . $wpdb->last_error);
+		}
+	}
+
 
     private function merge_tables($temp_table_name) {
         global $wpdb;
