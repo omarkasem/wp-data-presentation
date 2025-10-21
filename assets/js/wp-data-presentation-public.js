@@ -3,7 +3,6 @@
 
     var self = {};
     var global_markers = [];
-    var markerCluster;
     var selectedLocations = [];
     var selectedIncidentsGraphs = [];
     var selectedFatGraphs = [];
@@ -774,10 +773,18 @@
           {
               zoom: zoom, 
               center: centerLocation,
-              styles: self.mapsStyles(),
-              mapTypeControl: false
+              mapTypeControl: false,
+              mapId: 'WPDP_MAP' // Required for AdvancedMarkerElement
           }
         );
+        
+        // Apply custom styles using StyledMapType
+        const styledMapType = new google.maps.StyledMapType(
+          self.mapsStyles(),
+          { name: 'Styled Map' }
+        );
+        self.main_map.mapTypes.set('styled_map', styledMapType);
+        self.main_map.setMapTypeId('styled_map');
           
       }else{
         self.main_map.setCenter(centerLocation);
@@ -786,15 +793,15 @@
 
       var my_map = self.main_map;
 
-      if(!self.svg_marker){     
-        self.svg_marker = {
-          path: "M-20,0a20,20 0 1,0 40,0a20,20 0 1,0 -40,0",
-          fillColor: '#FF0000',
-          fillOpacity: .6,
-          anchor: new google.maps.Point(0,0),
-          strokeWeight: 0,
-          scale: .7
-        };
+      // Create pin element for AdvancedMarkerElement
+      if(!self.pin_element){
+        const pinBackground = new google.maps.marker.PinElement({
+          background: '#FF0000',
+          borderColor: '#CC0000',
+          glyphColor: '#FFFFFF',
+          scale: 1.0
+        });
+        self.pin_element = pinBackground;
       }
         
       var infoWindow = new google.maps.InfoWindow;
@@ -815,10 +822,20 @@
     
         var location = { lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude) };
     
-        var marker = new google.maps.Marker({
+        // Create custom content for the marker
+        const pinElement = document.createElement('div');
+        pinElement.style.width = '20px';
+        pinElement.style.height = '20px';
+        pinElement.style.borderRadius = '50%';
+        pinElement.style.backgroundColor = '#FF0000';
+        pinElement.style.opacity = '0.6';
+        pinElement.style.border = 'none';
+
+        // Use AdvancedMarkerElement instead of deprecated Marker
+        var marker = new google.maps.marker.AdvancedMarkerElement({
           position: location,
           map: self.main_map,
-          icon: self.svg_marker
+          content: pinElement
         });
     
         global_markers.push(marker);
@@ -869,10 +886,26 @@
         });
       });
     
-      markerCluster = new MarkerClusterer(my_map, global_markers, {
-        imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
-        // imagePath: wpdp_obj.url+'assets/images/m'
-      });
+      // Clear existing clusterer if it exists
+      if (typeof self.markerClustererInstance !== 'undefined' && self.markerClustererInstance) {
+        if (self.markerClustererInstance.clearMarkers) {
+          self.markerClustererInstance.clearMarkers();
+        }
+      }
+      
+      // Initialize MarkerClusterer - the new library supports AdvancedMarkerElement
+      if (typeof markerClusterer !== 'undefined' && markerClusterer.MarkerClusterer) {
+        // New @googlemaps/markerclusterer library
+        self.markerClustererInstance = new markerClusterer.MarkerClusterer({ 
+          map: my_map, 
+          markers: global_markers 
+        });
+      } else if (typeof MarkerClusterer !== 'undefined') {
+        // Fallback to legacy MarkerClusterer if available
+        self.markerClustererInstance = new MarkerClusterer(my_map, global_markers, {
+          imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'
+        });
+      }
 
 
       // Date info panel
@@ -1372,10 +1405,13 @@
         $('#wpdp_map').show();
 
         for(let i=0; i<global_markers.length; i++){
-          global_markers[i].setMap(null);
+          global_markers[i].map = null;
         }
-        if(markerCluster){
-          markerCluster.clearMarkers();
+        if(self.markerClustererInstance){
+          if (self.markerClustererInstance.clearMarkers) {
+            self.markerClustererInstance.clearMarkers();
+          }
+          self.markerClustererInstance = null;
         }
         global_markers = [];
         self.maps();
@@ -2299,9 +2335,18 @@
           
           self.poly_map = new google.maps.Map(document.getElementById('polygons_map'), {
             zoom: 5.5,
-            styles: self.mapsStyles(),
             mapTypeControl: false,
+            mapId: 'WPDP_POLYGONS_MAP' // Required for AdvancedMarkerElement
           });
+          
+          // Apply custom styles using StyledMapType
+          const styledMapType = new google.maps.StyledMapType(
+            self.mapsStyles(),
+            { name: 'Styled Map' }
+          );
+          self.poly_map.mapTypes.set('styled_map', styledMapType);
+          self.poly_map.setMapTypeId('styled_map');
+          
           // Change how we add the info panel to the map
           document.getElementById('polygons_map').appendChild(infoPanel);
           document.getElementById('polygons_map').appendChild(datePanel);
@@ -2353,32 +2398,33 @@
             });
             self.poly_map.fitBounds(bounds);
 
-            // Create custom label for Republic of Congo
-            const congoLabel = new google.maps.Marker({
+            // Create custom label for Republic of Congo using AdvancedMarkerElement
+            const congoLabelContent = document.createElement('div');
+            congoLabelContent.innerHTML = 'Republic of<br>the Congo';
+            congoLabelContent.style.color = '#AEA88F';
+            congoLabelContent.style.fontSize = '12px';
+            congoLabelContent.style.fontWeight = 'bold';
+            congoLabelContent.style.textAlign = 'center';
+            congoLabelContent.style.backgroundColor = 'transparent';
+            congoLabelContent.style.padding = '0';
+            congoLabelContent.className = 'map-label';
+
+            const congoLabel = new google.maps.marker.AdvancedMarkerElement({
               position: { lat: -0.228021, lng: 15.827659 }, // Approximate center of Republic of Congo
               map: self.poly_map,
-              icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 0, // Makes the marker invisible
-              },
-              label: {
-                text: "Republic of\nthe Congo", // Using explicit newline character
-                color: "#AEA88F",
-                fontSize: "12px",
-                fontWeight: "bold",
-                className: "map-label" // Adding a class in case we need CSS styling
-              }
+              content: congoLabelContent
             });
 
             // Add zoom change listener to show/hide the label
             const ZOOM_THRESHOLD = 5; // Adjust this value based on when you want the label to hide
             google.maps.event.addListener(self.poly_map, 'zoom_changed', function() {
               const currentZoom = self.poly_map.getZoom();
-              congoLabel.setVisible(currentZoom < ZOOM_THRESHOLD);
+              // AdvancedMarkerElement uses map property to show/hide
+              congoLabel.map = (currentZoom < ZOOM_THRESHOLD) ? self.poly_map : null;
             });
 
             // Initial visibility check
-            congoLabel.setVisible(self.poly_map.getZoom() < ZOOM_THRESHOLD);
+            congoLabel.map = (self.poly_map.getZoom() < ZOOM_THRESHOLD) ? self.poly_map : null;
 
             // To shift the center after bounds are set, add this:
             google.maps.event.addListenerOnce(self.poly_map, 'bounds_changed', function() {
