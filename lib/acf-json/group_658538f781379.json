@@ -62,7 +62,7 @@
         },
         {
             "key": "field_66a2ce0fa2ef4",
-            "label": "Acled API Key",
+            "label": "Acled Password",
             "name": "acled_api_key",
             "aria-label": "",
             "type": "text",
@@ -830,5 +830,5 @@
     "active": true,
     "description": "",
     "show_in_rest": 0,
-    "modified": 1753182734
+    "modified": 1759908039
 }

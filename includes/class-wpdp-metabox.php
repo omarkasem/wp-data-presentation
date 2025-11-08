@@ -533,16 +533,39 @@ final class WPDP_Metabox {
             $file_path = get_attached_file($excel_file);
         }else{
             $url = $acled_url;
+            
+            // Remove old authentication parameters (email, key) if present
+            $url = remove_query_arg( array( 'email', 'key' ), $url );
+            
+            // Set event date parameters
             $event_date = date('Y-m-d', strtotime($this->api_event_date . ' -3 months'));
-            $url = remove_query_arg('event_date_where', $url);
-            $url = add_query_arg('event_date', $event_date, $url);
-            $url = add_query_arg('event_date_where', '>', $url);
+            $url = remove_query_arg( array( 'event_date', 'event_date_where' ), $url );
+            $url = add_query_arg( array(
+                'event_date' => $event_date,
+                'event_date_where' => '>'
+            ), $url );
 
-            $file_path = download_url($url);
-            if (is_wp_error($file_path)) {
+            // Ensure format parameter is set correctly for OAuth API
+            // According to ACLED docs, CSV format uses _format=csv (with underscore)
+            if ( strpos( $url, '_format=' ) === false ) {
+                $url = add_query_arg( '_format', 'csv', $url );
+            }
+
+            // Get access token from WPDP_API
+            $api = new WPDP_API();
+            $access_token = $api->get_valid_access_token();
+            
+            if ( is_wp_error( $access_token ) ) {
+                error_log( 'WPDP API Token Error: ' . $access_token->get_error_message() );
+                wp_die( "Error getting API access token: " . $access_token->get_error_message() );
+            }
+
+            // Download file with authorization header
+            $file_path = $this->download_url_with_auth( $url, $access_token );
+            if ( is_wp_error( $file_path ) ) {
                 $error_message = $file_path->get_error_message();
-                error_log($error_message);
-                wp_die("Error downloading file: $error_message");
+                error_log( $error_message );
+                wp_die( "Error downloading file: $error_message" );
             }
         }
 
@@ -571,6 +594,88 @@ final class WPDP_Metabox {
         delete_post_meta($post_id,'wpdp_countries_updated');
         update_post_meta($post_id,'wpdp_last_updated_date',time());
         
+    }
+
+    /**
+     * Download URL with authorization header
+     *
+     * @param string $url URL to download
+     * @param string $access_token OAuth access token
+     * @return string|WP_Error Path to downloaded file or WP_Error on failure
+     */
+    public function download_url_with_auth( $url, $access_token ) {
+        require_once( ABSPATH . 'wp-admin/includes/file.php' );
+        
+        // Log the request for debugging
+        error_log( 'WPDP: Attempting to download from URL: ' . $url );
+        error_log( 'WPDP: Token length: ' . strlen( $access_token ) );
+        
+        $temp_file = wp_tempnam( $url );
+        
+        $response = wp_remote_get( 
+            $url,
+            array(
+                'headers' => array(
+                    'Authorization' => 'Bearer ' . $access_token,
+                    'Accept' => 'text/csv, application/csv, */*',
+                ),
+                'timeout' => 300, // 5 minutes timeout for large files
+                'stream' => true,
+                'filename' => $temp_file,
+            )
+        );
+        
+        if ( is_wp_error( $response ) ) {
+            error_log( 'WPDP Download Error: ' . $response->get_error_message() );
+            return $response;
+        }
+        
+        $status_code = wp_remote_retrieve_response_code( $response );
+        $headers = wp_remote_retrieve_headers( $response );
+        
+        // Log response details
+        error_log( 'WPDP Response Status: ' . $status_code );
+        error_log( 'WPDP Response Headers: ' . print_r( $headers, true ) );
+        
+        if ( $status_code !== 200 ) {
+            // Try to get error details from the response
+            $body = wp_remote_retrieve_body( $response );
+            
+            // If streaming, the body might be in the file
+            if ( empty( $body ) && file_exists( $temp_file ) ) {
+                $body = file_get_contents( $temp_file, false, null, 0, 1000 );
+            }
+            
+            error_log( 'WPDP Download Failed - Status: ' . $status_code . ', Body: ' . $body );
+            
+            // Clean up temp file on error
+            if ( file_exists( $temp_file ) ) {
+                @unlink( $temp_file );
+            }
+            
+            return new WP_Error(
+                'download_failed',
+                sprintf( 'Failed to download file. Status: %d, Response: %s', $status_code, $body )
+            );
+        }
+        
+        // Get the file path from the response
+        $file_path = $response['filename'];
+        
+        if ( ! file_exists( $file_path ) ) {
+            error_log( 'WPDP: Downloaded file does not exist at: ' . $file_path );
+            return new WP_Error( 'download_failed', 'Downloaded file does not exist.' );
+        }
+        
+        $file_size = filesize( $file_path );
+        error_log( 'WPDP: Successfully downloaded file. Size: ' . $file_size . ' bytes' );
+        
+        if ( $file_size === 0 ) {
+            @unlink( $file_path );
+            return new WP_Error( 'download_failed', 'Downloaded file is empty.' );
+        }
+        
+        return $file_path;
     }
 
     public function download_and_upload_csv($temp_file, $post_id) {
