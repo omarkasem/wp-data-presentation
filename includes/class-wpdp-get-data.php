@@ -125,6 +125,7 @@ class WPDP_Db_Table {
         if ( false === $result ) {
             $error_message = 'WPDP Import Error: Failed to import CSV data into table ' . $table_name . ' - ' . $conn->error;
             error_log( $error_message );
+            wpdp_send_error_email( 'CSV Import Failed', 'Failed to import data for presentation ID: ' . $post_id );
             var_dump( 'Error importing CSV data - ' . $conn->error );
             exit;
         }
