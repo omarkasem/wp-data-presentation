@@ -12,6 +12,13 @@ final class WP_Data_Presentation {
 	 */
 	protected $_version = NULL;
 
+	/**
+	 * @var string Title of the plugin
+	 *
+	 * @since 1.0.0
+	 */
+	protected $_title = NULL;
+
 
 	/**
 	 * @var WP_Data_Presentation
@@ -30,10 +37,21 @@ final class WP_Data_Presentation {
 	 */
 	public function __construct( $version_number = '') {
 
-		$this->_title = esc_html__( 'WP_Data_Presentation', 'wp-data-presentation' );
 		$this->_version = $version_number;
 
 		$this->_require_files();
+		
+		// Load textdomain at init action to avoid early translation loading
+		add_action( 'init', array( $this, 'load_plugin_textdomain' ) );
+	}
+
+	/**
+	 * Load the plugin text domain for translation.
+	 *
+	 * @since 1.0.0
+	 */
+	public function load_plugin_textdomain() {
+		$this->_title = esc_html__( 'WP_Data_Presentation', 'wp-data-presentation' );
 	}
 
 	/**

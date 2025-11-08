@@ -151,9 +151,16 @@ final class WPDP_Metabox {
     /**
      * Handle the cron request
      */
-    public function handle_cron_request($request) {
-        $this->update_acled_presentations();
-        return new WP_REST_Response(array('status' => 'success', 'message' => 'ACLED presentations updated'), 200);
+    public function handle_cron_request( $request ) {
+        try {
+            error_log( 'WPDP Cron: Starting ACLED presentations update via REST API' );
+            $this->update_acled_presentations();
+            return new WP_REST_Response( array( 'status' => 'success', 'message' => 'ACLED presentations updated' ), 200 );
+        } catch ( Exception $e ) {
+            error_log( 'WPDP Cron Error: Cron request handler failed - ' . $e->getMessage() );
+            wpdp_send_error_email( 'Cron Request Handler Failed', 'The cron job request handler encountered an error' );
+            return new WP_REST_Response( array( 'status' => 'error', 'message' => 'Update failed' ), 500 );
+        }
     }
 
 
@@ -556,23 +563,29 @@ final class WPDP_Metabox {
             $access_token = $api->get_valid_access_token();
             
             if ( is_wp_error( $access_token ) ) {
-                error_log( 'WPDP API Token Error: ' . $access_token->get_error_message() );
+                $error_message = 'WPDP API Token Error: ' . $access_token->get_error_message();
+                error_log( $error_message );
+                wpdp_send_error_email( 'API Token Error', 'Failed to get API access token for presentation ID: ' . $post_id );
                 wp_die( "Error getting API access token: " . $access_token->get_error_message() );
             }
 
             // Download file with authorization header
             $file_path = $this->download_url_with_auth( $url, $access_token );
             if ( is_wp_error( $file_path ) ) {
-                $error_message = $file_path->get_error_message();
+                $error_message = 'WPDP Download Error: ' . $file_path->get_error_message();
                 error_log( $error_message );
-                wp_die( "Error downloading file: $error_message" );
+                wpdp_send_error_email( 'File Download Error', 'Failed to download file for presentation ID: ' . $post_id );
+                wp_die( "Error downloading file: " . $file_path->get_error_message() );
             }
         }
 
-        $import =  new WPDP_Db_Table($table_name,$file_path);
-        if (!$import->import_csv()) {
-            error_log('Error in importing');
-            var_dump('Error in importing');exit;
+        $import =  new WPDP_Db_Table( $table_name, $file_path );
+        if ( ! $import->import_csv() ) {
+            $error_message = 'WPDP Import Error: Failed to import CSV data for presentation ID: ' . $post_id . ' - Table: ' . $table_name;
+            error_log( $error_message );
+            wpdp_send_error_email( 'CSV Import Failed', 'Failed to import data for presentation ID: ' . $post_id );
+            var_dump( 'Error in importing' );
+            exit;
         }
 
         if($import_file !== 'Upload'){
@@ -631,11 +644,6 @@ final class WPDP_Metabox {
         }
         
         $status_code = wp_remote_retrieve_response_code( $response );
-        $headers = wp_remote_retrieve_headers( $response );
-        
-        // Log response details
-        error_log( 'WPDP Response Status: ' . $status_code );
-        error_log( 'WPDP Response Headers: ' . print_r( $headers, true ) );
         
         if ( $status_code !== 200 ) {
             // Try to get error details from the response
@@ -881,18 +889,56 @@ final class WPDP_Metabox {
             )
         );
 
-        $post_ids = get_posts($args);
-        if(empty($post_ids)){
+        $post_ids = get_posts( $args );
+        
+        if ( empty( $post_ids ) ) {
+            error_log( 'WPDP Cron: No presentations found for update' );
             return;
         }
-        foreach ($post_ids as $post_id) {
-            $this->create_data_table($post_id, false);
-            error_log("Updated ACLED presentation: " . $post_id);
+        
+        $has_errors = false;
+        $error_count = 0;
+        $success_count = 0;
+        $total_count = count( $post_ids );
+        
+        foreach ( $post_ids as $post_id ) {
+            try {
+                $this->create_data_table( $post_id, false );
+                error_log( "WPDP Cron: Successfully updated ACLED presentation: " . $post_id );
+                $success_count++;
+            } catch ( Exception $e ) {
+                $has_errors = true;
+                $error_count++;
+                error_log( sprintf( 
+                    'WPDP Cron Error: Failed to update presentation ID %d (%s) - %s',
+                    $post_id,
+                    get_the_title( $post_id ),
+                    $e->getMessage()
+                ) );
+            }
         }
 
+        // Clear cache after updates
         global $wpdb;
-        $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_wpdp_cache_%'");
+        $wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_wpdp_cache_%'" );
 
+        // Send email notification if there were any errors
+        if ( $has_errors ) {
+            wpdp_send_error_email( 
+                'Cron Job Failed', 
+                sprintf( 
+                    'Cron job completed with %d error(s) out of %d total presentations. Successfully updated: %d',
+                    $error_count,
+                    $total_count,
+                    $success_count
+                )
+            );
+        } else {
+            error_log( sprintf( 
+                'WPDP Cron: Successfully updated all %d presentations',
+                $total_count
+            ) );
+        }
     }
 
     public function add_custom_mime_types($mimes) {

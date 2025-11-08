@@ -58,21 +58,27 @@ class WPDP_Db_Table {
      * @since 1.0.0
      */
     public function import_csv() {
-        if (!$this->create_table()) {
-            return;
+        if ( ! $this->create_table() ) {
+            error_log( 'WPDP Import Error: Failed to create table - ' . $this->table_name );
+            return false;
         }
 
-        if (!file_exists($this->csv_file_path)) {
-            var_dump('csv file does not exist');exit;
+        if ( ! file_exists( $this->csv_file_path ) ) {
+            error_log( 'WPDP Import Error: CSV file does not exist - ' . $this->csv_file_path );
+            var_dump( 'csv file does not exist' );
+            exit;
         }
 
-        $conn = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-        mysqli_options($conn, MYSQLI_OPT_LOCAL_INFILE, true);
+        $conn = new mysqli( DB_HOST, DB_USER, DB_PASSWORD, DB_NAME );
+        mysqli_options( $conn, MYSQLI_OPT_LOCAL_INFILE, true );
 
         global $wpdb;
-        $csv_file_path = $this->sanitize_file_path($this->csv_file_path);
-        if ($conn->connect_error) {
-            die("Connection failed: " . $conn->connect_error);
+        $csv_file_path = $this->sanitize_file_path( $this->csv_file_path );
+        
+        if ( $conn->connect_error ) {
+            $error_message = 'WPDP Import Error: Database connection failed - ' . $conn->connect_error;
+            error_log( $error_message );
+            die( "Connection failed: " . $conn->connect_error );
         }
         $this->delimiter = $this->detect_delimiter($this->csv_file_path);
 
@@ -116,8 +122,10 @@ class WPDP_Db_Table {
         // $result = $wpdb->query($query);
 
 
-        if (false === $result) {
-            var_dump('Error importing CSV data - ' . $conn->error);
+        if ( false === $result ) {
+            $error_message = 'WPDP Import Error: Failed to import CSV data into table ' . $table_name . ' - ' . $conn->error;
+            error_log( $error_message );
+            var_dump( 'Error importing CSV data - ' . $conn->error );
             exit;
         }
 
@@ -131,40 +139,42 @@ class WPDP_Db_Table {
         return true;
     }
 
-	private function create_temp_table($temp_table_name) {
+	private function create_temp_table( $temp_table_name ) {
 		global $wpdb;
 
 		// Optional: Drop temp table if it exists to avoid "already exists" error
-		$wpdb->query("DROP TABLE IF EXISTS {$temp_table_name}");
+		$wpdb->query( "DROP TABLE IF EXISTS {$temp_table_name}" );
 
-		$result = $wpdb->query("CREATE TABLE {$temp_table_name} LIKE {$this->table_name}");
+		$result = $wpdb->query( "CREATE TABLE {$temp_table_name} LIKE {$this->table_name}" );
 
-		if ($result === false) {
-			error_log("Failed to create temp table {$temp_table_name}: " . $wpdb->last_error);
-			// You can also throw an exception or handle it however you want
-			// throw new Exception("Error creating temp table: " . $wpdb->last_error);
+		if ( $result === false ) {
+			$error_message = "WPDP Import Error: Failed to create temp table {$temp_table_name} - " . $wpdb->last_error;
+			error_log( $error_message );
+			return false;
 		}
+		
+		return true;
 	}
 
 
-    private function merge_tables($temp_table_name) {
+    private function merge_tables( $temp_table_name ) {
         global $wpdb;
         
         try {
             // Set longer timeout for large datasets
-            set_time_limit(300); // 5 minutes
+            set_time_limit( 300 ); // 5 minutes
             
             // First, insert new records
-            $insert_result = $wpdb->query("
+            $insert_result = $wpdb->query( "
                 INSERT INTO {$this->table_name}
                 SELECT t.*
                 FROM {$temp_table_name} t
                 LEFT JOIN {$this->table_name} m ON t.event_id_cnty = m.event_id_cnty
                 WHERE m.event_id_cnty IS NULL
-            ");
+            " );
 
             // Then, update fatalities, inter1, inter2, actor1, and actor2 when they've changed
-            $update_result = $wpdb->query("
+            $update_result = $wpdb->query( "
                 UPDATE {$this->table_name} m
                 INNER JOIN {$temp_table_name} t ON m.event_id_cnty = t.event_id_cnty
                 SET 
@@ -178,14 +188,15 @@ class WPDP_Db_Table {
                    OR IFNULL(t.inter2, '') != IFNULL(m.inter2, '')
                    OR IFNULL(t.actor1, '') != IFNULL(m.actor1, '')
                    OR IFNULL(t.actor2, '') != IFNULL(m.actor2, '')
-            ");
+            " );
 
-            return [
+            return array(
                 'inserted' => $insert_result,
                 'updated' => $update_result
-            ];
-        } catch (Exception $e) {
-            error_log("Error merging tables: " . $e->getMessage());
+            );
+        } catch ( Exception $e ) {
+            $error_message = "WPDP Import Error: Error merging tables - " . $e->getMessage();
+            error_log( $error_message );
             return false;
         }
     }
@@ -219,9 +230,9 @@ class WPDP_Db_Table {
 
         // Get the column names from the CSV file
         $column_names = $this->get_column_names();
-        if (empty($column_names)) {
-            // Unable to get column names from the CSV file
-            return;
+        if ( empty( $column_names ) ) {
+            error_log( 'WPDP Import Error: Unable to get column names from CSV file - ' . $this->csv_file_path );
+            return false;
         }
 
         $definitions = $this->get_column_definitions($column_names);
@@ -242,12 +253,16 @@ class WPDP_Db_Table {
 
         // Execute the query
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-        $wpdb->query($sql);
+        $wpdb->query( $sql );
 
         // Check if the table was created successfully
-        if ($wpdb->last_error) {
-            var_dump($wpdb->last_error);exit;
+        if ( $wpdb->last_error ) {
+            $error_message = 'WPDP Import Error: Failed to create table ' . $this->table_name . ' - ' . $wpdb->last_error;
+            error_log( $error_message );
+            var_dump( $wpdb->last_error );
+            exit;
         }
+        
         return true;
     }
 
