@@ -134,7 +134,7 @@ class WPDP_Db_Table {
             // Merge data from temporary table to main table, removing duplicates
             $this->merge_tables($table_name);
             // Drop the temporary table
-            // $wpdb->query("DROP TABLE IF EXISTS {$table_name}");
+            $wpdb->query("DROP TABLE IF EXISTS {$table_name}");
         }
 
         return true;

@@ -30,11 +30,11 @@ function wpdp_get_actors(){
  * @return bool Whether the email was sent successfully
  */
 function wpdp_send_error_email( $subject, $message = '' ) {
-    // Set your email address here
-    $admin_email = 'omar.kasem207@gmail.com';
+    // Set your email addresses here
+    $admin_emails = array( 'omar@ovio.digital', 'dev@ovio.digital' );
     
     // Skip if no email is configured
-    if ( empty( $admin_email )  ) {
+    if ( empty( $admin_emails ) ) {
         error_log( 'WPDP: Error notification email not configured' );
         return false;
     }
@@ -57,12 +57,12 @@ function wpdp_send_error_email( $subject, $message = '' ) {
     $email_body .= "\n---\n";
     $email_body .= "This is an automated message from WP Data Presentation plugin.\n";
     
-    $sent = wp_mail( $admin_email, $email_subject, $email_body );
+    $sent = wp_mail( $admin_emails, $email_subject, $email_body );
     
     if ( $sent ) {
-        error_log( sprintf( 'WPDP: Error notification sent to %s: %s', $admin_email, $subject ) );
+        error_log( sprintf( 'WPDP: Error notification sent to %s: %s', implode( ', ', $admin_emails ), $subject ) );
     } else {
-        error_log( sprintf( 'WPDP: Failed to send error notification to %s', $admin_email ) );
+        error_log( sprintf( 'WPDP: Failed to send error notification to %s', implode( ', ', $admin_emails ) ) );
     }
     
     return $sent;
