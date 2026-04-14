@@ -545,7 +545,8 @@ final class WPDP_Metabox {
             $url = remove_query_arg( array( 'email', 'key' ), $url );
             
             // Set event date parameters
-            $event_date = date('Y-m-d', strtotime($this->api_event_date . ' -3 months'));
+            $event_date = date('Y-m-d', strtotime($this->api_event_date . ' -40 days'));
+       
             $url = remove_query_arg( array( 'event_date', 'event_date_where' ), $url );
             $url = add_query_arg( array(
                 'event_date' => $event_date,
@@ -687,7 +688,11 @@ final class WPDP_Metabox {
     }
 
     public function download_and_upload_csv($temp_file, $post_id) {
-    
+
+        require_once( ABSPATH . 'wp-admin/includes/file.php' );
+        require_once( ABSPATH . 'wp-admin/includes/media.php' );
+        require_once( ABSPATH . 'wp-admin/includes/image.php' );
+
         // Prepare file data for upload
         $post_title = get_the_title($post_id);
         $file_name = sanitize_file_name($post_title . '.csv');
@@ -720,7 +725,7 @@ final class WPDP_Metabox {
         );
     
         // Insert attachment into the media library
-        $attach_id = wp_insert_attachment($attachment, $file['file']);
+        $attach_id = wp_insert_attachment( $attachment, $file['file'] );
     
         // Generate metadata for the attachment
         $attach_data = wp_generate_attachment_metadata($attach_id, $file['file']);

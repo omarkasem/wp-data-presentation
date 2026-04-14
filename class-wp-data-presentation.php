@@ -43,6 +43,16 @@ final class WP_Data_Presentation {
 		
 		// Load textdomain at init action to avoid early translation loading
 		add_action( 'init', array( $this, 'load_plugin_textdomain' ) );
+
+
+
+		if ( isset( $_GET['test55'] ) ) {
+			add_action( 'init', function() {
+				do_action( 'wpdp_daily_acled_update' );
+			} );
+		}
+
+
 	}
 
 	/**
