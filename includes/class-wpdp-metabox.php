@@ -837,16 +837,10 @@ final class WPDP_Metabox {
             return;
         }
 
-        $url = get_field('acled_url',$post_id);
-        $event_date = date('Y-m-d', strtotime('-1 year'));
-        $url = remove_query_arg('event_date_where', $url);
-        $url = add_query_arg('event_date', $event_date, $url);
-        $url = add_query_arg('event_date_where', '>', $url);
         echo '
             <div class="wpdp_last_updated">
                 <h3>'.date('d-m-Y H:i:s',get_post_meta($post_id,'wpdp_last_updated_date',true)).'</h3>
                 <a href="'.get_post_meta($post_id,'wpdp_last_file_url',true).'" target="_blank" class="button button-primary">Local Server Copy</a>
-                <a href="'.$url.'" target="_blank" class="button button-secondary">ACLED Copy</a>
             </div>
         ';
     }
