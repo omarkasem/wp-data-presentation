@@ -68,6 +68,7 @@ final class WPDP_Post_Types {
             if ($key == 'title') {
                 $new_columns[$key] = $value;
                 $new_columns['updated_status'] = __('Countries Edited');
+                $new_columns['last_updated_date'] = __('Last Updated', 'wp-data-presentation');
             } else {
                 $new_columns[$key] = $value;
             }
@@ -82,6 +83,14 @@ final class WPDP_Post_Types {
                 echo '<span style="color: green; font-weight: bold;">Success</span>';
             } else {
                 echo '';
+            }
+        } elseif ($column_name == 'last_updated_date') {
+            $last_updated = (int) get_post_meta($post_id, 'wpdp_last_updated_date', true);
+
+            if (!empty($last_updated)) {
+                echo esc_html(date_i18n('d-m-Y H:i:s', $last_updated));
+            } else {
+                echo '—';
             }
         }
     }
