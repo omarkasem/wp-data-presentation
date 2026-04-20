@@ -545,7 +545,7 @@ final class WPDP_Metabox {
             $url = remove_query_arg( array( 'email', 'key' ), $url );
             
             // Set event date parameters
-            $event_date = date('Y-m-d', strtotime($this->api_event_date . ' -40 days'));
+            $event_date = date('Y-m-d', strtotime($this->api_event_date . ' -30 days'));
        
             $url = remove_query_arg( array( 'event_date', 'event_date_where' ), $url );
             $url = add_query_arg( array(
@@ -619,19 +619,24 @@ final class WPDP_Metabox {
      */
     public function download_url_with_auth( $url, $access_token ) {
         require_once( ABSPATH . 'wp-admin/includes/file.php' );
-        
-        // Log the request for debugging
+
+        $temp_file = wp_tempnam( $url );
+
+        // Append a cache-busting timestamp so the remote server never serves
+        // a cached/stale response between successive cron runs.
+        $url = add_query_arg( '_cb', time(), $url );
+
         error_log( 'WPDP: Attempting to download from URL: ' . $url );
         error_log( 'WPDP: Token length: ' . strlen( $access_token ) );
-        
-        $temp_file = wp_tempnam( $url );
         
         $response = wp_remote_get( 
             $url,
             array(
                 'headers' => array(
-                    'Authorization' => 'Bearer ' . $access_token,
-                    'Accept' => 'text/csv, application/csv, */*',
+                    'Authorization'  => 'Bearer ' . $access_token,
+                    'Accept'         => 'text/csv, application/csv, */*',
+                    'Cache-Control'  => 'no-cache, no-store',
+                    'Pragma'         => 'no-cache',
                 ),
                 'timeout' => 300, // 5 minutes timeout for large files
                 'stream' => true,
