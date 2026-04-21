@@ -87,6 +87,7 @@ final class WPDP_Dashboard_Widget {
         echo '<thead><tr>';
         echo '<th>' . esc_html__( 'Presentation', 'wp-data-presentation' ) . '</th>';
         echo '<th>' . esc_html__( 'Last Updated', 'wp-data-presentation' ) . '</th>';
+        echo '<th>' . esc_html__( 'Last Data Entry', 'wp-data-presentation' ) . '</th>';
         echo '<th>' . esc_html__( 'Actions', 'wp-data-presentation' ) . '</th>';
         echo '</tr></thead>';
         echo '<tbody>';
@@ -95,10 +96,12 @@ final class WPDP_Dashboard_Widget {
             $post_id         = $presentation->ID;
             $local_copy_url  = get_post_meta( $post_id, 'wpdp_last_file_url', true );
             $last_updated    = $this->get_last_updated_text( $post_id );
+            $last_data_entry = $this->get_last_data_entry_text( $post_id );
 
             echo '<tr>';
             echo '<td><strong>' . esc_html( get_the_title( $post_id ) ) . '</strong></td>';
             echo '<td>' . esc_html( $last_updated ) . '</td>';
+            echo '<td>' . esc_html( $last_data_entry ) . '</td>';
             echo '<td>';
 
             if ( ! empty( $local_copy_url ) ) {
@@ -129,6 +132,31 @@ final class WPDP_Dashboard_Widget {
         $last_updated = (int) get_post_meta( $post_id, 'wpdp_last_updated_date', true );
 
         return date_i18n( 'd-m-Y H:i:s', $last_updated );
+    }
+
+    /**
+     * Get the last data entry date for a presentation table.
+     *
+     * @param int $post_id Presentation post ID.
+     * @return string
+     */
+    private function get_last_data_entry_text( $post_id ) {
+        global $wpdb;
+
+        $table_name   = $wpdb->prefix . 'wpdp_data_' . (int) $post_id;
+        $table_exists = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table_name ) );
+
+        if ( $table_exists !== $table_name ) {
+            return '—';
+        }
+
+        $last_date = $wpdb->get_var( "SELECT MAX(event_date) FROM {$table_name}" );
+
+        if ( empty( $last_date ) ) {
+            return '—';
+        }
+
+        return date_i18n( 'd F Y', strtotime( $last_date ) );
     }
 }
 
